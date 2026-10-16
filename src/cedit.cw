@@ -2113,7 +2113,7 @@ class Cedit {
     // ---- Projects -------------------------------------------------------
 
     String version() {
-        // Keep in sync with project(cwhip VERSION ...) in CMakeLists.txt.
+        // Keep in sync with project(cedit VERSION ...) in CMakeLists.txt.
         return "0.0.1"
     }
 

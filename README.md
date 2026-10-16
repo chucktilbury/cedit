@@ -3,12 +3,9 @@
 `cedit` is the Cwhip source editor: a GTK 4 and GtkSourceView application
 implemented in the Cwhip language.
 
-The editor is intended to be developed and tested alongside the Cwhip compiler.
-This repository is the first source/history split from the Cwhip monorepo; its
-standalone build, dependency/version policy, installation and release workflow
-are not yet established. Until those are added, use the integrated build
-instructions in the [Cwhip repository](https://github.com/chucktilbury/cwhip)
-and read the [cedit guide](CEDIT.md).
+This is a standalone CMake project consuming the installed Cwhip 0.0.1 SDK.
+No compiler or workspace checkout is required. See [the build guide](doc/BUILD.md)
+and [cedit guide](CEDIT.md). It remains a proof of concept, not a production IDE.
 
 ## Source
 
@@ -27,8 +24,8 @@ implemented.
 
 This is an active proof of concept and a workload for testing Cwhip as an
 application language, not yet a separately packaged production editor.
-Independent CMake configuration, tests/CI, install rules, desktop integration
-and release/version compatibility are follow-up work tracked in the
+Independent CMake build/test/clean/install is supported. Desktop integration,
+release packaging and compatibility beyond the exact SDK version remain work in the
 [Cwhip Applications project](https://github.com/users/chucktilbury/projects/1).
 
 ## License

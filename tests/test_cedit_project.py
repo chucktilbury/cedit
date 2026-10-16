@@ -440,17 +440,18 @@ GROUPS = ("session", "switching", "lifecycle", "invalid")
 
 def main():
     parser = argparse.ArgumentParser()
-    for name in ("--compiler", "--include", "--native", "--source", "--work", "--cmake"):
+    for name in ("--compiler", "--include", "--native", "--source", "--work"):
         parser.add_argument(name, type=Path, required=True)
     parser.add_argument("--clang", required=True)
     parser.add_argument("--sanitize", default="")
     parser.add_argument("--xvfb", required=True)
     parser.add_argument("--group", choices=GROUPS)
+    parser.add_argument("--version", required=True)
     args = parser.parse_args()
 
     def selected(group):
         return args.group is None or args.group == group
-    version = re.search(r"project\(cwhip VERSION ([0-9.]+)", args.cmake.read_text()).group(1)
+    version = args.version
     args.work.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=args.work, prefix="project-") as directory:
         work = Path(directory).resolve()

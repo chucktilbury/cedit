@@ -1,0 +1,23 @@
+cmake_minimum_required(VERSION 3.24)
+project(cedit VERSION 0.0.1 LANGUAGES C)
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
+    message(FATAL_ERROR "Configure out of source: cmake -S . -B build")
+endif()
+find_package(Cwhip 0.0.1 EXACT CONFIG REQUIRED)
+cwhip_require_sourceview()
+add_executable(cedit_launcher src/launcher.c)
+set_target_properties(cedit_launcher PROPERTIES OUTPUT_NAME cedit C_STANDARD 11
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+cwhip_add_program(cedit SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/src/cedit.cw" OUTPUT_NAME cedit.bin)
+add_dependencies(cedit cedit_launcher)
+get_target_property(editor_binary cedit CWHIP_EXECUTABLE)
+install(TARGETS cedit_launcher RUNTIME DESTINATION bin)
+install(PROGRAMS "${editor_binary}" DESTINATION bin)
+include(CTest)
+if(BUILD_TESTING)
+    include(cmake/Tests.cmake)
+    add_custom_target(test-all
+        COMMAND "${CMAKE_CTEST_COMMAND}" --output-on-failure --parallel 1
+        DEPENDS cedit USES_TERMINAL VERBATIM)
+endif()
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES "${CMAKE_BINARY_DIR}/tests")
