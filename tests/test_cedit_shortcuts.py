@@ -9,6 +9,7 @@ import argparse
 import ctypes
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import tempfile
 import time
@@ -287,6 +288,7 @@ def background_startup(executable: Path, work: Path, env: dict[str, str]) -> Non
     failure = subprocess.run([str(executable)], cwd=case, env=invalid_env,
                              capture_output=True, text=True, timeout=20)
     assert failure.returncode != 0 and "display unavailable" in failure.stderr, failure
+    assert "cedit: error[CEDIT0002]:" in failure.stderr, failure
     print("PASS background_startup")
 
 
@@ -303,6 +305,15 @@ def main() -> None:
         env = environment(work)
         env.pop("WAYLAND_DISPLAY", None)
         env["GDK_BACKEND"] = "x11"
+        isolated = work / "launcher-without-application"
+        isolated.mkdir(exist_ok=True)
+        missing_app_launcher = isolated / "cedit"
+        shutil.copy2(executable, missing_app_launcher)
+        failure = subprocess.run([str(missing_app_launcher), "--foreground"],
+                                 cwd=work, env=env, capture_output=True, text=True,
+                                 timeout=20)
+        assert failure.returncode == 1 and not failure.stdout, failure
+        assert "cedit: error[CEDIT3001]:" in failure.stderr, failure
         with headless(args.xvfb, work, env) as gui_env:
             background_startup(executable, work, gui_env)
         for name, action in (("close_tabs", close_tabs), ("dirty_close", dirty_close),

@@ -1658,7 +1658,10 @@ class Cedit {
         window.present()
         presented = true
         if (!settings.errors.equals("")) {
-            Gtk.AlertDialog().show(window, "Settings errors", format("{}\n{}\nAutomatic saving is disabled; repair the file and restart.", settings.path, settings.errors))
+            Gtk.AlertDialog().show(window, "Settings errors", diagnostic(
+                "CEDIT2001", format(
+                    "{}\n{}\nAutomatic saving is disabled; repair the file and restart.",
+                    settings.path, settings.errors)))
         }
         if (process.argc() > 1 && process.arg(1).equals("--test")) {
             Gtk.Application().post(testAction)
@@ -1808,7 +1811,12 @@ class Cedit {
         pages.append(startupPreferences)
         startupPreferences.setVisible(false)
         root.append(content)
-        preferencesMessage = Gtk.Label(settings.errors)
+        String settingsError = ""
+        if (!settings.errors.equals("")) {
+            settingsError = diagnostic("CEDIT2001",
+                format("{}: {}", settings.path, settings.errors))
+        }
+        preferencesMessage = Gtk.Label(settingsError)
         root.append(preferencesMessage)
         root.append(Gtk.Label(format("Automatically saved to {}", settings.path)))
         resetChoices = Gtk.Box(Gtk.Box.HORIZONTAL, 6)
@@ -2018,7 +2026,9 @@ class Cedit {
             i = i + 1
         }
         if (!settings.writable) {
-            preferencesMessage.setText(format("{}\nChanges apply for this session only; saving disabled.", settings.errors))
+            preferencesMessage.setText(diagnostic("CEDIT2001", format(
+                "{}: {}; changes apply for this session only and saving is disabled.",
+                settings.path, settings.errors)))
             return
         }
         if (savePending) {
@@ -2036,39 +2046,39 @@ class Cedit {
         if (text.equals(persistedText)) { return true }
         String directory = System.FileSystem().dirname(settings.path)
         if (!makeSettingsDirectory(directory)) {
-            preferencesMessage.setText(format("Settings save failed: {}", System.System().lastError()))
+            settingsSaveFailure(System.System().lastError())
             return false
         }
         // Refuse to overwrite a file edited externally since the last load/save.
         if (System.FileSystem().exists(settings.path)) {
             if (!System.FileSystem().isFile(settings.path) ||
                 System.FileSystem().fileSize(settings.path) > 65536) {
-                preferencesMessage.setText("Settings save failed: current settings must be a regular file no larger than 64 KiB")
+                settingsSaveFailure("current settings must be a regular file no larger than 64 KiB")
                 return false
             }
             System.File file = null
             try {
                 file = System.File(settings.path, "r")
             } except(Exception) {
-                preferencesMessage.setText("Settings save failed: cannot read current settings")
+                settingsSaveFailure("cannot read current settings")
                 return false
             }
             String disk = ""
             try { disk = file.readAll() }
             except(Exception) as failure {
                 file.close()
-                preferencesMessage.setText(format("Settings save failed: {}", failure.message))
+                settingsSaveFailure(failure.message)
                 return false
             }
             String readError = System.System().lastError()
             file.close()
             if (!readError.equals("") || !disk.equals(persistedText)) {
-                preferencesMessage.setText("Settings changed on disk; restart before saving preferences")
+                settingsSaveFailure("settings changed on disk; restart before saving preferences")
                 return false
             }
         } else {
             if (!persistedText.equals("")) {
-                preferencesMessage.setText("Settings removed on disk; restart before saving preferences")
+                settingsSaveFailure("settings removed on disk; restart before saving preferences")
                 return false
             }
         }
@@ -2085,10 +2095,21 @@ class Cedit {
         if (!makeSettingsDirectory(parent)) { return false }
         return System.FileSystem().mkdir(directory)
     }
+    String diagnostic(String code, String explanation) {
+        return format("cedit: error[{}]: {}", code, explanation)
+    }
+    void reportDiagnostic(String code, String explanation) {
+        status.setText(diagnostic(code, explanation))
+    }
+    void settingsSaveFailure(String detail) {
+        preferencesMessage.setText(diagnostic("CEDIT2001", format(
+            "Settings save failed: {} at {}; changes remain session-only. Check the settings path and permissions, then retry.",
+            detail, settings.path)))
+    }
     void settingsSaved(String error) {
         savePending = false
         if (!error.equals("")) {
-            preferencesMessage.setText(format("Settings save failed: {}", error))
+            settingsSaveFailure(error)
             saveAgain = false
             closeAfterSave = false
             preferencesWindow.present()
@@ -2119,8 +2140,10 @@ class Cedit {
     }
 
     void projectFailure(String title, String detail) {
-        status.setText(format("{}: {}", title, detail))
-        Gtk.AlertDialog().show(window, title, detail)
+        String recovery = "Review the path and details, correct the issue, then retry."
+        String message = diagnostic("CEDIT2002", format("{}: {}", title, detail))
+        reportDiagnostic("CEDIT2002", format("{}: {}; {}", title, detail, recovery))
+        Gtk.AlertDialog().show(window, title, format("{}\n\n{}", message, recovery))
     }
 
     String canonicalFolder(String path, String title) {
@@ -2432,7 +2455,11 @@ class Cedit {
     void projectSaveFailed(String op, String errors) {
         closeAfterSave = false
         if (op.equals("save") || op.equals("configure")) {
-            if (op.equals("configure") && configureMessage != null) { configureMessage.setText(format("Save failed: {}", errors)) }
+            if (op.equals("configure") && configureMessage != null) {
+                configureMessage.setText(diagnostic("CEDIT2002", format(
+                    "Project save failed: {}; correct the reported path and retry.",
+                    errors)))
+            }
             projectFailure("Project save failed", errors)
             return
         }
@@ -2762,7 +2789,10 @@ class Cedit {
         flag = settings.highlightLine
         if (current.hasHighlight) { flag = current.highlightLine }
         overrideRow("highlight_current_line").show(current.hasHighlight, "", flag)
-        configureMessage.setText(current.errors)
+        if (!current.errors.equals("")) {
+            configureMessage.setText(diagnostic("CEDIT2002",
+                format("{}: {}", current.configPath, current.errors)))
+        } else { configureMessage.setText("") }
     }
 
     void inheritAll() {
@@ -2779,7 +2809,9 @@ class Cedit {
         CwhipProject current = activeProject
         if (current == null || commandsBlocked()) { return }
         if (!current.writable) {
-            configureMessage.setText(format("Repair {} and reopen the project before changing it:\n{}", current.configPath, current.errors))
+            configureMessage.setText(diagnostic("CEDIT2002", format(
+                "{}: repair and reopen the project before changing it: {}",
+                current.configPath, current.errors)))
             return
         }
         String name = configureName.text().trim()
@@ -2896,8 +2928,8 @@ class Cedit {
         }
         String absolutePath = System.FileSystem().absolutePath(requestedPath)
         if (absolutePath.equals("")) {
-            showError("Open failed: ", requestedPath)
-            reportOpenFailure(status.text(), false)
+            reportOpenFailure(format("Open failed: {}: {}", requestedPath,
+                                     System.System().lastError()), false)
             return null
         }
         int index = 0
@@ -2917,8 +2949,8 @@ class Cedit {
         try {
             input = System.File(absolutePath, "r")
         } except(Exception) {
-            showError("Open failed: ", requestedPath)
-            reportOpenFailure(status.text(), false)
+            reportOpenFailure(format("Open failed: {}: {}", requestedPath,
+                                     System.System().lastError()), false)
             return null
         }
         String text = ""
@@ -2953,12 +2985,14 @@ class Cedit {
     // Single opens report on the status line (and in a dialog for files that
     // are not text); a chooser batch collects failures for one dialog.
     void reportOpenFailure(String message, bool dialog) {
-        status.setText(message)
+        String recovery = "Choose a local, readable text file and retry."
+        String reported = diagnostic("CEDIT1001", format("{}; {}", message, recovery))
+        status.setText(reported)
         if (collectingFailures) {
-            openFailures.append(message)
+            openFailures.append(reported)
         } else {
             if (dialog) {
-                Gtk.AlertDialog().show(window, "Could not open file", message)
+                Gtk.AlertDialog().show(window, "Could not open file", reported)
             }
         }
     }
@@ -3053,12 +3087,12 @@ class Cedit {
 
     bool writeDocument(EditorDocument document, String destination) {
         if (destination.equals("")) {
-            status.setText("Save failed: empty file path")
+            reportSaveFailure("empty file path")
             closeSearchDialog()
             return false
         }
         if (destination.contains("://")) {
-            status.setText("Save failed: only local filesystem paths are supported")
+            reportSaveFailure(format("{}: only local filesystem paths are supported", destination))
             return false
         }
         String absoluteDestination = destination
@@ -3069,7 +3103,7 @@ class Cedit {
         absoluteDestination = System.FileSystem().normalize(absoluteDestination)
         if (System.FileSystem().exists(absoluteDestination)) {
             if (!System.FileSystem().isFile(absoluteDestination)) {
-                status.setText("Save failed: destination is not a regular file")
+                reportSaveFailure(format("{}: destination is not a regular file", absoluteDestination))
                 return false
             }
             absoluteDestination = System.FileSystem().absolutePath(absoluteDestination)
@@ -3077,7 +3111,7 @@ class Cedit {
             String parent = System.FileSystem().absolutePath(
                 System.FileSystem().dirname(absoluteDestination))
             if (parent.equals("")) {
-                showError("Save failed: ", destination)
+                reportSaveFailure(format("{}: could not resolve destination folder", destination))
                 return false
             }
             absoluteDestination = System.FileSystem().join(parent,
@@ -3087,7 +3121,8 @@ class Cedit {
         while (index < documents.length) {
             EditorDocument other = documents[index] as EditorDocument
             if (other != document && other.path.equals(absoluteDestination)) {
-                status.setText("Save failed: destination belongs to another open document")
+                reportSaveFailure(format("{}: destination belongs to another open document",
+                                         absoluteDestination))
                 return false
             }
             index = index + 1
@@ -3097,7 +3132,8 @@ class Cedit {
         try {
             output = System.File(absoluteDestination, "w")
         } except(Exception) {
-            showError("Save failed: ", absoluteDestination)
+            reportSaveFailure(format("{}: {}", absoluteDestination,
+                                     System.System().lastError()))
             return false
         }
         String contents = document.view.text()
@@ -3105,7 +3141,8 @@ class Cedit {
         String writeError = System.System().lastError()
         if (written != contents.length) {
             output.close()
-            status.setText(format("Save failed: {}: {}", absoluteDestination, writeError))
+            if (writeError.equals("")) { writeError = "incomplete write" }
+            reportSaveFailure(format("{}: {}", absoluteDestination, writeError))
             return false
         }
         output.flush()
@@ -3113,8 +3150,12 @@ class Cedit {
         output.close()
         String closeError = System.System().lastError()
         if (!flushError.equals("") || !closeError.equals("")) {
-            status.setText(format("Save failed: {}: {} {}", absoluteDestination,
-                                  flushError, closeError))
+            String writeProblem = flushError
+            if (!closeError.equals("")) {
+                if (!writeProblem.equals("")) { writeProblem.append("; ") }
+                writeProblem.append(closeError)
+            }
+            reportSaveFailure(format("{}: {}", absoluteDestination, writeProblem))
             return false
         }
         if (!document.path.equals(absoluteDestination)) {
@@ -3130,6 +3171,12 @@ class Cedit {
         project.fileSaved(absoluteDestination)
         updateMenu()
         return true
+    }
+
+    void reportSaveFailure(String detail) {
+        reportDiagnostic("CEDIT1002", format(
+            "Save failed: {}; your edits remain unsaved. Choose a valid writable local destination and retry.",
+            detail))
     }
 
     bool commandsBlocked() {
@@ -3165,7 +3212,9 @@ class Cedit {
             return
         }
         if (path.contains("://")) {
-            status.setText("Open folder failed: only local filesystem paths are supported")
+            reportDiagnostic("CEDIT2002", format(
+                "Open folder failed: {}: only local filesystem paths are supported. Choose a local folder and retry.",
+                path))
             return
         }
         if (!path.startsWith("/")) {
@@ -3214,8 +3263,9 @@ class Cedit {
                 title = "Could not open file"
                 status.setText(openFailures[0] as String)
             } else {
-                status.setText(format("Open failed for {} of {} files", openFailures.length,
-                                      paths.length))
+                reportDiagnostic("CEDIT1001", format(
+                    "Open failed for {} of {} files; see the dialog for paths and reasons.",
+                    openFailures.length, paths.length))
             }
             Gtk.AlertDialog().show(window, title, details)
             openFailures = []
@@ -3875,14 +3925,6 @@ class Cedit {
         if (document != null) {
             removeDocument(document)
         }
-    }
-
-    void showError(String prefix, String path) {
-        String message = prefix
-        message.append(path)
-        message.append(": ")
-        message.append(System.System().lastError())
-        status.setText(message)
     }
 
     void test() {

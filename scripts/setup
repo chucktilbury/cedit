@@ -2,14 +2,18 @@
 
 set -o errexit -o nounset -o pipefail
 
+diagnostic() {
+    printf 'cedit: error[%s]: %s\n' "$1" "$2" >&2
+}
+
 if [[ -n "${_PROJECT_NAME:-}" ]]; then
-    printf 'A project shell is already active (%s). Exit it before starting another.\n' \
-        "$_PROJECT_NAME" >&2
+    diagnostic CEDIT0002 \
+        "a project shell is already active ($_PROJECT_NAME); exit it before starting another"
     exit 1
 fi
 
 if (( $# > 1 )); then
-    printf 'Usage: %s [debug|release|profile]\n' "$0" >&2
+    diagnostic CEDIT0001 "usage: $0 [debug|release|profile]"
     exit 2
 fi
 
@@ -25,8 +29,8 @@ case "$build_type" in
         cmake_build_type=RelWithDebInfo
         ;;
     *)
-        printf 'Unknown build type: %s\nUsage: %s [debug|release|profile]\n' \
-            "$build_type" "$0" >&2
+        diagnostic CEDIT0001 \
+            "unknown build type '$build_type'; usage: $0 [debug|release|profile]"
         exit 2
         ;;
 esac
@@ -40,14 +44,15 @@ if [[ -z "${CWHIP_SDK:-}" ]]; then
         config_home="$HOME/.config"
     fi
     if [[ -n "$config_home" && "$config_home" != /* ]]; then
-        printf "Cannot discover sdk_prefix: config home '%s' is not absolute.\n" \
-            "$config_home" >&2
+        diagnostic CEDIT2001 \
+            "cannot discover sdk_prefix: config home '$config_home' is not absolute"
         exit 1
     fi
     settings="$config_home/cwhip/settings.toml"
     if [[ -n "$config_home" && -e "$settings" ]]; then
         if ! sdk_prefix="$(python3 "$project_root/scripts/sdk-prefix.py" "$settings")"; then
-            printf 'SDK settings discovery failed; project shell was not started.\n' >&2
+            diagnostic CEDIT2001 \
+                "SDK settings discovery failed; project shell was not started"
             exit 1
         fi
         if [[ -n "$sdk_prefix" ]]; then
@@ -63,7 +68,8 @@ export CWHIP_BUILD_TYPE="$cmake_build_type"
 
 if ! cmake -S "$project_root" -B "$build_dir" \
     -DCMAKE_BUILD_TYPE="$cmake_build_type"; then
-    printf 'CMake configuration failed; project shell was not started.\n' >&2
+    diagnostic CEDIT3001 \
+        "CMake configuration failed; project shell was not started"
     exit 1
 fi
 

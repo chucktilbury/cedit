@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Adopt stable `CEDIT` diagnostic codes for setup, launcher, SDK discovery,
+  document open/save, project metadata, and settings-save failures. GUI errors
+  preserve file paths and reasons, include recovery guidance, and explicitly
+  retain unsaved edits after failed saves. Link the shared diagnostics contract.
 - Accept shared SDK-only settings without an editor version; preference saves
   add version 1 and preserve the SDK prefix. Explicit unsupported versions
   remain errors.

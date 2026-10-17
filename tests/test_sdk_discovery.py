@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -79,6 +80,16 @@ class SdkDiscoveryTests(unittest.TestCase):
 
     def select(self, prefix):
         self.write_settings(f"sdk_prefix = {json.dumps(str(prefix))}\n")
+
+    def test_sdk_prefix_usage_diagnostic_uses_stderr_and_exit_two(self):
+        result = subprocess.run(
+            [sys.executable, str(ROOT / "scripts/sdk-prefix.py")],
+            capture_output=True, text=True, timeout=10,
+        )
+        self.assertEqual(result.returncode, 2)
+        self.assertEqual(result.stdout, "")
+        self.assertTrue(result.stderr.startswith("cedit: error[CEDIT0001]: usage:"),
+                        result.stderr)
 
     def run_configure(self, setup=False, success=True, extra=(), shell_input=None):
         if setup:
@@ -320,15 +331,20 @@ class SdkDiscoveryTests(unittest.TestCase):
         output = self.run_configure(setup=True, success=False)
         self.assertIn("sdk_prefix", output)
         self.assertIn("project shell was not started", output)
+        self.assertIn("cedit: error[CEDIT2001]:", output)
 
     def test_setup_malformed_toml_never_opens_shell(self):
         self.write_settings('sdk_prefix = "unterminated\n')
-        self.assertIn("sdk_prefix", self.run_configure(setup=True, success=False))
+        output = self.run_configure(setup=True, success=False)
+        self.assertIn("sdk_prefix", output)
+        self.assertIn("cedit: error[CEDIT2001]:", output)
 
     def test_setup_invalid_override_never_falls_back(self):
         self.select(self.fallback)
         self.env["CWHIP_SDK"] = str(self.root / "missing")
-        self.assertIn("CMake configuration failed", self.run_configure(setup=True, success=False))
+        output = self.run_configure(setup=True, success=False)
+        self.assertIn("CMake configuration failed", output)
+        self.assertIn("cedit: error[CEDIT3001]:", output)
 
     def test_setup_invalid_sdk_never_opens_shell(self):
         self.select(self.home)

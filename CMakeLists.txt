@@ -1,11 +1,13 @@
 cmake_minimum_required(VERSION 3.24)
 project(cedit VERSION 0.0.1 LANGUAGES C)
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
-    message(FATAL_ERROR "Configure out of source: cmake -S . -B build")
+    message(FATAL_ERROR
+        "cedit: error[CEDIT0001]: configure out of source: cmake -S . -B build")
 endif()
 include(cmake/CwhipSdk.cmake)
 if(NOT Cwhip_APPLICATION_OUTPUT_DIRECTORIES)
-    message(FATAL_ERROR "Install a Cwhip SDK with application output-directory support")
+    message(FATAL_ERROR
+        "cedit: error[CEDIT2001]: install a Cwhip SDK with application output-directory support")
 endif()
 set(CWHIP_BIN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/bin" CACHE PATH "Application executable directory")
 set(CWHIP_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib" CACHE PATH "Native library directory")

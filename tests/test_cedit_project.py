@@ -253,7 +253,8 @@ class ProjectChecks {
         finish()
     }
     void badConfig() {
-        require(ProjectFixture().alert("Could not open project|Malformed"), "malformed config reported")
+        require(ProjectFixture().alert("Could not open project|Malformed|error[CEDIT2002]"),
+            "malformed config reported with stable diagnostic")
         require(editor.activeProject == null, "malformed project not opened")
         finish()
     }
@@ -276,7 +277,8 @@ class ProjectChecks {
             return
         }
         if (stage == 1) {
-            require(ProjectFixture().alert("Project save failed"), "write failure reported")
+            require(ProjectFixture().alert("Project save failed|error[CEDIT2002]"),
+                "write failure reported with stable diagnostic")
             require(!ProjectFixture().alertOpen(), "alert dismissed")
             editor.quitAction()
             advance()
