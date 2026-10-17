@@ -1,6 +1,6 @@
 # cedit
 
-`examples/editor/cedit.cw` is a GTK editor written in Cwhip. Its compiler
+`src/cedit.cw` is a GTK editor written in Cwhip. Its compiler
 is `cwhip`; runtime and package ABI names use the `cwhip_*` prefix. The editor uses the optional GTK
 package and a separate GtkSourceView-backed `sourceview` package. It provides
 File, Edit, Project and Help menus, native open/save-as file choosers, multiple notebook tabs,
@@ -42,24 +42,28 @@ sudo apt install build-essential cmake clang python3 pkg-config \
   libgtk-4-dev libgtksourceview-5-dev xvfb dbus-daemon
 ```
 
-Installed GUI development dependencies are detected on fresh configurations.
-Build the editor directly:
+Install a complete Cwhip 0.0.1 SDK with GTK 4 >= 4.10 and GtkSourceView support.
+This standalone repository consumes that SDK; it does not build the compiler.
+Start a project shell and build the editor:
 
 ```sh
-cmake -S . -B build-cwhip -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Debug
-make -C build-cwhip -j4 cedit
-./bin/cedit file1.cw file2.cw
+export CWHIP_SDK=/path/to/installed/cwhip
+scripts/setup debug
+# In the new shell, initially in build/:
+cmake --build . --target cedit --parallel 4
+cedit file1.cw file2.cw
 ```
 
-Inside the configured Makefiles build directory, use `make cedit`; with any
-generator, use `cmake --build build-cwhip --target cedit -j4`. The target builds
-the compiler and required support on a fresh build, generates a private package
-lock from staged modules, and compiles the editor only when its inputs change.
-An ordinary compiler build prepares the enabled peripheral support but does
-not compile the editor. The executable is `<source>/bin/cedit` by default;
-with `-DCWHIP_STAGE_PREFIX=/absolute/prefix` it is `/absolute/prefix/bin/cedit`.
-No manual compiler invocation or package activation is needed. The editor remains
-a staged example, not a `cmake --install` target; no desktop entry is installed.
+`scripts/setup` defaults to `debug`; `release` selects Release and `profile`
+selects RelWithDebInfo. Exit the child shell to return to the original shell.
+The SDK can also be selected with `Cwhip_DIR` or `CMAKE_PREFIX_PATH`.
+With any generator, use `cmake --build build --target cedit --parallel 4`
+from the repository root. The target uses private SDK package locks and compiles
+the editor only when its inputs change. The executable is `<source>/bin/cedit`
+by default; `CWHIP_BIN_DIR` and `CWHIP_LIB_DIR` override project output locations.
+No manual compiler invocation or package activation is needed. Install with
+`cmake --install build --prefix /path/to/cedit`; no desktop entry is installed.
+See [the build guide](doc/BUILD.md) for direct CMake and relocation instructions.
 
 The editor was previously named `cwhip-editor`; rebuild using the `cedit` target
 and update commands to use `cedit`. The source entry point is now `cedit.cw`.
@@ -83,13 +87,9 @@ GUI diagnostics continue to use the launching terminal's stdout/stderr.
 
 Headless tests require Xvfb and `dbus-daemon`; they default to enabled when
 those tools are present, otherwise configuration explicitly reports them
-disabled without blocking Cwhip. Set `-DCWHIP_GTK_TESTS=ON` to require them, or
-`-DBUILD_TESTING=OFF` to omit all tests. Compiler-only builds
-can set `-DCWHIP_GTK=OFF -DCWHIP_GTK_SOURCEVIEW=OFF`; their `cedit` target reports
-the missing support explicitly. To enable GUI support in an already configured
-compiler-only build, reconfigure with both options `ON`. Even with GUI packages
-enabled, the compiler and non-import applications do not link GTK or
-GtkSourceView. See [build and installation](https://github.com/chucktilbury/cwhip/blob/master/doc/INSTALLATION.md).
+excluded without blocking the build. Set `-DBUILD_TESTING=OFF` to omit tests.
+Missing SDK resources, incompatible SDK versions, and SDKs without SourceView
+support fail at configure time. See [the standalone build guide](doc/BUILD.md).
 
 **File > New** creates an editable untitled tab. **Open...** uses a native GTK
 file chooser that allows selecting several files; each selected file is opened
@@ -501,10 +501,10 @@ Any future in-process plugins should be treated as trusted code.
 Appearance, Files/session, Build, and LSP preference categories and
 file-type overrides are future work; no placeholder pages are installed.
 
-Run the editor-specific headless cases and existing GTK integration checks:
+Run the standalone editor's headless suite (build first), or use `test-all`
+to build and then run it:
 
 ```sh
-ctest --test-dir build-cwhip \
-  -R '^(cedit_binary|cedit_shortcuts|cedit_preferences_[a-z]+|cedit_dialogs|cwhip_example_editor_cedit\\.cw|cedit_default_shortcuts|cedit_project_[a-z]+|cedit_project_explorer|cwhip_gtk|cwhip_gtk_bindings)$' \
-  --output-on-failure
+ctest --test-dir build --output-on-failure
+cmake --build build --target test-all
 ```

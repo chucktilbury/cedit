@@ -6,16 +6,20 @@ set(arguments --compiler "${Cwhip_COMPILER}" --clang "${Cwhip_CLANG_EXECUTABLE}"
 add_custom_target(check-noop
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tests/test_cedit_build.py"
         --build "${CMAKE_BINARY_DIR}" --cmake "${CMAKE_COMMAND}"
-        --executable "${CMAKE_BINARY_DIR}/bin/cedit" --compiler "${Cwhip_COMPILER}"
+        --executable "${CWHIP_BIN_DIR}/cedit" --compiler "${Cwhip_COMPILER}"
     USES_TERMINAL VERBATIM)
 if(XVFB AND DBUS)
+    add_test(NAME cedit_project_setup COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_SOURCE_DIR}/tests/test_project_setup.py"
+        --source "${CMAKE_SOURCE_DIR}" --sdk "${Cwhip_PREFIX}"
+        --cmake "${CMAKE_COMMAND}" --xvfb "${XVFB}")
     add_test(NAME cedit_binary COMMAND "${Python3_EXECUTABLE}"
         "${CMAKE_SOURCE_DIR}/tests/test_smoke.py"
-        --executable "${CMAKE_BINARY_DIR}/bin/cedit" --xvfb "${XVFB}"
+        --executable "${CWHIP_BIN_DIR}/cedit" --xvfb "${XVFB}"
         --work "${CMAKE_BINARY_DIR}/tests/binary")
     add_test(NAME cedit_shortcuts COMMAND "${Python3_EXECUTABLE}"
         "${CMAKE_SOURCE_DIR}/tests/test_cedit_shortcuts.py"
-        --executable "${CMAKE_BINARY_DIR}/bin/cedit" --xvfb "${XVFB}"
+        --executable "${CWHIP_BIN_DIR}/cedit" --xvfb "${XVFB}"
         --work "${CMAKE_BINARY_DIR}/tests/shortcuts")
     foreach(group ui migration save invalid)
         add_test(NAME cedit_preferences_${group} COMMAND "${Python3_EXECUTABLE}"
