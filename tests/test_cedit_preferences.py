@@ -1,6 +1,7 @@
 """Real GTK controls/actions plus native property checks; every run has private HOME/XDG."""
 
 import argparse
+import json
 import os
 from pathlib import Path
 import shlex
@@ -111,6 +112,30 @@ class PreferencesChecks {
             require(!editor.savePending && !editor.settings.writable, "malformed file is never saved")
             editor.quitAction()
             print(format("PASS invalid {}", checks))
+            return
+        }
+        if (mode.equals("sdk-only") || mode.equals("sdk-save") || mode.equals("sdk-reload")) {
+            require(editor.settings.writable && editor.settings.errors.equals(""),
+                "SDK settings load without editor version or errors")
+            int expectedSize = 12
+            if (mode.equals("sdk-reload") || stage > 0) { expectedSize = 18 }
+            require(editor.settings.fontSize == expectedSize &&
+                editor.settings.tabWidth == 4 && editor.settings.insertSpaces &&
+                editor.settings.lineNumbers && !editor.settings.wrap &&
+                !editor.settings.reopenLast && editor.settings.lastRoot.equals(""),
+                "SDK settings use editor defaults and reload saved preferences")
+            require(editor.currentDocument().view.hasShortcut("<Control>s"),
+                "SDK settings retain default shortcuts")
+            if (mode.equals("sdk-save") && stage == 0) {
+                editor.showPreferences()
+                editor.sizeEntry.setText("18")
+                require(editor.savePending, "SDK settings allow preference save")
+                stage = 1
+                Gtk.Application().post(nextAction)
+                return
+            }
+            editor.quitAction()
+            print(format("PASS {} {}", mode, checks))
             return
         }
         if (mode.equals("reload")) {
@@ -551,6 +576,18 @@ def main():
             assert focus["project"]["reopen_last"] is True
             run("focus-reload", usability.read_text())
         if selected("migration"):
+            sdk_prefix = '/installed SDK with "quotes" and \\backslash'
+            sdk_only = f"sdk_prefix = {json.dumps(sdk_prefix)}\n"
+            untouched = run("sdk-only", sdk_only)
+            assert untouched.read_text() == sdk_only, "startup modified SDK-only settings"
+            saved = run("sdk-save", sdk_only)
+            saved_text = saved.read_text()
+            data = tomllib.loads(saved_text)
+            assert data["sdk_prefix"] == sdk_prefix
+            assert data["version"] == 1
+            assert data["editor"]["font_size"] == 18
+            reloaded = run("sdk-reload", saved_text)
+            assert reloaded.read_text() == saved_text, "reload modified saved SDK settings"
             legacy = run("legacy", legacy="<Control><Alt>e=save\n")
             migrated = tomllib.loads(legacy.read_text())
             assert migrated["keyboard"]["save"] == "<Control><Alt>e"
@@ -581,6 +618,8 @@ def main():
                 ("nul", 'version = 1\n[keyboard]\nsave = "\\u0000"\n', "Malformed"),
                 ("binary", "version = 1\n\0", "Malformed"),
                 ("version", "version = 99\n", "version"),
+                ("sdk-version", 'sdk_prefix = "/installed/sdk"\nversion = 99\n', "version"),
+                ("version-type", 'version = "1"\n', "version"),
                 ("type", 'version = 1\n[editor]\nfont_size = "large"\n', "integer"),
                 ("range", "version = 1\n[editor]\ntab_width = 17\n", "1 to 16"),
                 ("focus-type", 'version = 1\n[editor]\nsave_on_tab_loss = "yes"\n', "boolean"),

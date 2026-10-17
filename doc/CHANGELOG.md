@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Accept shared SDK-only settings without an editor version; preference saves
+  add version 1 and preserve the SDK prefix. Explicit unsupported versions
+  remain errors.
 - Discover the installed SDK prefix from the top-level `sdk_prefix` in
   `$XDG_CONFIG_HOME/cwhip/settings.toml` (or `$HOME/.config/cwhip/settings.toml`)
   in both CMake and setup, with precedence non-empty `CWHIP_SDK` > settings >
