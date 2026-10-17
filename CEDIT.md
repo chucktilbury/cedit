@@ -424,8 +424,13 @@ use defaults and `""` explicitly disables one. Unknown keyboard commands are
 errors. A missing file is normal first-run behavior: no file is created until
 a valid setting changes.
 
+The SDK installer may create this shared file with only a top-level
+`sdk_prefix` string. An absent `version` uses default editor settings; saving
+preferences adds `version = 1` and preserves `sdk_prefix` and other unrelated
+keys. An explicitly supplied version must still be the integer `1`.
+
 Malformed TOML, wrong types/ranges, invalid/conflicting shortcuts, read errors,
-unsupported/missing versions, and strings with encoded NULs are reported in a
+unsupported versions, and strings with encoded NULs are reported in a
 startup alert and Preferences. Valid entries still apply, invalid editor entries
 use defaults, and invalid/conflicting bindings are not installed. Automatic
 saving is disabled for that session, so the original file is not clobbered;

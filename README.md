@@ -8,8 +8,11 @@ No compiler or workspace checkout is required. See [the build guide](doc/BUILD.m
 and [cedit guide](CEDIT.md). It remains a proof of concept, not a production IDE.
 
 Run `scripts/setup` for a Debug project shell (`release` and `profile` are also
-supported), then `cmake --build . --parallel 4`. Set `CWHIP_SDK` to an installed
-SDK prefix if CMake cannot discover it. Executables are built in the repository's
+supported), then `cmake --build . --parallel 4`. The SDK is selected by a
+non-empty `CWHIP_SDK`, then the `sdk_prefix` recorded by the SDK installer in
+`$XDG_CONFIG_HOME/cwhip/settings.toml` (or `~/.config/cwhip/settings.toml`),
+then normal CMake discovery; see [SDK selection](doc/BUILD.md#sdk-selection).
+Executables are built in the repository's
 `bin/` directory; intermediate files stay in `build/`. The shell and output
 conventions follow [cwhip-template](https://github.com/chucktilbury/cwhip-template),
 without a template dependency or synchronization step.

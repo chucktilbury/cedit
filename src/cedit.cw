@@ -269,7 +269,8 @@ class CeditSettings {
             error(format("Malformed settings TOML: {}", malformed))
             return
         }
-        if (!value("", "version").equals("i1")) {
+        String version = value("", "version")
+        if (!version.equals("") && !version.equals("i1")) {
             error("Unsupported settings version: expected version = 1")
             return
         }

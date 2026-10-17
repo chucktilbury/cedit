@@ -14,7 +14,6 @@ without that capability are rejected explicitly; rebuild/install an updated SDK.
 Run the executable setup script, not `source scripts/setup`:
 
 ```sh
-export CWHIP_SDK=/path/to/installed/cwhip
 scripts/setup                 # debug (Debug)
 # Alternatively: scripts/setup release or scripts/setup profile
 # In the child Bash, initially in build/:
@@ -30,13 +29,57 @@ exit without opening that shell. Nested project shells are rejected. Exiting
 returns to the original shell without changing its environment or directory.
 
 The environment sources readable `~/.bashrc`, then prepends project `bin/`,
-`scripts/`, and optional `CWHIP_SDK/bin` to PATH. It exports `_PROJECT_NAME`,
+`scripts/`, and optional `CWHIP_SDK/bin` to PATH. When the shared settings
+file selects the SDK, setup exports that prefix as `CWHIP_SDK` to CMake and
+the child shell (so its `bin/` is on PATH); it never modifies the settings file
+or the calling shell. It exports `_PROJECT_NAME`,
 `_PROJECT_LOC`, `_BUILD_TYPE`, and `CWHIP_BUILD_TYPE`, and adds the project and
 build mode to the prompt. Explicit `status`, `add`, `commit`, `push`, and `all`
 Git functions act on this repository; `all` stages, commits and pushes only
 when invoked. `dbg` forwards arguments to `cdbg`. Setup never fetches an SDK,
 modifies Git state, or creates a virtualenv. The script and environment file
 are project-owned and can be modified for local conventions.
+
+## SDK selection
+
+Direct `cmake -S . -B build` and `scripts/setup` select the SDK in this exact
+order:
+
+1. An explicit, non-empty `CWHIP_SDK` environment variable.
+2. The top-level TOML string `sdk_prefix` in
+   `$XDG_CONFIG_HOME/cwhip/settings.toml`, or
+   `$HOME/.config/cwhip/settings.toml` when `XDG_CONFIG_HOME` is unset/empty.
+   The Cwhip SDK installer records this value in the same file that holds
+   cedit's preferences.
+3. Normal CMake package discovery (`CMAKE_PREFIX_PATH`, `Cwhip_DIR`, and
+   conventional locations) when neither selection is present.
+
+```toml
+sdk_prefix = "/absolute/path/to/installed/cwhip"
+```
+
+The value is the **whole installation prefix**, not its `bin/` or CMake package
+directory. It must be a non-empty absolute path to an existing directory without
+NUL or line breaks; basic strings with escapes, literal strings, spaces and
+comments are supported. A non-empty `XDG_CONFIG_HOME` must be absolute and is the
+only settings location: a missing file there does not fall back to the HOME
+file. With neither `XDG_CONFIG_HOME` nor `HOME`, normal discovery applies.
+
+A missing settings file or absent top-level key leaves normal discovery
+unchanged. Malformed TOML, an invalid value, an unreadable file, or a relative
+`XDG_CONFIG_HOME` stops configuration (and setup, before opening a shell) with a
+diagnostic instead of selecting another SDK. The file is parsed as data with
+Python 3.11+ `tomllib` (`scripts/sdk-prefix.py`); it is never sourced or
+modified. Python is needed only when the settings file exists and `CWHIP_SDK`
+is unset. A non-empty `CWHIP_SDK` bypasses the settings file and config-home
+checks entirely, even if they are malformed.
+
+Whenever `CWHIP_SDK` or `sdk_prefix` selects a prefix, CMake searches only that
+prefix and clears a previously cached `Cwhip_DIR`, so switching SDKs in an
+existing build tree never silently reuses a stale package. A prefix without a
+compatible Cwhip package fails configuration. To return to normal discovery,
+unset `CWHIP_SDK`, remove `sdk_prefix`, and clear `Cwhip_DIR` from an existing
+cache if needed.
 
 ## Direct CMake and installation
 
@@ -59,9 +102,7 @@ not a runtime source-checkout dependency; system GTK/SourceView libraries
 remain runtime prerequisites. Compiler actions selected in the editor require
 the installed `cwhip` toolchain on PATH.
 
-`CWHIP_SDK` selects an installed prefix explicitly, including when switching
-SDKs in an existing build tree; when unset, `Cwhip_DIR`, `CMAKE_PREFIX_PATH`,
-and conventional CMake discovery apply. Missing resources, wrong
+See [SDK selection](#sdk-selection) for how the SDK prefix is chosen. Missing resources, wrong
 version or non-GUI SDKs fail at configure time. Builds use the SDK's
 `cwhip_add_program` contract with private HOME/XDG/package locks and no user
 module overrides. Intermediates remain in the binary tree; executables go to
@@ -81,7 +122,9 @@ independently of build output overrides.
 
 Tests own their native fixtures and runners in `tests/`. They use GTK and
 the installed public runtime C headers, not compiler tests, native sources
-or private GTK headers. Xvfb and
+or private GTK headers. `cedit_sdk_discovery` exercises SDK selection with
+mock SDK packages and isolated HOME/XDG directories (no GUI required); run it
+alone with `python3 tests/test_sdk_discovery.py`. Xvfb and
 dbus-daemon enable isolated headless suites; otherwise configuration prints
 an explicit exclusion. No test uses the user's desktop. Ordinary CTest does
 not rebuild the project; `test-all` builds first, `check-noop` is the explicit
