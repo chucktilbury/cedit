@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Discover the installed SDK prefix from the top-level `sdk_prefix` in
+  `$XDG_CONFIG_HOME/cwhip/settings.toml` (or `$HOME/.config/cwhip/settings.toml`)
+  in both CMake and setup, with precedence non-empty `CWHIP_SDK` > settings >
+  normal CMake discovery. Settings are parsed safely with Python 3.11+ and
+  invalid selections fail without falling back. Add discovery regression tests.
 - Add the MIT License.
 - Adopt the Cwhip template's executable project-shell setup with Debug, Release,
   and profiling configurations and optional installed-SDK selection.
