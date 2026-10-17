@@ -7,6 +7,13 @@ This is a standalone CMake project consuming the installed Cwhip 0.0.1 SDK.
 No compiler or workspace checkout is required. See [the build guide](doc/BUILD.md)
 and [cedit guide](CEDIT.md). It remains a proof of concept, not a production IDE.
 
+Run `scripts/setup` for a Debug project shell (`release` and `profile` are also
+supported), then `cmake --build . --parallel 4`. Set `CWHIP_SDK` to an installed
+SDK prefix if CMake cannot discover it. Executables are built in the repository's
+`bin/` directory; intermediate files stay in `build/`. The shell and output
+conventions follow [cwhip-template](https://github.com/chucktilbury/cwhip-template),
+without a template dependency or synchronization step.
+
 ## Source
 
 - `src/cedit.cw` — editor application
@@ -16,9 +23,8 @@ and [cedit guide](CEDIT.md). It remains a proof of concept, not a production IDE
 
 The initial source import preserves the history of `examples/editor/` from
 [Cwhip commit `5a229c6`](https://github.com/chucktilbury/cwhip/commit/5a229c632a1bddd01891c0ef0776f37e34ab8290).
-The original Cwhip repository remains the source of shared compiler, runtime,
-GTK binding and package APIs until the standalone dependency boundary is
-implemented.
+The original Cwhip repository provides the shared compiler, runtime, GTK binding
+and package APIs through its installed SDK.
 
 ## Status
 
@@ -27,6 +33,7 @@ application language, not yet a separately packaged production editor.
 Independent CMake build/test/clean/install is supported. Desktop integration,
 release packaging and compatibility beyond the exact SDK version remain work in the
 [Cwhip Applications project](https://github.com/users/chucktilbury/projects/1).
+See [the changelog](doc/CHANGELOG.md) for repository changes.
 
 ## License
 
