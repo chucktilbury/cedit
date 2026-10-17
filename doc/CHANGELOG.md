@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add the MIT License.
 - Adopt the Cwhip template's executable project-shell setup with Debug, Release,
   and profiling configurations and optional installed-SDK selection.
 - Default application executables to project-root `bin/` and native libraries
