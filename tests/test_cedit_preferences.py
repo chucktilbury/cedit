@@ -59,7 +59,9 @@ class PreferencesChecks {
         if (!condition) {
             String message = editor.settings.errors
             if (editor.preferencesMessage != null) { message = editor.preferencesMessage.text() }
-            System.StandardIO().writeErrorLine(format("FAIL stage {}: {}: {}", stage, label, message))
+            System.StandardIO().writeErrorLine(format(
+                "FAIL stage {}: {}: status: {}; preferences/settings: {}",
+                stage, label, editor.status.text(), message))
             System.Process().exit(1)
         }
         checks = checks + 1
@@ -72,6 +74,14 @@ class PreferencesChecks {
             i = i + 1
         }
         return null
+    }
+    void requireAutosaveFailure(EditorDocument document, String label) {
+        String message = editor.status.text()
+        require(document.view.modified() && document.view.text().equals("failed autosave\n") &&
+            message.contains("cedit: error[CEDIT1002]: Automatic Save failed:") &&
+            message.contains("/dev/null/blocked.cw") &&
+            message.contains("remain unsaved") && message.contains("retry"),
+            label)
     }
     void activate() {
         mode = System.Process().getEnv("PREFERENCE_CASE")
@@ -205,19 +215,17 @@ class PreferencesChecks {
                 file.path = "/dev/null/blocked.cw"
                 file.view.setText("failed autosave\n")
                 editor.newDocument()
-                require(file.view.modified() && editor.status.text().contains("Automatic Save failed"),
-                    "failed tab autosave visibly retains dirty buffer")
+                requireAutosaveFailure(file, "failed tab autosave visibly retains dirty buffer")
                 editor.windowFocusChanged(false)
-                require(file.view.modified() && editor.fileDialog == null &&
-                    editor.status.text().contains("Automatic Save failed"),
-                    "repeated focus losses produce no dialog loop")
+                requireAutosaveFailure(file, "repeated focus losses retain visible failure")
+                require(editor.fileDialog == null, "repeated focus losses produce no dialog loop")
                 editor.openFile("example.cw")
                 EditorDocument good = editor.currentDocument()
                 good.view.setText("another successful autosave\n")
                 editor.windowFocusChanged(false)
-                require(file.view.modified() && !good.view.modified() &&
-                    editor.status.text().contains("Automatic Save failed"),
+                requireAutosaveFailure(file,
                     "another buffer's successful autosave does not hide earlier failure")
+                require(!good.view.modified(), "another buffer autosaves successfully")
                 require(PreferenceFixture().closeTab(1), "inactive dirty tab close icon")
                 require(editor.pendingCloseDocument == file && editor.closeChoices != null,
                     "inactive close uses dirty document protection")

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Keep automatic-save failures in the diagnostic explanation, preserving the
+  visible `Automatic Save failed` context and dirty buffers across tab/focus
+  changes and successful saves of other documents.
 - Adopt stable `CEDIT` diagnostic codes for setup, launcher, SDK discovery,
   document open/save, project metadata, and settings-save failures. GUI errors
   preserve file paths and reasons, include recovery guidance, and explicitly
