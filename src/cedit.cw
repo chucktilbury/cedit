@@ -3174,9 +3174,11 @@ class Cedit {
     }
 
     void reportSaveFailure(String detail) {
+        String operation = "Save"
+        if (automaticSaving) { operation = "Automatic Save" }
         reportDiagnostic("CEDIT1002", format(
-            "Save failed: {}; your edits remain unsaved. Choose a valid writable local destination and retry.",
-            detail))
+            "{} failed: {}; your edits remain unsaved. Choose a valid writable local destination and retry.",
+            operation, detail))
     }
 
     bool commandsBlocked() {
@@ -3505,7 +3507,7 @@ class Cedit {
             document == null || document.path.equals("") || !document.view.modified()) { return }
         automaticSaving = true
         if (!writeDocument(document, document.path)) {
-            document.automaticSaveError = format("Automatic {}", status.text())
+            document.automaticSaveError = status.text()
             hasAutomaticSaveErrors = true
         }
         automaticSaving = false
