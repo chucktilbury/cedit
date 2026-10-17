@@ -9,7 +9,7 @@ if(cwhip_sdk_prefix STREQUAL "")
     if(NOT cwhip_config_home STREQUAL "")
         if(NOT IS_ABSOLUTE "${cwhip_config_home}")
             message(FATAL_ERROR
-                "Cannot discover sdk_prefix: config home '${cwhip_config_home}' is not absolute")
+                "cedit: error[CEDIT2001]: cannot discover sdk_prefix: config home '${cwhip_config_home}' is not absolute")
         endif()
         cmake_path(APPEND cwhip_config_home "cwhip"
             OUTPUT_VARIABLE cwhip_settings_directory)

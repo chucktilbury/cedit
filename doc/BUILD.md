@@ -74,6 +74,12 @@ modified. Python is needed only when the settings file exists and `CWHIP_SDK`
 is unset. A non-empty `CWHIP_SDK` bypasses the settings file and config-home
 checks entirely, even if they are malformed.
 
+cedit-owned setup, launcher and SDK-selection failures use
+`cedit: error[CEDITxxxx]: explanation`; diagnostics go to stderr and setup
+usage errors return 2. CMake's own package-discovery output remains intact.
+See [cedit's diagnostic boundaries](../CEDIT.md#diagnostics) and the shared
+[diagnostic contract](https://github.com/chucktilbury/cwhip/blob/master/doc/DIAGNOSTICS.md).
+
 Whenever `CWHIP_SDK` or `sdk_prefix` selects a prefix, CMake searches only that
 prefix and clears a previously cached `Cwhip_DIR`, so switching SDKs in an
 existing build tree never silently reuses a stale package. A prefix without a

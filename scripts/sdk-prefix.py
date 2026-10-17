@@ -5,15 +5,20 @@ from pathlib import Path
 import sys
 
 
+def diagnostic(code, message):
+    print(f"cedit: error[{code}]: {message}", file=sys.stderr)
+
+
 def main():
+    if len(sys.argv) != 2:
+        diagnostic("CEDIT0001", "usage: sdk-prefix.py SETTINGS_FILE")
+        return 2
     settings = Path(sys.argv[1])
     try:
         import tomllib
     except ModuleNotFoundError:
-        print(
-            f"{settings}: reading sdk_prefix requires Python 3.11 or newer",
-            file=sys.stderr,
-        )
+        diagnostic("CEDIT2001",
+                   f"{settings}: reading sdk_prefix requires Python 3.11 or newer")
         return 1
 
     try:
@@ -36,7 +41,7 @@ def main():
     except FileNotFoundError:
         return 0
     except (OSError, ValueError) as error:
-        print(f"{settings}: cannot read sdk_prefix: {error}", file=sys.stderr)
+        diagnostic("CEDIT2001", f"{settings}: cannot read sdk_prefix: {error}")
         return 1
 
     sys.stdout.write(prefix)

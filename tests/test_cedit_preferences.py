@@ -107,7 +107,9 @@ class PreferencesChecks {
         if (mode.equals("invalid")) {
             require(!editor.settings.writable && !editor.settings.errors.equals(""), "visible load error, saving locked")
             editor.showPreferences()
-            require(editor.preferencesMessage.text().contains(System.Process().getEnv("EXPECTED_ERROR")), "specific error")
+            require(editor.preferencesMessage.text().contains(System.Process().getEnv("EXPECTED_ERROR")) &&
+                editor.preferencesMessage.text().contains("error[CEDIT2001]"),
+                "specific error has stable diagnostic")
             editor.sizeEntry.setText("22")
             require(!editor.savePending && !editor.settings.writable, "malformed file is never saved")
             editor.quitAction()
@@ -352,7 +354,10 @@ class PreferencesChecks {
                 Gtk.Application().post(nextAction)
                 return
             }
-            require(editor.preferencesMessage.text().contains("save failed"), "visible write failure")
+            require(editor.preferencesMessage.text().contains("save failed") &&
+                editor.preferencesMessage.text().contains("error[CEDIT2001]") &&
+                editor.preferencesMessage.text().contains("session-only"),
+                "visible write failure and recovery guidance")
             require(PreferenceFixture().visible(), "write failure keeps preferences available")
             editor.quitAction()
             print(format("PASS save-failure {}", checks))

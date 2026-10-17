@@ -68,11 +68,14 @@ def main():
         for arguments in (["invalid"], ["debug", "extra"]):
             result = run([setup, *arguments], cwd=work, env=env,
                          input="echo UNEXPECTED_SHELL\n", success=False)
+            assert result.returncode == 2, result
+            assert "cedit: error[CEDIT0001]:" in result.stderr, result
             assert "UNEXPECTED_SHELL" not in result.stdout
         bad_env = dict(env, CWHIP_SDK=str(work / "missing SDK"))
         result = run([setup], cwd=work, env=bad_env,
                      input="echo UNEXPECTED_SHELL\n", success=False)
         assert "project shell was not started" in result.stderr, result
+        assert "cedit: error[CEDIT3001]:" in result.stderr, result
         assert "UNEXPECTED_SHELL" not in result.stdout
         run([setup, "debug"], cwd=work, env=env, input="exit\n")
 

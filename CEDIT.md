@@ -85,6 +85,26 @@ The launcher and sibling `cedit.bin` must stay together; directly running
 the compiled `.bin` (or compiling the Cwhip source yourself) stays foreground.
 GUI diagnostics continue to use the launching terminal's stdout/stderr.
 
+## Diagnostics
+
+cedit-owned CLI and GUI failures use the shared
+[diagnostic format](https://github.com/chucktilbury/cwhip/blob/master/doc/DIAGNOSTICS.md):
+`cedit: error[CEDITxxxx]: explanation`. CLI diagnostics go to stderr; usage
+errors from `scripts/setup` return 2, and other failures retain their existing
+nonzero exit behavior. Codes identify stable reporting boundaries: `CEDIT0001`
+for usage/startup invocation, `CEDIT0002` for launcher readiness, `CEDIT1001`
+and `CEDIT1002` for document open/save, `CEDIT2001` and `CEDIT2002` for settings
+and project metadata, and `CEDIT3001` for process/configuration failures.
+GUI file and project failures keep the affected path and reason visible and
+include a recovery hint; failed document saves leave edits unsaved and do not
+report success. Existing project/open dialogs remain, and routine information
+stays in the status line.
+
+The editor currently has no compiler action or compiler-output parser; source
+diagnostics are therefore emitted by the compiler unchanged rather than being
+rewrapped or parsed by cedit. CMake and GTK retain their own detailed diagnostics
+where they own the failure.
+
 Headless tests require Xvfb and `dbus-daemon`; they default to enabled when
 those tools are present, otherwise configuration explicitly reports them
 excluded without blocking the build. Set `-DBUILD_TESTING=OFF` to omit tests.

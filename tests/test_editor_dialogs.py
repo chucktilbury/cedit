@@ -162,7 +162,9 @@ class EditorChecks {
         if (stage == 6) {
             require(editor.documents.length == 3 && editor.currentDocument().view.text().equals("other\n"), "Open reads selected file")
             editor.openFile(path("missing.cw"))
-            require(editor.status.text().contains("Open failed") && editor.documents.length == 3, "invalid open reported")
+            require(editor.status.text().contains("Open failed") &&
+                    editor.status.text().contains("error[CEDIT1001]") &&
+                    editor.documents.length == 3, "invalid open reported")
             editor.openFile(System.FileSystem().getCwd())
             require(editor.status.text().contains("not a regular file"), "directory rejected")
             editor.activateDocument(saved)
@@ -211,7 +213,12 @@ class EditorChecks {
             require(editor.documents.length == 2 && editor.status.text().contains("Open failed"), "accepted file disappearing before Open is reported")
             require(Fixture().alert("Could not open|vanishing.cw") && !Fixture().alertOpen(), "chooser Open failure dialog dismissed")
             EditorDocument document = editor.currentDocument()
+            document.view.setText("pending save\n")
             require(!editor.writeDocument(document, path("missing-folder/save.cw")) && document.path.equals(path("other.cw")), "invalid save preserves identity")
+            require(document.view.modified() && document.view.text().equals("pending save\n") &&
+                    editor.status.text().contains("error[CEDIT1002]") &&
+                    editor.status.text().contains("remain unsaved"),
+                    "failed Save reports recovery and preserves unsaved edits")
             editor.openFile("sftp://invalid.example/file.cw")
             require(editor.status.text().contains("only local filesystem paths"), "nonlocal Open reported")
             require(!editor.writeDocument(document, "sftp://invalid.example/file.cw") && document.path.equals(path("other.cw")), "nonlocal Save rejected")
@@ -278,7 +285,9 @@ class EditorChecks {
         }
         if (stage == 15) {
             require(editor.documents.length == documentsBeforeMany + 1, "multi-select opens every new text file")
-            require(editor.status.text().contains("Open failed for 2 of 4 files"), "per-file failures reported")
+            require(editor.status.text().contains("Open failed for 2 of 4 files") &&
+                    editor.status.text().contains("error[CEDIT1001]"),
+                    "per-file failures reported")
             require(Fixture().alert("binary.dat|invalid.txt|not a text file"), "multi-select failures shown in one dialog")
             require(!Fixture().alertOpen(), "alert dismissed")
             EditorDocument text = documentAt("many/two.txt")
