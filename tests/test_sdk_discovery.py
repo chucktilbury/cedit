@@ -81,6 +81,68 @@ class SdkDiscoveryTests(unittest.TestCase):
     def select(self, prefix):
         self.write_settings(f"sdk_prefix = {json.dumps(str(prefix))}\n")
 
+    def write_sdk_toml(self, content):
+        path = self.settings.with_name("sdk.toml")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content)
+        return path
+
+    def quick(self):
+        return ("-DCMAKE_DISABLE_FIND_PACKAGE_Python3=TRUE", "-DBUILD_TESTING=OFF")
+
+    def test_sdk_toml_wins_over_legacy_settings(self):
+        new = self.make_sdk("new-sdk")
+        self.select(self.make_sdk("legacy-sdk"))
+        self.write_sdk_toml(f"sdk_prefix = {json.dumps(str(new))}\n")
+        self.run_configure(extra=("-DBUILD_TESTING=OFF",))
+        self.assert_selected(new)
+
+    def test_preference_overwrite_does_not_touch_sdk_toml(self):
+        new = self.make_sdk("new-sdk")
+        sdk_toml = self.write_sdk_toml(f"sdk_prefix = {json.dumps(str(new))}\n")
+        before = sdk_toml.read_bytes()
+        self.settings.write_text("version = 1\n")  # simulated editor save
+        self.run_configure(extra=("-DBUILD_TESTING=OFF",))
+        self.assert_selected(new)
+        self.assertEqual(sdk_toml.read_bytes(), before)
+
+    def test_absent_sdk_toml_uses_legacy_settings(self):
+        legacy = self.make_sdk("legacy-sdk")
+        self.select(legacy)
+        self.run_configure(extra=("-DBUILD_TESTING=OFF",))
+        self.assert_selected(legacy)
+
+    def test_invalid_sdk_toml_errors_without_legacy_fallback(self):
+        self.select(self.make_sdk("legacy-sdk"))
+        for content in ('sdk_prefix = "relative"\n', 'sdk_prefix = ""\n',
+                        'sdk_prefix = "unterminated\n'):
+            with self.subTest(content=content):
+                self.write_sdk_toml(content)
+                self.assertIn("sdk.toml", self.run_configure(success=False))
+                self.run_configure(setup=True, success=False)
+
+    def test_sdk_toml_missing_key_uses_normal_discovery_not_legacy(self):
+        self.select(self.make_sdk("legacy-sdk"))
+        self.write_sdk_toml('other = "value"\n')
+        self.run_configure(extra=("-DBUILD_TESTING=OFF",))
+        self.assert_selected(self.fallback)
+        self.run_configure(setup=True)
+        self.assertEqual(self.shell_record.read_text(), "")
+
+    def test_setup_prefers_sdk_toml(self):
+        new = self.make_sdk("new-sdk")
+        self.select(self.make_sdk("legacy-sdk"))
+        self.write_sdk_toml(f"sdk_prefix = {json.dumps(str(new))}\n")
+        self.run_configure(setup=True)
+        self.assertEqual(self.shell_record.read_text(), str(new))
+
+    def test_env_bypasses_invalid_sdk_toml(self):
+        explicit = self.make_sdk("explicit")
+        self.write_sdk_toml("not toml\n")
+        self.env["CWHIP_SDK"] = str(explicit)
+        self.run_configure(extra=("-DBUILD_TESTING=OFF",))
+        self.assert_selected(explicit)
+
     def test_sdk_prefix_usage_diagnostic_uses_stderr_and_exit_two(self):
         result = subprocess.run(
             [sys.executable, str(ROOT / "scripts/sdk-prefix.py")],

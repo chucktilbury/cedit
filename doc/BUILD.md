@@ -47,10 +47,14 @@ order:
 
 1. An explicit, non-empty `CWHIP_SDK` environment variable.
 2. The top-level TOML string `sdk_prefix` in
-   `$XDG_CONFIG_HOME/cwhip/settings.toml`, or
-   `$HOME/.config/cwhip/settings.toml` when `XDG_CONFIG_HOME` is unset/empty.
-   The Cwhip SDK installer records this value in the same file that holds
-   cedit's preferences.
+   `$XDG_CONFIG_HOME/cwhip/sdk.toml`, or
+   `$HOME/.config/cwhip/sdk.toml` when `XDG_CONFIG_HOME` is unset/empty.
+   The Cwhip SDK installer records this value in `sdk.toml`, separate from
+   cedit's preferences in `settings.toml`. Only when `sdk.toml` does not exist
+   is a top-level `sdk_prefix` in the legacy `settings.toml` (same directory)
+   used. An existing `sdk.toml` is authoritative: if it is unreadable or
+   malformed, or its prefix is invalid, configuration fails with no legacy
+   fallback; if it lacks `sdk_prefix`, step 3 applies (not the legacy file).
 3. Normal CMake package discovery (`CMAKE_PREFIX_PATH`, `Cwhip_DIR`, and
    conventional locations) when neither selection is present.
 
@@ -62,15 +66,15 @@ The value is the **whole installation prefix**, not its `bin/` or CMake package
 directory. It must be a non-empty absolute path to an existing directory without
 NUL or line breaks; basic strings with escapes, literal strings, spaces and
 comments are supported. A non-empty `XDG_CONFIG_HOME` must be absolute and is the
-only settings location: a missing file there does not fall back to the HOME
+only config location: a missing file there does not fall back to the HOME
 file. With neither `XDG_CONFIG_HOME` nor `HOME`, normal discovery applies.
 
-A missing settings file or absent top-level key leaves normal discovery
+Missing config files or an absent top-level key leaves normal discovery
 unchanged. Malformed TOML, an invalid value, an unreadable file, or a relative
 `XDG_CONFIG_HOME` stops configuration (and setup, before opening a shell) with a
 diagnostic instead of selecting another SDK. The file is parsed as data with
 Python 3.11+ `tomllib` (`scripts/sdk-prefix.py`); it is never sourced or
-modified. Python is needed only when the settings file exists and `CWHIP_SDK`
+modified or migrated. Python is needed only when sdk.toml or settings.toml exists and `CWHIP_SDK`
 is unset. A non-empty `CWHIP_SDK` bypasses the settings file and config-home
 checks entirely, even if they are malformed.
 

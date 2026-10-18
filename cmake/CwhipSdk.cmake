@@ -1,5 +1,6 @@
 # Selects the installed Cwhip SDK: non-empty CWHIP_SDK > the top-level
-# sdk_prefix in the shared user settings.toml > normal CMake package discovery.
+# sdk_prefix in cwhip/sdk.toml (legacy settings.toml only if sdk.toml is absent)
+# > normal CMake package discovery.
 set(cwhip_sdk_prefix "$ENV{CWHIP_SDK}")
 if(cwhip_sdk_prefix STREQUAL "")
     set(cwhip_config_home "$ENV{XDG_CONFIG_HOME}")
@@ -14,14 +15,14 @@ if(cwhip_sdk_prefix STREQUAL "")
         cmake_path(APPEND cwhip_config_home "cwhip"
             OUTPUT_VARIABLE cwhip_settings_directory)
         cmake_path(NORMAL_PATH cwhip_settings_directory)
-        set(cwhip_settings "${cwhip_settings_directory}/settings.toml")
         # EXISTS checks readability; listing lets the parser diagnose unreadable files.
         file(GLOB cwhip_settings_entries "${cwhip_settings_directory}/*")
-        if("${cwhip_settings}" IN_LIST cwhip_settings_entries)
+        if("${cwhip_settings_directory}/sdk.toml" IN_LIST cwhip_settings_entries
+           OR "${cwhip_settings_directory}/settings.toml" IN_LIST cwhip_settings_entries)
             find_package(Python3 3.11 REQUIRED COMPONENTS Interpreter)
             execute_process(
                 COMMAND "${Python3_EXECUTABLE}"
-                    "${PROJECT_SOURCE_DIR}/scripts/sdk-prefix.py" "${cwhip_settings}"
+                    "${PROJECT_SOURCE_DIR}/scripts/sdk-prefix.py" "${cwhip_settings_directory}"
                 RESULT_VARIABLE cwhip_settings_result
                 OUTPUT_VARIABLE cwhip_sdk_prefix
                 ERROR_VARIABLE cwhip_settings_error)
