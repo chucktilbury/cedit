@@ -13,7 +13,9 @@
   add version 1 and preserve the SDK prefix. Explicit unsupported versions
   remain errors.
 - Discover the installed SDK prefix from the top-level `sdk_prefix` in
-  `$XDG_CONFIG_HOME/cwhip/settings.toml` (or `$HOME/.config/cwhip/settings.toml`)
+  `$XDG_CONFIG_HOME/cwhip/sdk.toml` (or `$HOME/.config/cwhip/sdk.toml`; legacy
+  `settings.toml` is read only when `sdk.toml` is absent, so editor preference
+  saves can no longer clobber the SDK location)
   in both CMake and setup, with precedence non-empty `CWHIP_SDK` > settings >
   normal CMake discovery. Settings are parsed safely with Python 3.11+ and
   invalid selections fail without falling back. Add discovery regression tests.

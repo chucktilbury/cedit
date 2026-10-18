@@ -444,8 +444,10 @@ use defaults and `""` explicitly disables one. Unknown keyboard commands are
 errors. A missing file is normal first-run behavior: no file is created until
 a valid setting changes.
 
-The SDK installer may create this shared file with only a top-level
-`sdk_prefix` string. An absent `version` uses default editor settings; saving
+The SDK location lives in a separate `cwhip/sdk.toml` (see
+[SDK selection](doc/BUILD.md#sdk-selection)); cedit never writes it. A legacy
+`settings.toml` may still contain a top-level `sdk_prefix` string, used only
+when `sdk.toml` is absent. An absent `version` uses default editor settings; saving
 preferences adds `version = 1` and preserves `sdk_prefix` and other unrelated
 keys. An explicitly supplied version must still be the integer `1`.
 

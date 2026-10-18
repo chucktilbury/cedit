@@ -48,9 +48,10 @@ if [[ -z "${CWHIP_SDK:-}" ]]; then
             "cannot discover sdk_prefix: config home '$config_home' is not absolute"
         exit 1
     fi
-    settings="$config_home/cwhip/settings.toml"
-    if [[ -n "$config_home" && -e "$settings" ]]; then
-        if ! sdk_prefix="$(python3 "$project_root/scripts/sdk-prefix.py" "$settings")"; then
+    cwhip_config="$config_home/cwhip"
+    if [[ -n "$config_home" && ( -e "$cwhip_config/sdk.toml" || -L "$cwhip_config/sdk.toml" ||
+        -e "$cwhip_config/settings.toml" || -L "$cwhip_config/settings.toml" ) ]]; then
+        if ! sdk_prefix="$(python3 "$project_root/scripts/sdk-prefix.py" "$cwhip_config")"; then
             diagnostic CEDIT2001 \
                 "SDK settings discovery failed; project shell was not started"
             exit 1
