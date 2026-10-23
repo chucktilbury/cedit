@@ -99,12 +99,13 @@ cache if needed.
 
 The selected SDK's package config provides
 `CwhipApplicationDefaults.cmake`; cedit calls
-`cwhip_apply_application_defaults()` immediately after finding that package,
-before declaring application cache defaults. The helper reads the
+`cwhip_apply_application_defaults()` immediately after finding that package
+and before `project()` initializes CMake defaults. The helper reads the
 `[applications]` table in `sdk.toml`. Its `install_prefix` and `build_type`
 values seed `CMAKE_INSTALL_PREFIX` and `CMAKE_BUILD_TYPE` only when those
-settings are still defaults. Explicit CMake values and values already stored
-in the build cache take precedence. A mode passed to `scripts/setup` is
+settings are still defaults. Explicit CMake values, a
+`CMAKE_INSTALL_PREFIX` environment setting, and values already stored in the
+build cache take precedence. A mode passed to `scripts/setup` is
 explicit, while omitting the mode allows the SDK's `build_type` to apply.
 
 The install prefix provides a staging default for `cmake --install build`;

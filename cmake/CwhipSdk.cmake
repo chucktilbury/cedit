@@ -22,7 +22,8 @@ if(cwhip_sdk_prefix STREQUAL "")
             find_package(Python3 3.11 REQUIRED COMPONENTS Interpreter)
             execute_process(
                 COMMAND "${Python3_EXECUTABLE}"
-                    "${PROJECT_SOURCE_DIR}/scripts/sdk-prefix.py" "${cwhip_settings_directory}"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/sdk-prefix.py"
+                    "${cwhip_settings_directory}"
                 RESULT_VARIABLE cwhip_settings_result
                 OUTPUT_VARIABLE cwhip_sdk_prefix
                 ERROR_VARIABLE cwhip_settings_error)

@@ -33,6 +33,7 @@ class SdkDiscoveryTests(unittest.TestCase):
         self.env = os.environ.copy()
         for name in (
             "CWHIP_SDK", "CMAKE_PREFIX_PATH", "Cwhip_DIR", "Cwhip_ROOT",
+            "CMAKE_INSTALL_PREFIX", "CMAKE_BUILD_TYPE",
             "_PROJECT_NAME", "XDG_CONFIG_HOME",
         ):
             self.env.pop(name, None)
@@ -77,14 +78,17 @@ class SdkDiscoveryTests(unittest.TestCase):
         defaults = ["function(cwhip_apply_application_defaults)"]
         if install_prefix is not None:
             defaults.extend((
-                "    if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)",
-                f'        set(CMAKE_INSTALL_PREFIX "{install_prefix}" CACHE PATH "Application install prefix" FORCE)',
-                "        unset(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)",
+                "    if(NOT DEFINED CMAKE_INSTALL_PREFIX)",
+                '        if(DEFINED ENV{CMAKE_INSTALL_PREFIX})',
+                '            set(CMAKE_INSTALL_PREFIX "$ENV{CMAKE_INSTALL_PREFIX}" CACHE PATH "Environment install prefix" FORCE)',
+                "        else()",
+                f'            set(CMAKE_INSTALL_PREFIX "{install_prefix}" CACHE PATH "Application install prefix" FORCE)',
+                "        endif()",
                 "    endif()",
             ))
         if build_type is not None:
             defaults.extend((
-                '    if(CMAKE_BUILD_TYPE STREQUAL "")',
+                "    if(NOT DEFINED CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)",
                 f'        set(CMAKE_BUILD_TYPE "{build_type}" CACHE STRING "Application build type" FORCE)',
                 "    endif()",
             ))
@@ -215,6 +219,7 @@ class SdkDiscoveryTests(unittest.TestCase):
             "defaults-sdk", self.root / "sdk-install", "Release"
         )
         self.select(sdk)
+        self.env["CMAKE_INSTALL_PREFIX"] = str(self.root / "environment-install")
         install_prefix = self.root / "explicit-install"
         self.run_configure(extra=(
             f"-DCMAKE_INSTALL_PREFIX={install_prefix}",
@@ -223,6 +228,42 @@ class SdkDiscoveryTests(unittest.TestCase):
         ))
         self.assert_cache_value("CMAKE_INSTALL_PREFIX", str(install_prefix))
         self.assert_cache_value("CMAKE_BUILD_TYPE", "Debug")
+
+    def test_install_prefix_environment_overrides_sdk_default(self):
+        sdk = self.make_sdk(
+            "defaults-sdk", self.root / "sdk-install", "Release"
+        )
+        self.select(sdk)
+        install_prefix = self.root / "environment-install"
+        self.env["CMAKE_INSTALL_PREFIX"] = str(install_prefix)
+        self.run_configure(extra=("-DBUILD_TESTING=OFF",))
+        self.assert_cache_value("CMAKE_INSTALL_PREFIX", str(install_prefix))
+
+    def test_explicit_empty_build_type_overrides_sdk_default(self):
+        sdk = self.make_sdk(
+            "defaults-sdk", self.root / "sdk-install", "Release"
+        )
+        self.select(sdk)
+        self.run_configure(extra=(
+            "-DCMAKE_BUILD_TYPE=",
+            "-DBUILD_TESTING=OFF",
+        ))
+        self.assert_cache_value("CMAKE_BUILD_TYPE", "")
+
+    def test_existing_empty_build_type_cache_survives_sdk_default(self):
+        first_sdk = self.make_sdk(
+            "first-sdk", self.root / "first-install"
+        )
+        self.select(first_sdk)
+        self.run_configure(extra=("-DBUILD_TESTING=OFF",))
+        self.assert_cache_value("CMAKE_BUILD_TYPE", "")
+
+        second_sdk = self.make_sdk(
+            "second-sdk", self.root / "second-install", "RelWithDebInfo"
+        )
+        self.select(second_sdk)
+        self.run_configure(extra=("-DBUILD_TESTING=OFF",))
+        self.assert_cache_value("CMAKE_BUILD_TYPE", "")
 
     def test_existing_cache_values_survive_sdk_default_changes(self):
         first_prefix = self.root / "first-application-install"

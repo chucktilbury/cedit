@@ -40,7 +40,8 @@ def main():
         env = {key: value for key, value in os.environ.items()
                if key not in ("_PROJECT_NAME", "_PROJECT_LOC", "_BUILD_TYPE",
                               "CWHIP_BUILD_TYPE", "MAKEFLAGS", "MFLAGS", "MAKELEVEL",
-                              "Cwhip_DIR", "CMAKE_PREFIX_PATH")}
+                              "Cwhip_DIR", "CMAKE_PREFIX_PATH",
+                              "CMAKE_INSTALL_PREFIX", "CMAKE_BUILD_TYPE")}
         env.update(HOME=str(home), CWHIP_SDK=str(args.sdk))
         setup = str(source / "scripts/setup")
         state = (
@@ -123,6 +124,22 @@ def main():
         run(["python3", str(source / "tests/test_smoke.py"),
              "--executable", str(private / "bin/cedit"), "--xvfb", args.xvfb,
              "--work", str(work / "override smoke")], cwd=work, env=env)
+
+        cache = (build / "CMakeCache.txt").read_text()
+        install_prefix = next(
+            line.split("=", 1)[1] for line in cache.splitlines()
+            if line.startswith("CMAKE_INSTALL_PREFIX:")
+        )
+        default_stage = work / "default install stage"
+        run([args.cmake, "--install", str(build)], cwd=work,
+            env=dict(env, DESTDIR=str(default_stage)))
+        staged_app = default_stage / install_prefix.lstrip("/")
+        assert (staged_app / "bin/cedit").is_file()
+        assert (staged_app / "bin/cedit.bin").is_file()
+        run(["python3", str(source / "tests/test_smoke.py"),
+             "--executable", str(staged_app / "bin/cedit"),
+             "--xvfb", args.xvfb,
+             "--work", str(work / "default staged smoke")], cwd=work, env=env)
 
 
 if __name__ == "__main__":
