@@ -30,14 +30,21 @@ cmake -S . -B build-cedit-sdk -DCMAKE_BUILD_TYPE=Debug \
   -DCWHIP_STAGE_PREFIX="$PWD/build-cedit-sdk/stage" \
   -DCMAKE_INSTALL_PREFIX="$HOME/opt/cwhip-cedit-updated" \
   -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_TESTING=OFF \
-  -DCWHIP_GTK=ON -DCWHIP_GTK_SOURCEVIEW=ON -DCWHIP_REGISTER_SDK=OFF
+  -DCWHIP_GTK=ON -DCWHIP_GTK_SOURCEVIEW=ON -DCWHIP_REGISTER_SDK=ON
 cmake --build build-cedit-sdk --target cwhip --parallel 4
 cmake --install build-cedit-sdk
 ```
 
-The explicit prefix avoids system installation; `CWHIP_REGISTER_SDK=OFF`
-preserves existing user SDK settings. Back in the cedit checkout, select that
-complete SDK explicitly:
+The explicit prefix avoids system installation. `CWHIP_REGISTER_SDK=ON`
+(the default) records the installed `sdk_prefix` and `[applications]`
+`install_prefix`/`build_type` in `cwhip/sdk.toml`, preserving unrelated TOML.
+This is the normal upgrade path for registering shared application defaults.
+An optional `-DCWHIP_REGISTER_SDK=OFF` instead leaves that file byte-for-byte
+unchanged: it installs the helper but does not update SDK selection or create
+application defaults, so old or absent settings remain in effect.
+
+Back in the cedit checkout, select the complete SDK explicitly (a pre-existing
+`CWHIP_SDK` would otherwise override the newly registered prefix):
 
 ```sh
 CWHIP_SDK="$HOME/opt/cwhip-cedit-updated" cmake -S . -B build
