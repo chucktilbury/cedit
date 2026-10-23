@@ -43,3 +43,5 @@ if(NOT cwhip_sdk_prefix STREQUAL "")
 else()
     find_package(Cwhip 0.0.1 EXACT CONFIG REQUIRED)
 endif()
+
+cwhip_apply_application_defaults()

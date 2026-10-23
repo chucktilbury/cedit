@@ -7,11 +7,13 @@ This is a standalone CMake project consuming the installed Cwhip 0.0.1 SDK.
 No compiler or workspace checkout is required. See [the build guide](doc/BUILD.md)
 and [cedit guide](CEDIT.md). It remains a proof of concept, not a production IDE.
 
-Run `scripts/setup` for a Debug project shell (`release` and `profile` are also
-supported), then `cmake --build . --parallel 4`. The SDK is selected by a
-non-empty `CWHIP_SDK`, then the `sdk_prefix` in `$XDG_CONFIG_HOME/cwhip/sdk.toml` (or `~/.config/cwhip/sdk.toml`;
-legacy `settings.toml` only when `sdk.toml` is absent),
-then normal CMake discovery; see [SDK selection](doc/BUILD.md#sdk-selection).
+Run `scripts/setup` for a project shell, then `cmake --build . --parallel 4`.
+Without an explicit mode, setup inherits the selected SDK's application build
+default; `scripts/setup debug`, `release`, or `profile` selects a mode directly.
+The SDK is selected by a non-empty `CWHIP_SDK`, then the `sdk_prefix` in
+`$XDG_CONFIG_HOME/cwhip/sdk.toml` (or `~/.config/cwhip/sdk.toml`; legacy
+`settings.toml` only when `sdk.toml` is absent), then normal CMake discovery;
+see [SDK selection](doc/BUILD.md#sdk-selection).
 Executables are built in the repository's
 `bin/` directory; intermediate files stay in `build/`. The shell and output
 conventions follow [cwhip-template](https://github.com/chucktilbury/cwhip-template),

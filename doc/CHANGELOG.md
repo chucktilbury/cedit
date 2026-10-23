@@ -19,6 +19,11 @@
   in both CMake and setup, with precedence non-empty `CWHIP_SDK` > settings >
   normal CMake discovery. Settings are parsed safely with Python 3.11+ and
   invalid selections fail without falling back. Add discovery regression tests.
+- Inherit SDK-provided application `install_prefix` and `build_type` defaults
+  through `cwhip_apply_application_defaults()`, preserving explicit CMake
+  settings and existing build caches. Setup no longer passes a build type
+  unless the user explicitly selects a mode; add override, cache-preservation,
+  and install-staging regression coverage.
 - Add the MIT License.
 - Adopt the Cwhip template's executable project-shell setup with Debug, Release,
   and profiling configurations and optional installed-SDK selection.

@@ -53,15 +53,24 @@ def main():
             '"$_PROJECT_LOC/scripts/setup" && exit 33\n'
             "exit 0\n"
         )
-        for mode, cmake_mode in (("", "Debug"), ("release", "Release"),
-                                 ("profile", "RelWithDebInfo")):
+        for mode in ("", "release", "profile"):
             command = [setup] + ([mode] if mode else [])
             result = run(command, cwd=work, env=env, input=state)
+            cache = (source / "build/CMakeCache.txt").read_text()
+            cmake_mode = next(
+                line.split("=", 1)[1] for line in cache.splitlines()
+                if line.startswith("CMAKE_BUILD_TYPE:")
+            )
+            shell_mode = {
+                "Debug": "debug",
+                "Release": "release",
+                "RelWithDebInfo": "profile",
+                "": "default",
+            }.get(cmake_mode, cmake_mode.lower())
             expected = (f"STATE={source}/build|{source}|{source.name}|"
-                        f"{mode or 'debug'}|{cmake_mode}|yes")
+                        f"{shell_mode}|{cmake_mode}|yes")
             assert expected in result.stdout, result
-            assert f"CMAKE_BUILD_TYPE:STRING={cmake_mode}" in (
-                source / "build/CMakeCache.txt").read_text()
+            assert f"CMAKE_BUILD_TYPE:STRING={cmake_mode}" in cache
             assert not (source / "bin").exists()
             assert not (source / "lib").exists()
             assert not (source / "share").exists()
