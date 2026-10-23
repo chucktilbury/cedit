@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Diagnose stale 0.0.1 SDKs missing application defaults with `CEDIT2001`,
+  identifying the selected SDK and requiring an updated SDK rebuild/install
+  instead of an unknown CMake command or silent fallback.
 - Keep automatic-save failures in the diagnostic explanation, preserving the
   visible `Automatic Save failed` context and dirty buffers across tab/focus
   changes and successful saves of other documents.

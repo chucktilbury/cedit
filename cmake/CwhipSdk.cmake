@@ -45,4 +45,19 @@ else()
     find_package(Cwhip 0.0.1 EXACT CONFIG REQUIRED)
 endif()
 
+if(NOT COMMAND cwhip_apply_application_defaults)
+    if(NOT "${Cwhip_PREFIX}" STREQUAL "")
+        set(cwhip_sdk_location "Cwhip SDK '${Cwhip_PREFIX}'")
+    elseif(NOT cwhip_sdk_prefix STREQUAL "")
+        set(cwhip_sdk_location "Cwhip SDK '${cwhip_sdk_prefix}'")
+    else()
+        set(cwhip_sdk_location "Cwhip package '${Cwhip_DIR}'")
+    endif()
+    message(FATAL_ERROR
+        "cedit: error[CEDIT2001]: ${cwhip_sdk_location}: missing application-defaults capability "
+        "(cwhip_apply_application_defaults); rebuild and reinstall an updated Cwhip SDK "
+        "with CwhipApplicationDefaults.cmake included by CwhipConfig.cmake, then reconfigure cedit. "
+        "Older SDK installs also report version 0.0.1; the version alone is not sufficient.")
+endif()
+
 cwhip_apply_application_defaults()

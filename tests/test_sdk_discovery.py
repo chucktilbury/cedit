@@ -51,12 +51,14 @@ class SdkDiscoveryTests(unittest.TestCase):
         self.env["PATH"] = f"{tools}:{self.env['PATH']}"
         self.env["SHELL_RECORD"] = str(self.shell_record)
 
-    def make_sdk(self, name, install_prefix=None, build_type=None):
+    def make_sdk(self, name, install_prefix=None, build_type=None,
+                 application_defaults=True):
         prefix = self.root / name
         package = prefix / "lib/cmake/Cwhip"
         package.mkdir(parents=True)
         (package / "CwhipConfig.cmake").write_text(
-            'include("${CMAKE_CURRENT_LIST_DIR}/CwhipApplicationDefaults.cmake")\n'
+            ('include("${CMAKE_CURRENT_LIST_DIR}/CwhipApplicationDefaults.cmake")\n'
+             if application_defaults else '') +
             'get_filename_component(Cwhip_PREFIX "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)\n'
             'file(WRITE "${CMAKE_BINARY_DIR}/selected-sdk.txt" "${Cwhip_PREFIX}")\n'
             'find_package(Python3 COMPONENTS Interpreter)\n'
@@ -93,9 +95,10 @@ class SdkDiscoveryTests(unittest.TestCase):
                 "    endif()",
             ))
         defaults.append("endfunction()")
-        (package / "CwhipApplicationDefaults.cmake").write_text(
-            "\n".join(defaults) + "\n"
-        )
+        if application_defaults:
+            (package / "CwhipApplicationDefaults.cmake").write_text(
+                "\n".join(defaults) + "\n"
+            )
         return prefix
 
     def write_settings(self, content):
@@ -205,6 +208,59 @@ class SdkDiscoveryTests(unittest.TestCase):
         self.assertIn(f"{name}:", cache)
         self.assertIn(f"{name}:PATH={value}" if name == "CMAKE_INSTALL_PREFIX"
                       else f"{name}:STRING={value}", cache)
+
+    def test_legacy_sdk_without_application_defaults_is_rejected(self):
+        sdk = self.make_sdk("legacy SDK", application_defaults=False)
+        for selection in ("environment", "settings", "discovery", "package-dir"):
+            with self.subTest(selection=selection):
+                self.env.pop("CWHIP_SDK", None)
+                self.env.pop("Cwhip_DIR", None)
+                self.settings.with_name("sdk.toml").unlink(missing_ok=True)
+                self.env["CMAKE_PREFIX_PATH"] = str(self.fallback)
+                extra = self.quick()
+                if selection == "environment":
+                    self.env["CWHIP_SDK"] = str(sdk)
+                elif selection == "settings":
+                    self.write_sdk_toml(f"sdk_prefix = {json.dumps(str(sdk))}\n")
+                    extra = ("-DBUILD_TESTING=OFF",)
+                elif selection == "discovery":
+                    self.env["CMAKE_PREFIX_PATH"] = str(sdk)
+                else:
+                    self.env.pop("CMAKE_PREFIX_PATH")
+                    self.env["Cwhip_DIR"] = str(sdk / "lib/cmake/Cwhip")
+                    extra += (f"-DCwhip_DIR={sdk / 'lib/cmake/Cwhip'}",)
+                for setup in (False, True):
+                    with self.subTest(setup=setup):
+                        if self.build.exists():
+                            shutil.rmtree(self.build)
+                        output = self.run_configure(
+                            setup=setup, success=False,
+                            extra=() if setup else extra,
+                        )
+                        diagnostic = " ".join(output.split())
+                        self.assertIn("cedit: error[CEDIT2001]:", diagnostic)
+                        self.assertIn(str(sdk), diagnostic)
+                        self.assertIn("missing application-defaults capability", diagnostic)
+                        self.assertIn("cwhip_apply_application_defaults", diagnostic)
+                        self.assertIn("rebuild and reinstall an updated Cwhip SDK", diagnostic)
+                        self.assertNotIn("Unknown CMake command", output)
+                        self.assert_selected(sdk)
+
+    def test_legacy_sdk_without_exported_prefix_identifies_selection(self):
+        sdk = self.make_sdk("legacy SDK", application_defaults=False)
+        config = sdk / "lib/cmake/Cwhip/CwhipConfig.cmake"
+        config.write_text("\n".join(
+            line for line in config.read_text().splitlines()
+            if "Cwhip_PREFIX" not in line
+        ) + "\n")
+        self.env["CWHIP_SDK"] = str(sdk)
+        output = self.run_configure(success=False, extra=self.quick())
+        self.assertIn(f"Cwhip SDK '{sdk}'", " ".join(output.split()))
+        self.env.pop("CWHIP_SDK")
+        self.env["CMAKE_PREFIX_PATH"] = str(sdk)
+        output = self.run_configure(success=False, extra=self.quick())
+        self.assertIn(f"Cwhip package '{config.parent}'", " ".join(output.split()))
+        self.assertIn("cedit: error[CEDIT2001]:", output)
 
     def test_selected_sdk_application_defaults_are_inherited(self):
         install_prefix = self.root / "application-install"
