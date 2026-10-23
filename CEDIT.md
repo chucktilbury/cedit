@@ -54,8 +54,10 @@ cmake --build . --target cedit --parallel 4
 cedit file1.cw file2.cw
 ```
 
-`scripts/setup` defaults to `debug`; `release` selects Release and `profile`
-selects RelWithDebInfo. Exit the child shell to return to the original shell.
+Without an explicit mode, `scripts/setup` inherits the selected SDK's
+application build default; if none is configured, CMake's default applies.
+`debug`, `release`, and `profile` explicitly select Debug, Release, and
+RelWithDebInfo. Exit the child shell to return to the original shell.
 The SDK can also be selected with `Cwhip_DIR` or `CMAKE_PREFIX_PATH`.
 With any generator, use `cmake --build build --target cedit --parallel 4`
 from the repository root. The target uses private SDK package locks and compiles

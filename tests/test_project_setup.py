@@ -40,7 +40,8 @@ def main():
         env = {key: value for key, value in os.environ.items()
                if key not in ("_PROJECT_NAME", "_PROJECT_LOC", "_BUILD_TYPE",
                               "CWHIP_BUILD_TYPE", "MAKEFLAGS", "MFLAGS", "MAKELEVEL",
-                              "Cwhip_DIR", "CMAKE_PREFIX_PATH")}
+                              "Cwhip_DIR", "CMAKE_PREFIX_PATH",
+                              "CMAKE_INSTALL_PREFIX", "CMAKE_BUILD_TYPE")}
         env.update(HOME=str(home), CWHIP_SDK=str(args.sdk))
         setup = str(source / "scripts/setup")
         state = (
@@ -53,15 +54,24 @@ def main():
             '"$_PROJECT_LOC/scripts/setup" && exit 33\n'
             "exit 0\n"
         )
-        for mode, cmake_mode in (("", "Debug"), ("release", "Release"),
-                                 ("profile", "RelWithDebInfo")):
+        for mode in ("", "release", "profile"):
             command = [setup] + ([mode] if mode else [])
             result = run(command, cwd=work, env=env, input=state)
+            cache = (source / "build/CMakeCache.txt").read_text()
+            cmake_mode = next(
+                line.split("=", 1)[1] for line in cache.splitlines()
+                if line.startswith("CMAKE_BUILD_TYPE:")
+            )
+            shell_mode = {
+                "Debug": "debug",
+                "Release": "release",
+                "RelWithDebInfo": "profile",
+                "": "default",
+            }.get(cmake_mode, cmake_mode.lower())
             expected = (f"STATE={source}/build|{source}|{source.name}|"
-                        f"{mode or 'debug'}|{cmake_mode}|yes")
+                        f"{shell_mode}|{cmake_mode}|yes")
             assert expected in result.stdout, result
-            assert f"CMAKE_BUILD_TYPE:STRING={cmake_mode}" in (
-                source / "build/CMakeCache.txt").read_text()
+            assert f"CMAKE_BUILD_TYPE:STRING={cmake_mode}" in cache
             assert not (source / "bin").exists()
             assert not (source / "lib").exists()
             assert not (source / "share").exists()
@@ -114,6 +124,22 @@ def main():
         run(["python3", str(source / "tests/test_smoke.py"),
              "--executable", str(private / "bin/cedit"), "--xvfb", args.xvfb,
              "--work", str(work / "override smoke")], cwd=work, env=env)
+
+        cache = (build / "CMakeCache.txt").read_text()
+        install_prefix = next(
+            line.split("=", 1)[1] for line in cache.splitlines()
+            if line.startswith("CMAKE_INSTALL_PREFIX:")
+        )
+        default_stage = work / "default install stage"
+        run([args.cmake, "--install", str(build)], cwd=work,
+            env=dict(env, DESTDIR=str(default_stage)))
+        staged_app = default_stage / install_prefix.lstrip("/")
+        assert (staged_app / "bin/cedit").is_file()
+        assert (staged_app / "bin/cedit.bin").is_file()
+        run(["python3", str(source / "tests/test_smoke.py"),
+             "--executable", str(staged_app / "bin/cedit"),
+             "--xvfb", args.xvfb,
+             "--work", str(work / "default staged smoke")], cwd=work, env=env)
 
 
 if __name__ == "__main__":

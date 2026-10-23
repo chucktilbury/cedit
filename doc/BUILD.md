@@ -6,15 +6,16 @@ Clang, Python >= 3.11, CMake >= 3.24, a C compiler, pkg-config and those GTK
 development libraries must be installed. This project never fetches a compiler.
 The SDK must provide the `Cwhip_APPLICATION_OUTPUT_DIRECTORIES` capability
 (`cwhip_add_program(OUTPUT_DIRECTORY ...)` and
-`cwhip_require_sourceview(RESOURCE_DIRECTORY ...)`). Older 0.0.1 SDK installs
-without that capability are rejected explicitly; rebuild/install an updated SDK.
+`cwhip_require_sourceview(RESOURCE_DIRECTORY ...)`) and include
+`CwhipApplicationDefaults.cmake` from its package config. Older 0.0.1 SDK
+installs without these capabilities are rejected; rebuild/install an updated SDK.
 
 ## Project shell
 
 Run the executable setup script, not `source scripts/setup`:
 
 ```sh
-scripts/setup                 # debug (Debug)
+scripts/setup                 # inherit the SDK application build default
 # Alternatively: scripts/setup release or scripts/setup profile
 # In the child Bash, initially in build/:
 cmake --build . --parallel 4
@@ -22,8 +23,11 @@ cedit
 exit
 ```
 
-Release selects `Release`; profile selects `RelWithDebInfo`. Setup works from
-outside the repository and with spaces in paths. It configures `build/` before
+Without a mode argument, setup does not pass an implicit build type to CMake,
+so the selected SDK's application default or an existing build-cache value is
+preserved. Explicit `debug`, `release`, and `profile` arguments select `Debug`,
+`Release`, and `RelWithDebInfo`. Setup works from outside the repository and
+with spaces in paths. It configures `build/` before
 opening a fresh interactive Bash using `.project_env`; configuration errors
 exit without opening that shell. Nested project shells are rejected. Exiting
 returns to the original shell without changing its environment or directory.
@@ -90,6 +94,24 @@ existing build tree never silently reuses a stale package. A prefix without a
 compatible Cwhip package fails configuration. To return to normal discovery,
 unset `CWHIP_SDK`, remove `sdk_prefix`, and clear `Cwhip_DIR` from an existing
 cache if needed.
+
+## Application defaults
+
+The selected SDK's package config provides
+`CwhipApplicationDefaults.cmake`; cedit calls
+`cwhip_apply_application_defaults()` immediately after finding that package
+and before `project()` initializes CMake defaults. The helper reads the
+`[applications]` table in `sdk.toml`. Its `install_prefix` and `build_type`
+values seed `CMAKE_INSTALL_PREFIX` and `CMAKE_BUILD_TYPE` only when those
+settings are still defaults. Explicit CMake values, a
+`CMAKE_INSTALL_PREFIX` environment setting, and values already stored in the
+build cache take precedence. A mode passed to `scripts/setup` is
+explicit, while omitting the mode allows the SDK's `build_type` to apply.
+
+The install prefix provides a staging default for `cmake --install build`;
+pass `--prefix` to `cmake --install` or set `-DCMAKE_INSTALL_PREFIX=...` to
+choose another destination. These defaults do not share a build directory or
+propagate arbitrary SDK build flags into the application.
 
 ## Direct CMake and installation
 
