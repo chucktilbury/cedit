@@ -229,8 +229,9 @@ promise of cross-version runtime ABI or release packaging stability.
 
 `cedit_numeric` checks the actual settings/workspace parsing boundaries (including
 cursor positions up to 100,000,000), native menu IDs boxed as exact `int64`,
-and staged SourceView contexts for every numeric type and removed reserved
-keyword. Application counts and native SDK APIs remain `int64`; widen operands
+and staged SourceView contexts for numeric and range types, membership, slice
+bounds, grouped switch ranges, and `next`, plus removed reserved keywords.
+Application counts and native SDK APIs remain `int64`; widen operands
 before arithmetic when adding literal-only expressions, since assignment does
 not prevent small-integer overflow. Decimal literals default to `fp32`; use an
 `f64` suffix when an `fp64` literal is required. The current editor has

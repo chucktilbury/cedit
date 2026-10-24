@@ -60,6 +60,17 @@ class NumericChecks {
         view.setText("0.1f64 0xf64 255u")
         require(view.hasContextAt("number", 5) && view.hasContextAt("number", 11) &&
             view.hasContextAt("number", 16), "numeric suffix and hex highlighting")
+        view.setText("range<int64> bounds = first..last")
+        require(view.hasContextAt("type", 0), "range type highlighting")
+        require(view.hasContextAt("type", 6), "range element type highlighting")
+        view.setText("value in bounds")
+        require(view.hasContextAt("keyword", 6), "range membership highlighting")
+        view.setText("items[1:3]")
+        require(view.hasContextAt("number", 6) && view.hasContextAt("number", 8),
+            "slice bound highlighting")
+        view.setText("case (0, 2..4) { next }")
+        require(view.hasContextAt("keyword", 0) && view.hasContextAt("keyword", 17),
+            "grouped switch range and next highlighting")
         Gtk.MenuBar menu = Gtk.MenuBar()
         int64 parent = menu.addMenu("Numeric")
         NumericChecks target = NumericChecks()
@@ -110,7 +121,7 @@ def main():
         with headless(args.xvfb, work, env) as gui_env:
             result = invoke([str(executable)], work, gui_env)
         assert result.returncode == 0, result
-        assert result.stdout == "PASS numeric 24" and not result.stderr, result
+        assert result.stdout == "PASS numeric 29" and not result.stderr, result
 
 
 if __name__ == "__main__":
