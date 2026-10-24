@@ -9,6 +9,9 @@ add_custom_target(check-noop
         --executable "${CWHIP_BIN_DIR}/cedit" --compiler "${Cwhip_COMPILER}"
     USES_TERMINAL VERBATIM)
 if(XVFB AND DBUS)
+    add_test(NAME cedit_numeric COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_SOURCE_DIR}/tests/test_cedit_numeric.py" ${arguments}
+        --work "${CMAKE_BINARY_DIR}/tests/numeric")
     add_test(NAME cedit_project_setup COMMAND "${Python3_EXECUTABLE}"
         "${CMAKE_SOURCE_DIR}/tests/test_project_setup.py"
         --source "${CMAKE_SOURCE_DIR}" --sdk "${Cwhip_PREFIX}"

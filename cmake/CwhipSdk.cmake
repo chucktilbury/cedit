@@ -39,10 +39,17 @@ if(NOT cwhip_sdk_prefix STREQUAL "")
     # An explicit prefix must never reuse a stale cached package location.
     unset(Cwhip_DIR CACHE)
     unset(Cwhip_DIR)
-    find_package(Cwhip 0.0.1 EXACT CONFIG REQUIRED
+    find_package(Cwhip 0.0.2 EXACT CONFIG REQUIRED
         PATHS "${cwhip_sdk_prefix}" NO_DEFAULT_PATH)
 else()
-    find_package(Cwhip 0.0.1 EXACT CONFIG REQUIRED)
+    find_package(Cwhip 0.0.2 EXACT CONFIG REQUIRED)
+endif()
+
+if(NOT "${Cwhip_SDK_ABI}" STREQUAL "numeric-v2")
+    message(FATAL_ERROR
+        "cedit: error[CEDIT2001]: Cwhip package '${Cwhip_DIR}': expected SDK ABI "
+        "'numeric-v2', got '${Cwhip_SDK_ABI}'; rebuild and reinstall the complete "
+        "Cwhip 0.0.2 numeric SDK and all native packages, then reconfigure cedit.")
 endif()
 
 if(NOT COMMAND cwhip_apply_application_defaults)
@@ -57,7 +64,7 @@ if(NOT COMMAND cwhip_apply_application_defaults)
         "cedit: error[CEDIT2001]: ${cwhip_sdk_location}: missing application-defaults capability "
         "(cwhip_apply_application_defaults); rebuild and reinstall an updated Cwhip SDK "
         "with CwhipApplicationDefaults.cmake included by CwhipConfig.cmake, then reconfigure cedit. "
-        "Older SDK installs also report version 0.0.1; the version alone is not sufficient.")
+        "The SDK version alone is not sufficient.")
 endif()
 
 cwhip_apply_application_defaults()
