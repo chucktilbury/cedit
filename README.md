@@ -5,6 +5,8 @@ implemented in the Cwhip language.
 
 This is a standalone CMake project consuming the installed Cwhip 0.0.2 SDK
 with the `numeric-v2` ABI (including rebuilt GTK/SourceView packages).
+The SDK must include callable `R<P1,P2>` source syntax and native
+`int`/`uint`/`float` aliases; earlier numeric-v2 SDKs lack this source support.
 No compiler source or workspace checkout is required. See [the build guide](doc/BUILD.md)
 and [cedit guide](CEDIT.md). It remains a proof of concept, not a production IDE.
 

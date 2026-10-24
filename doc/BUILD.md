@@ -16,9 +16,19 @@ it and reports `CEDIT2001` with the selected SDK prefix (or package directory if
 the package does not export a prefix). It never skips SDK defaults or switches
 to another SDK or `/usr/local` to work around this failure.
 
+The SDK must also include callable `R<P1,P2>` source syntax (`R<>` for no
+parameters), native `int`/`uint`/`float` aliases, and matching SourceView
+definitions. Earlier numeric-v2 SDKs do not support this source syntax even
+though the ABI marker is unchanged. The compiler normalizes these native
+aliases to `int32`/`uint32`/`fp32` on the supported target. `callback` is now
+an ordinary identifier; the old `callback<R(P1,P2)>` source form is removed.
+Native runtime signature literals still use the legacy encoding for ABI
+compatibility; the C fixtures deliberately retain those strings.
+
 ### Refreshing a stale SDK
 
-Use Cwhip sources containing the numeric SDK/package migration and
+Use Cwhip sources containing the callable-syntax/native-alias migration,
+the numeric SDK/package migration and
 [chucktilbury/cwhip#25](https://github.com/chucktilbury/cwhip/pull/25)
 (numeric execution), in addition to the application-defaults support from
 [chucktilbury/cwhip#21](https://github.com/chucktilbury/cwhip/pull/21).
@@ -230,7 +240,9 @@ promise of cross-version runtime ABI or release packaging stability.
 `cedit_numeric` checks the actual settings/workspace parsing boundaries (including
 cursor positions up to 100,000,000), native menu IDs boxed as exact `int64`,
 and staged SourceView contexts for numeric and range types, membership, slice
-bounds, grouped switch ranges, and `next`, plus removed reserved keywords.
+bounds, grouped switch ranges, and `next`, plus native `int`/`uint`/`float`
+aliases, callable `R<P1,P2>` syntax, an ordinary `callback` identifier, and
+the still-reserved `unsigned` keyword.
 Application counts and native SDK APIs remain `int64`; widen operands
 before arithmetic when adding literal-only expressions, since assignment does
 not prevent small-integer overflow. Decimal literals default to `fp32`; use an

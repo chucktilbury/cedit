@@ -19,7 +19,10 @@ font. The `cwhip` GtkSourceView language
 definition highlights Cwhip keywords/types, strings, comments, and
 numbers. The SDK language definition recognizes `int8`/`uint8` through
 `int64`/`uint64`, `fp32`/`fp64`, and numeric suffixes including `f64`.
-Removed `int`, `unsigned`, and `float` remain reserved keywords, not types.
+Native numeric aliases `int`, `uint`, and `float` canonicalize to
+`int32`, `uint32`, and `fp32` on the supported target; `unsigned`
+remains reserved. Callable types use `R<P1,P2>` (or `void<>` for an action
+with no parameters); `callback` is an ordinary identifier, not a keyword.
 cedit has no type-keyword completion list; bracket/quote auto-completion is
 unchanged. Highlighting is enabled only for recognized source files: a document's
 language is chosen from its `.cw` file suffix and selects `cwhip`,
@@ -50,7 +53,8 @@ Other releases need equivalent packages meeting CMake >= 3.24, Python >= 3.11,
 and GTK >= 4.10; older distribution packages may not meet those requirements.
 
 Install a complete Cwhip 0.0.2 SDK with the `numeric-v2` ABI, GTK 4 >= 4.10,
-and rebuilt GtkSourceView support.
+and rebuilt GtkSourceView support, including callable `R<P1,P2>` source
+syntax and native `int`/`uint`/`float` aliases.
 This standalone repository consumes that SDK; it does not build the compiler.
 Start a project shell and build the editor:
 
