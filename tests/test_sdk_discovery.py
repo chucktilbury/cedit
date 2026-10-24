@@ -14,6 +14,10 @@ ROOT = Path(__file__).resolve().parents[1]
 CMAKE = os.environ.get("CEDIT_CMAKE", "cmake")
 
 
+def normalize_diagnostic(text):
+    return " ".join(text.split())
+
+
 class SdkDiscoveryTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
@@ -135,10 +139,27 @@ class SdkDiscoveryTests(unittest.TestCase):
                     config.write_text(config.read_text().replace('set(Cwhip_SDK_ABI "")\n', ""))
                 self.env["CWHIP_SDK"] = str(sdk)
                 output = self.run_configure(success=False, extra=self.quick())
-                self.assertIn("cedit: error[CEDIT2001]:", output)
-                self.assertIn("expected SDK ABI", output)
-                self.assertIn("numeric-v2", output)
+                diagnostic = normalize_diagnostic(output)
+                self.assertIn("cedit: error[CEDIT2001]:", diagnostic)
+                self.assertIn("expected SDK ABI", diagnostic)
+                self.assertIn("numeric-v2", diagnostic)
                 self.run_configure(setup=True, success=False)
+
+    def test_long_sdk_prefix_preserves_wrapped_abi_diagnostic(self):
+        sdk_name = "abi-" + "x" * 160
+        sdk = self.make_sdk(sdk_name, abi="legacy-v1")
+        self.assertGreaterEqual(len(str(sdk)), 160)
+        self.env["CWHIP_SDK"] = str(sdk)
+        output = self.run_configure(success=False, extra=self.quick())
+        diagnostic = normalize_diagnostic(output)
+        self.assertIn(str(sdk), diagnostic)
+        self.assertIn(
+            "cedit: error[CEDIT2001]: Cwhip package", diagnostic)
+        self.assertIn(
+            "expected SDK ABI 'numeric-v2', got 'legacy-v1'", diagnostic)
+        self.assertIn("rebuild and reinstall", diagnostic)
+        self.assertIn("Cwhip package\n", output)
+        self.assertNotIn(f"Cwhip package '{sdk}'", output)
 
     def test_sdk_toml_wins_over_legacy_settings(self):
         new = self.make_sdk("new-sdk")
