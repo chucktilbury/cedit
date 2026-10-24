@@ -5,7 +5,7 @@ implemented in the Cwhip language.
 
 This is a standalone CMake project consuming the installed Cwhip 0.0.2 SDK
 with the `numeric-v2` ABI (including rebuilt GTK/SourceView packages).
-No compiler or workspace checkout is required. See [the build guide](doc/BUILD.md)
+No compiler source or workspace checkout is required. See [the build guide](doc/BUILD.md)
 and [cedit guide](CEDIT.md). It remains a proof of concept, not a production IDE.
 
 Run `scripts/setup` for a project shell, then `cmake --build . --parallel 4`.

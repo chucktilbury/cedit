@@ -133,9 +133,10 @@ unchanged. Malformed TOML, an invalid value, an unreadable file, or a relative
 `XDG_CONFIG_HOME` stops configuration (and setup, before opening a shell) with a
 diagnostic instead of selecting another SDK. The file is parsed as data with
 Python 3.11+ `tomllib` (`scripts/sdk-prefix.py`); it is never sourced or
-modified or migrated. Python is needed only when sdk.toml or settings.toml exists and `CWHIP_SDK`
-is unset. A non-empty `CWHIP_SDK` bypasses the settings file and config-home
-checks entirely, even if they are malformed.
+modified or migrated. This discovery parser runs only when sdk.toml or
+settings.toml exists and `CWHIP_SDK` is unset; the installed SDK still requires
+Python 3.11+ for its CMake/package tooling. A non-empty `CWHIP_SDK` bypasses
+the settings file and config-home checks entirely, even if they are malformed.
 
 cedit-owned setup, launcher and SDK-selection failures use
 `cedit: error[CEDITxxxx]: explanation`; diagnostics go to stderr and setup
@@ -163,6 +164,14 @@ settings are still defaults. Explicit CMake values, a
 build cache take precedence. A mode passed to `scripts/setup` is
 explicit, while omitting the mode allows the SDK's `build_type` to apply.
 
+The current SDK helper applies these defaults only when the file's top-level
+`sdk_prefix` resolves to the selected SDK and `[applications] install_prefix`
+is non-empty. Selecting another SDK with `CWHIP_SDK` does not inherit defaults
+registered for the previous SDK. A `build_type` alone does not seed defaults.
+Keep these strings double-quoted, as written by the SDK installer: unlike
+cedit's TOML SDK-selection parser, the current application-defaults helper
+does not decode TOML literal (single-quoted) strings.
+
 The install prefix provides a staging default for `cmake --install build`;
 pass `--prefix` to `cmake --install` or set `-DCMAKE_INSTALL_PREFIX=...` to
 choose another destination. These defaults do not share a build directory or
@@ -186,8 +195,8 @@ Run `bin/cedit` or `/path/to/cedit/bin/cedit`. Its native launcher finds
 SourceView language definitions relative to that executable. The application
 prefix may be moved as a whole. The compiler SDK is a build-time dependency,
 not a runtime source-checkout dependency; system GTK/SourceView libraries
-remain runtime prerequisites. Compiler actions selected in the editor require
-the installed `cwhip` toolchain on PATH.
+remain runtime prerequisites. The editor has no compiler/build action;
+invoke `cwhip` or the project's build commands separately in a terminal.
 
 See [SDK selection](#sdk-selection) for how the SDK prefix is chosen. Missing resources, wrong
 version or non-GUI SDKs fail at configure time. Builds use the SDK's
