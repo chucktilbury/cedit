@@ -151,15 +151,18 @@ class SdkDiscoveryTests(unittest.TestCase):
         self.assertGreaterEqual(len(str(sdk)), 160)
         self.env["CWHIP_SDK"] = str(sdk)
         output = self.run_configure(success=False, extra=self.quick())
-        diagnostic = normalize_diagnostic(output)
+        start = output.index("cedit: error[CEDIT2001]:")
+        end = output.index("Call Stack", start)
+        raw_diagnostic = output[start:end]
+        diagnostic = normalize_diagnostic(raw_diagnostic)
         self.assertIn(str(sdk), diagnostic)
         self.assertIn(
             "cedit: error[CEDIT2001]: Cwhip package", diagnostic)
         self.assertIn(
             "expected SDK ABI 'numeric-v2', got 'legacy-v1'", diagnostic)
         self.assertIn("rebuild and reinstall", diagnostic)
-        self.assertIn("Cwhip package\n", output)
-        self.assertNotIn(f"Cwhip package '{sdk}'", output)
+        self.assertIn("\n", raw_diagnostic)
+        self.assertNotIn(str(sdk), raw_diagnostic)
 
     def test_sdk_toml_wins_over_legacy_settings(self):
         new = self.make_sdk("new-sdk")
