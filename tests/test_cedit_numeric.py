@@ -12,6 +12,7 @@ DRIVER = r"""
 class NumericChecks {
     int64 checks
     void noop() {}
+    int add(int32 left, int8 right) { return left + right }
     void require(bool condition, String label) {
         if (!condition) {
             System.StandardIO().writeErrorLine(format("FAIL numeric: {}", label))
@@ -40,7 +41,7 @@ class NumericChecks {
             "workspace position bounds")
         GtkSource.View view = GtkSource.View()
         require(view.setLanguage("cwhip"), "staged Cwhip language available")
-        list types = "int8 uint8 int16 uint16 int32 uint32 int64 uint64 fp32 fp64".split(" ")
+        list types = "int8 uint8 int16 uint16 int32 uint32 int64 uint64 fp32 fp64 int uint float".split(" ")
         int64 index = 0
         while (index < types.length) {
             String spelling = types[index] as String
@@ -48,15 +49,16 @@ class NumericChecks {
             require(view.hasContextAt("type", 0), format("{} type highlighting", spelling))
             index = index + 1
         }
-        list removed = "int unsigned float".split(" ")
-        index = 0
-        while (index < removed.length) {
-            String spelling = removed[index] as String
-            view.setText(spelling)
-            require(!view.hasContextAt("type", 0) && view.hasContextAt("keyword", 0),
-                format("{} reserved, not a type", spelling))
-            index = index + 1
-        }
+        view.setText("unsigned")
+        require(!view.hasContextAt("type", 0) && view.hasContextAt("keyword", 0),
+            "unsigned reserved, not a type")
+        view.setText("int<int32,int8> callback")
+        require(view.hasContextAt("type", 0) && view.hasContextAt("type", 4) &&
+            view.hasContextAt("type", 10), "callable return and parameter type highlighting")
+        require(!view.hasContextAt("type", 16) && !view.hasContextAt("keyword", 16),
+            "callback is an ordinary identifier")
+        view.setText("void<> action")
+        require(view.hasContextAt("type", 0), "zero-argument callable highlighting")
         view.setText("0.1f64 0xf64 255u")
         require(view.hasContextAt("number", 5) && view.hasContextAt("number", 11) &&
             view.hasContextAt("number", 16), "numeric suffix and hex highlighting")
@@ -74,6 +76,14 @@ class NumericChecks {
         Gtk.MenuBar menu = Gtk.MenuBar()
         int64 parent = menu.addMenu("Numeric")
         NumericChecks target = NumericChecks()
+        int signedNative = 1
+        uint unsignedNative = 1u
+        float floatNative = 1.0
+        list aliases = [signedNative, unsignedNative, floatNative]
+        require(aliases[0] is int32 && aliases[1] is uint32 && aliases[2] is fp32,
+            "native aliases keep canonical dynamic numeric tags")
+        int<int32,int8> callback = target.add
+        require(callback(40, 2) == 42, "native alias callable and ordinary callback symbol")
         list items = [menu.addItem(parent, "Check", target.noop)]
         require(items[0] is int64, "native menu ID keeps exact dynamic int64 tag")
         menu.setItemEnabled(items[0] as int64, false)
@@ -121,7 +131,7 @@ def main():
         with headless(args.xvfb, work, env) as gui_env:
             result = invoke([str(executable)], work, gui_env)
         assert result.returncode == 0, result
-        assert result.stdout == "PASS numeric 29" and not result.stderr, result
+        assert result.stdout == "PASS numeric 35" and not result.stderr, result
 
 
 if __name__ == "__main__":
