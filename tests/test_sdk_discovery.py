@@ -52,7 +52,7 @@ class SdkDiscoveryTests(unittest.TestCase):
         self.env["SHELL_RECORD"] = str(self.shell_record)
 
     def make_sdk(self, name, install_prefix=None, build_type=None,
-                 application_defaults=True):
+                 application_defaults=True, version="0.0.2", abi="numeric-v2"):
         prefix = self.root / name
         package = prefix / "lib/cmake/Cwhip"
         package.mkdir(parents=True)
@@ -60,6 +60,7 @@ class SdkDiscoveryTests(unittest.TestCase):
             ('include("${CMAKE_CURRENT_LIST_DIR}/CwhipApplicationDefaults.cmake")\n'
              if application_defaults else '') +
             'get_filename_component(Cwhip_PREFIX "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)\n'
+            f'set(Cwhip_SDK_ABI "{abi}")\n'
             'file(WRITE "${CMAKE_BINARY_DIR}/selected-sdk.txt" "${Cwhip_PREFIX}")\n'
             'find_package(Python3 COMPONENTS Interpreter)\n'
             'set(Cwhip_APPLICATION_OUTPUT_DIRECTORIES TRUE)\n'
@@ -73,9 +74,11 @@ class SdkDiscoveryTests(unittest.TestCase):
             'endfunction()\n'
         )
         (package / "CwhipConfigVersion.cmake").write_text(
-            'set(PACKAGE_VERSION "0.0.1")\n'
-            'set(PACKAGE_VERSION_COMPATIBLE TRUE)\n'
-            'set(PACKAGE_VERSION_EXACT TRUE)\n'
+            f'set(PACKAGE_VERSION "{version}")\n'
+            'if(PACKAGE_FIND_VERSION VERSION_EQUAL PACKAGE_VERSION)\n'
+            '    set(PACKAGE_VERSION_COMPATIBLE TRUE)\n'
+            '    set(PACKAGE_VERSION_EXACT TRUE)\n'
+            'endif()\n'
         )
         defaults = ["function(cwhip_apply_application_defaults)"]
         if install_prefix is not None:
@@ -116,6 +119,26 @@ class SdkDiscoveryTests(unittest.TestCase):
 
     def quick(self):
         return ("-DCMAKE_DISABLE_FIND_PACKAGE_Python3=TRUE", "-DBUILD_TESTING=OFF")
+
+    def test_pre_numeric_sdk_version_is_rejected(self):
+        self.env["CWHIP_SDK"] = str(self.make_sdk("old-sdk", version="0.0.1"))
+        output = self.run_configure(success=False, extra=self.quick())
+        self.assertIn("0.0.2", output)
+        self.assertIn("0.0.1", output)
+
+    def test_missing_or_incompatible_numeric_abi_is_rejected(self):
+        for abi in ("", "legacy-v1"):
+            with self.subTest(abi=abi):
+                sdk = self.make_sdk(f"abi-{abi}", abi=abi)
+                config = sdk / "lib/cmake/Cwhip/CwhipConfig.cmake"
+                if not abi:
+                    config.write_text(config.read_text().replace('set(Cwhip_SDK_ABI "")\n', ""))
+                self.env["CWHIP_SDK"] = str(sdk)
+                output = self.run_configure(success=False, extra=self.quick())
+                self.assertIn("cedit: error[CEDIT2001]:", output)
+                self.assertIn("expected SDK ABI", output)
+                self.assertIn("numeric-v2", output)
+                self.run_configure(setup=True, success=False)
 
     def test_sdk_toml_wins_over_legacy_settings(self):
         new = self.make_sdk("new-sdk")

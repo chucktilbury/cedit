@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Require Cwhip 0.0.2 with SDK ABI `numeric-v2`, rejecting missing or incompatible
+  ABI markers during SDK discovery. Migrate editor counts, positions, IDs and
+  native test signatures to `int64`, and string conversions to `toInt64`.
+  Cover preference/workspace numeric bounds, exact dynamic menu ID types, and
+  the SDK's ten numeric type spellings, reserved old names and literal suffixes.
 - Diagnose stale 0.0.1 SDKs missing application defaults with `CEDIT2001`,
   identifying the selected SDK and requiring an updated SDK rebuild/install
   instead of an unknown CMake command or silent fallback.

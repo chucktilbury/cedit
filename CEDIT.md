@@ -17,7 +17,11 @@ to existing `Gtk.Widget` containers. The document editor uses GtkSourceView's
 monospace setting; the rest of the application keeps the platform's normal
 font. The `cwhip` GtkSourceView language
 definition highlights Cwhip keywords/types, strings, comments, and
-numbers. Highlighting is enabled only for recognized source files: a document's
+numbers. The SDK language definition recognizes `int8`/`uint8` through
+`int64`/`uint64`, `fp32`/`fp64`, and numeric suffixes including `f64`.
+Removed `int`, `unsigned`, and `float` remain reserved keywords, not types.
+cedit has no type-keyword completion list; bracket/quote auto-completion is
+unchanged. Highlighting is enabled only for recognized source files: a document's
 language is chosen from its `.cw` file suffix and selects `cwhip`,
 and untitled documents, `.txt` files, and other unrecognized names are plain
 text. Save As re-evaluates the language for the new name. Additional languages
@@ -42,7 +46,8 @@ sudo apt install build-essential cmake clang python3 pkg-config \
   libgtk-4-dev libgtksourceview-5-dev xvfb dbus-daemon
 ```
 
-Install a complete Cwhip 0.0.1 SDK with GTK 4 >= 4.10 and GtkSourceView support.
+Install a complete Cwhip 0.0.2 SDK with the `numeric-v2` ABI, GTK 4 >= 4.10,
+and rebuilt GtkSourceView support.
 This standalone repository consumes that SDK; it does not build the compiler.
 Start a project shell and build the editor:
 
@@ -69,7 +74,9 @@ See [the build guide](doc/BUILD.md) for direct CMake and relocation instructions
 
 The editor was previously named `cwhip-editor`; rebuild using the `cedit` target
 and update commands to use `cedit`. The source entry point is now `cedit.cw`.
-The Cwhip language, compiler, package names, and native ABI are unchanged.
+That editor rename did not change compiler or package names. The numeric-v2
+migration does change the language's numeric types and native ABI: rebuild
+cedit and native packages together; old SDK binaries are incompatible.
 For continuity, cedit retains `$XDG_CONFIG_HOME/cwhip/settings.toml` (or
 `$HOME/.config/cwhip/settings.toml`), the `cwhip-shortcuts.conf` legacy import,
 and `.cwhip/project.toml` and `.cwhip/workspace.toml` project data.
