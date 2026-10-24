@@ -38,13 +38,16 @@ close prompt, and status line retain their natural height.
 
 ## Build and run
 
-On Debian/Ubuntu, install the compiler/build tools and optional GUI development
-and headless-test dependencies:
+On Ubuntu 24.04 or Debian 13, for example, install the compiler/build tools and
+optional GUI development and headless-test dependencies:
 
 ```sh
 sudo apt install build-essential cmake clang python3 pkg-config \
   libgtk-4-dev libgtksourceview-5-dev xvfb dbus-daemon
 ```
+
+Other releases need equivalent packages meeting CMake >= 3.24, Python >= 3.11,
+and GTK >= 4.10; older distribution packages may not meet those requirements.
 
 Install a complete Cwhip 0.0.2 SDK with the `numeric-v2` ABI, GTK 4 >= 4.10,
 and rebuilt GtkSourceView support.
@@ -139,7 +142,14 @@ explicitly rejected rather than interpreted as cancellation.
 **Recent** reopens the last unique file added to the session history.
 Command-line file arguments open tabs at startup.
 
-**Edit** offers Undo, Redo, Cut, Copy, Paste, Select All, Find, Replace, and Preferences.
+**File > Save All** (`<Control><Alt>s`) saves every modified document with an
+existing path. Untitled documents stay unsaved without opening Save As dialogs;
+the status line reports the saved and skipped counts, or a save failure.
+
+**Edit** offers Undo, Redo, Cut, Copy, Paste, Select All, Find, Replace,
+Strip Trailing Spaces, and Preferences. **Strip Trailing Spaces** removes
+trailing spaces and tabs from the active buffer without saving it; it has no
+default shortcut.
 Find and Replace open a separate, non-modal window transient for the editor.
 The Find window contains the query and Find next; Replace adds the replacement
 field and Replace next / Replace all. Closing the window hides it and preserves
@@ -180,7 +190,8 @@ Default shortcuts use GTK trigger notation: `<Control>s` saves,
 and `<Control><Shift>z` redoes. `<Control><Shift>s` opens Save As,
 `<Control>w` closes the active tab, and `<Control>q` requests Quit.
 `<Control>x`, `<Control>c`, `<Control>v`, and `<Control>a` perform Cut, Copy,
-Paste, and Select All. `<Control>comma` opens Preferences. Menus and configurable
+Paste, and Select All. `<Control><Alt>s` saves all modified named documents,
+and `<Control>comma` opens Preferences. Menus and configurable
 shortcuts resolve to the same named command callbacks.
 
 ## Project Explorer
@@ -192,10 +203,11 @@ automatically. Expand a directory with its arrow or click its name; a single cli
 on a file (or Enter on it) opens it through the same document-opening path
 as File > Open, including existing-tab focus and binary/invalid-UTF-8 rejection.
 Repeated activation focuses the existing tab, never opens a duplicate.
-Right-click the explorer for **Refresh** and checked **Show Hidden**, sharing
-the sidebar controls' state and actions. Refreshes preserve expanded folders
-and open buffers; successful Save and Save As refresh the explorer automatically,
-while failed or cancelled saves do not.
+Right-click the explorer for **Refresh** and checked **Show Hidden**; these
+controls are in the context menu, not separate sidebar buttons. Refreshes
+preserve expanded folders and open buffers. Successful Save and Save As refresh
+the tree when the saved path is under the root and not already listed; failed
+or cancelled saves do not.
 
 Only expanded directories are enumerated. Filesystem enumeration and
 directories-first, case-sensitive UTF-8 byte-order sorting run off the GUI
@@ -209,9 +221,10 @@ and failures visible. Non-UTF-8 filenames produce an explicit directory error,
 rather than silently skipping or lossily decoding names.
 
 **Refresh** re-reads the root after files are added, removed or permissions
-change; **Show Hidden Files** includes dot-prefixed files and directories.
-Both rebuild the tree with its root expanded and descendants collapsed;
-open documents, unsaved edits and the active tab are unchanged. Expansion
+change; **Show Hidden** includes dot-prefixed files and directories.
+Both rebuild the tree with its root expanded and restore expanded descendants
+as their parents load; open documents, unsaved edits and the active tab are
+unchanged. Expansion
 results are cached until that rebuild. Replacing the root, refreshing, or
 closing the editor cancels obsolete work and prevents stale results from
 repopulating the tree. A plain folder opened this way has no saved state; the
@@ -260,12 +273,16 @@ to the editor; cancelling one changes nothing.
   and saves `project.toml` and applies the result immediately; **Reset All to
   Inherit** unchecks every override.
 
-Switching projects (Open, New on another folder, Open Folder, or Delete) and
-Quit first save the current workspace. Modified documents then get the normal
-**Save** / **Discard** / **Cancel** prompt; **Cancel** leaves the current
-project, documents and state unchanged. Dirty edits are never written to
-workspace state. If saving the workspace fails at Quit, a bar offers **Quit
-Without Saving** or **Cancel**.
+**Open Project** prompts **Save** / **Discard** / **Cancel** for modified
+documents before saving the outgoing workspace and replacing the open tabs.
+**Quit** likewise resolves dirty documents before writing workspace state.
+**New Project** and **Open Folder** save the outgoing project's workspace but
+keep open documents and dirty buffers, so they do not prompt to save those
+buffers. **Delete Project** removes its metadata after confirmation without
+first saving its workspace, and keeps open documents. Dirty edits are never
+written to workspace state. A workspace-save failure when switching offers
+**Continue Without Saving** or **Cancel**; at Quit it offers **Quit Without
+Saving** or **Cancel**.
 
 ### Settings precedence
 
@@ -367,9 +384,13 @@ remembered project is reported in an alert and the editor starts normally.
 ## About
 
 **Help > About cedit...** opens a small window parented to the editor showing the
-editor name, version (the repository version from `CMakeLists.txt`), a short
-description, licensing status (the repository has no license file) and the
-project URL as text. **Close** hides it; it is closed with the editor.
+editor name, version (currently 0.0.1, matching `CMakeLists.txt`), a short
+description, and website/repository URLs as text. **Close** hides it; it is
+closed with the editor. The current dialog has stale licensing and repository
+text: this repository is [MIT-licensed](LICENSE), despite the dialog's
+"no license file" message, and cedit's repository is
+[chucktilbury/cedit](https://github.com/chucktilbury/cedit), not the upstream
+Cwhip repository shown there.
 
 ## Preferences and settings
 
@@ -387,6 +408,14 @@ Font size is an integer **6-72 points**, and tab width is an integer **1-16
 columns**. Defaults are `monospace`, 12 pt, 4 columns, spaces, line numbers on,
 wrapping off, and current-line highlighting off. Changing tab width/insertion
 does not rewrite existing indentation.
+
+**Strip trailing spaces on save** is off by default. When enabled, every
+document save (including Save All and automatic saves) strips trailing spaces
+and tabs from the buffer before writing. **Auto-close brackets and quotes**
+is on by default and can be disabled independently. It inserts matching
+brackets/quotes, wraps selected text, steps over a matching closing character,
+and deletes an empty pair together on Backspace. These two settings are
+global preferences, not project overrides.
 
 **Save on loss of tab focus** and **Save on loss of window focus** are independent,
 persisted options, both off by default. Tab loss saves the outgoing modified
@@ -407,7 +436,7 @@ Preferences cancels the previous recorder. Invalid syntax and conflicts
 (compared using canonical GTK triggers, not raw spelling) show an error without
 replacing either command. **Disable** removes a binding; **Reset** restores one
 binding unless its default would conflict. Each section's **Reset to Defaults**
-requires **Confirm Reset**; **Cancel** changes nothing. Only document command
+requires **Confirm Reset**; **Cancel** changes nothing. Named command
 shortcuts are configurable; GTK's ordinary text navigation remains native.
 
 New settings save automatically to `$XDG_CONFIG_HOME/cwhip/settings.toml`, or
@@ -430,6 +459,8 @@ wrap = false
 highlight_current_line = false
 save_on_tab_loss = false
 save_on_window_loss = false
+strip_trailing_spaces = false
+auto_complete_brackets = true
 
 [keyboard]
 save = "<Control>s"
@@ -445,8 +476,9 @@ last_root = ""
 ```
 
 Editor keys are optional and use defaults when absent. Keyboard keys are
-command IDs (`new`, `open`, `save`, `save-as`, `close`, `quit`, `find`, `replace`,
-`undo`, `redo`, `cut`, `copy`, `paste`, `select-all`, `preferences`,
+command IDs (`new`, `open`, `save`, `save-as`, `save-all`, `close`, `quit`,
+`find`, `replace`, `undo`, `redo`, `cut`, `copy`, `paste`, `select-all`,
+`strip-trailing-spaces`, `preferences`,
 `project-new`, `project-open`, `project-save`,
 `project-save-as`, `project-delete`, `project-configure`, `about`); omitted IDs
 use defaults and `""` explicitly disables one. Unknown keyboard commands are
@@ -456,7 +488,8 @@ a valid setting changes.
 The SDK location lives in a separate `cwhip/sdk.toml` (see
 [SDK selection](doc/BUILD.md#sdk-selection)); cedit never writes it. A legacy
 `settings.toml` may still contain a top-level `sdk_prefix` string, used only
-when `sdk.toml` is absent. An absent `version` uses default editor settings; saving
+when `sdk.toml` is absent. An absent `version` is accepted: supplied valid editor
+settings still apply, and absent keys use their defaults. Saving
 preferences adds `version = 1` and preserves `sdk_prefix` and other unrelated
 keys. An explicitly supplied version must still be the integer `1`.
 
@@ -528,8 +561,8 @@ and buffer APIs.
 
 Projects deliberately do not include unsaved-buffer recovery (dirty edits are
 only kept in memory), build commands, LSP configuration, plugins, Git
-integration or project trust. Persistent recent history, native per-tab close glyphs, and an
-extension/plugin runtime, and a configurable toolbar are not included yet. The
+integration or project trust. Persistent recent history, an extension/plugin
+runtime, and a configurable toolbar are not included yet. The
 dialog controls and menu/shortcut commands use the same editor actions, so a
 future toolbar can reuse those actions.
 Any future in-process plugins should be treated as trusted code.
