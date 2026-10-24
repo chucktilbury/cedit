@@ -9,6 +9,51 @@ The SDK must provide the `Cwhip_APPLICATION_OUTPUT_DIRECTORIES` capability
 `cwhip_require_sourceview(RESOURCE_DIRECTORY ...)`) and include
 `CwhipApplicationDefaults.cmake` from its package config. Older 0.0.1 SDK
 installs without these capabilities are rejected; rebuild/install an updated SDK.
+Version 0.0.1 alone is not sufficient: older installs have the same version but
+lack `cwhip_apply_application_defaults`. cedit checks this command before calling
+it and reports `CEDIT2001` with the selected SDK prefix (or package directory if
+the package does not export a prefix). It never skips SDK defaults or switches
+to another SDK or `/usr/local` to work around this failure.
+
+### Refreshing a stale SDK
+
+Use Cwhip sources containing
+[chucktilbury/cwhip#21](https://github.com/chucktilbury/cwhip/pull/21)
+(merge commit `203f7fbab6b7d68820d67288b11b32d1fe0af995`) or later. Updating
+cedit or re-running its CMake configuration does not update the installed SDK.
+Follow the upstream [GUI SDK build instructions](https://github.com/chucktilbury/cwhip/blob/master/doc/GETTING_STARTED.md#add-the-optional-gui-sdk).
+For example, from an updated Cwhip source checkout, use a **new build directory
+and unused installation prefix** to avoid mixing old and new SDK files:
+
+```sh
+cmake -S . -B build-cedit-sdk -DCMAKE_BUILD_TYPE=Debug \
+  -DCWHIP_STAGE_PREFIX="$PWD/build-cedit-sdk/stage" \
+  -DCMAKE_INSTALL_PREFIX="$HOME/opt/cwhip-cedit-updated" \
+  -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_TESTING=OFF \
+  -DCWHIP_GTK=ON -DCWHIP_GTK_SOURCEVIEW=ON -DCWHIP_REGISTER_SDK=ON
+cmake --build build-cedit-sdk --target cwhip --parallel 4
+cmake --install build-cedit-sdk
+```
+
+The explicit prefix avoids system installation. `CWHIP_REGISTER_SDK=ON`
+(the default) records the installed `sdk_prefix` and `[applications]`
+`install_prefix`/`build_type` in `cwhip/sdk.toml`, preserving unrelated TOML.
+This is the normal upgrade path for registering shared application defaults.
+An optional `-DCWHIP_REGISTER_SDK=OFF` instead leaves that file byte-for-byte
+unchanged: it installs the helper but does not update SDK selection or create
+application defaults, so old or absent settings remain in effect.
+
+Back in the cedit checkout, select the complete SDK explicitly (a pre-existing
+`CWHIP_SDK` would otherwise override the newly registered prefix):
+
+```sh
+CWHIP_SDK="$HOME/opt/cwhip-cedit-updated" cmake -S . -B build
+cmake --build build --parallel 4
+```
+
+The package must both install `CwhipApplicationDefaults.cmake` and include it
+from `lib/cmake/Cwhip/CwhipConfig.cmake`; do not copy the helper into cedit or
+patch the installed config by hand.
 
 ## Project shell
 
