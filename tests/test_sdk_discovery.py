@@ -35,12 +35,12 @@ class SdkDiscoveryTests(unittest.TestCase):
         self.settings = self.home / ".config/cwhip/settings.toml"
         self.build = self.project / "build"
         self.env = os.environ.copy()
-        for name in (
-            "CWHIP_SDK", "CMAKE_PREFIX_PATH", "Cwhip_DIR", "Cwhip_ROOT",
-            "CMAKE_INSTALL_PREFIX", "CMAKE_BUILD_TYPE",
-            "_PROJECT_NAME", "XDG_CONFIG_HOME",
-        ):
-            self.env.pop(name, None)
+        for name in list(self.env):
+            if name.startswith(("CMAKE_", "CWHIP_", "Cwhip_")) or name in (
+                "_PROJECT_NAME", "_PROJECT_LOC", "_BUILD_TYPE",
+                "XDG_CONFIG_HOME", "CMAKE",
+            ):
+                self.env.pop(name)
         self.env["HOME"] = str(self.home)
         self.fallback = self.make_sdk("fallback")
         self.env["CMAKE_PREFIX_PATH"] = str(self.fallback)
@@ -162,7 +162,7 @@ class SdkDiscoveryTests(unittest.TestCase):
             "expected SDK ABI 'numeric-v2', got 'legacy-v1'", diagnostic)
         self.assertIn("rebuild and reinstall", diagnostic)
         self.assertIn("\n", raw_diagnostic)
-        self.assertNotIn(str(sdk), raw_diagnostic)
+        self.assertIn(f"'{sdk}/lib/cmake/Cwhip':", raw_diagnostic)
 
     def test_sdk_toml_wins_over_legacy_settings(self):
         new = self.make_sdk("new-sdk")

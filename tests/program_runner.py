@@ -9,7 +9,9 @@ import shutil
 def environment(work: Path) -> dict[str, str]:
     env = os.environ.copy()
     for key in list(env):
-        if key.startswith("CWHIP_") or key in ("CC", "DESTDIR"):
+        if key.startswith(("CMAKE_", "CWHIP_", "Cwhip_")) or key in (
+            "CC", "DESTDIR", "MAKEFLAGS", "MFLAGS", "MAKELEVEL",
+        ):
             del env[key]
     for key, directory in (("HOME", "home"), ("XDG_CONFIG_HOME", "xdg"),
                            ("XDG_DATA_HOME", "data"), ("XDG_CACHE_HOME", "cache"),
