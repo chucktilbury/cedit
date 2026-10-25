@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Adopt Cwhip's syntax cleanup from compiler PR #37: parenthesize return
+  operands in the editor and generated test drivers, and require matching SDK
+  syntax definitions. Cover hash comments, removal of semicolon-comment
+  highlighting, and multiline bracket dictionary/list literals.
 - Require Cwhip 0.0.2 with SDK ABI `numeric-v2`, rejecting missing or incompatible
   ABI markers during SDK discovery. Migrate editor counts, positions, IDs and
   native test signatures to `int64`, and string conversions to `toInt64`.
