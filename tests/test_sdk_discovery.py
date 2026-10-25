@@ -36,8 +36,8 @@ class SdkDiscoveryTests(unittest.TestCase):
         self.build = self.project / "build"
         self.env = os.environ.copy()
         for name in list(self.env):
-            if name.startswith(("CMAKE_", "CWHIP_", "Cwhip_")) or name in (
-                "_PROJECT_NAME", "_PROJECT_LOC", "_BUILD_TYPE",
+            if name.startswith(("CMAKE_", "CWHIP_", "Cwhip_", "_PROJECT_")) or name in (
+                "_BUILD_TYPE",
                 "XDG_CONFIG_HOME", "CMAKE",
             ):
                 self.env.pop(name)
@@ -49,7 +49,9 @@ class SdkDiscoveryTests(unittest.TestCase):
         tools.mkdir()
         shell = tools / "bash"
         shell.write_text(
-            '#!/bin/sh\nprintf "%s" "${CWHIP_SDK-}" > "$SHELL_RECORD"\n'
+            '#!/bin/sh\n'
+            'if [ "${1-}" != "--rcfile" ]; then exec /bin/bash "$@"; fi\n'
+            'printf "%s" "${CWHIP_SDK-}" > "$SHELL_RECORD"\n'
         )
         shell.chmod(0o755)
         self.env["PATH"] = f"{tools}:{self.env['PATH']}"
@@ -594,6 +596,47 @@ class SdkDiscoveryTests(unittest.TestCase):
         self.assertIn("CMAKE_BUILD_TYPE:STRING=Release", (self.build / "CMakeCache.txt").read_text())
         self.assertEqual(self.settings.read_bytes(), before)
 
+    def test_setup_clean_preserves_sdk_discovery(self):
+        self.select(self.fallback)
+        self.build.mkdir()
+        stale = self.build / "stale"
+        stale.touch()
+        self.run_configure(setup=True, extra=("--clean", "release"))
+        self.assertFalse(stale.exists())
+        self.assert_selected(self.fallback)
+        self.assertEqual(self.shell_record.read_text(), str(self.fallback))
+
+    def test_build_functions_forward_targets_directory_and_status(self):
+        self.build.mkdir()
+        env = dict(self.env, _PROJECT_LOC=str(self.project),
+                   _PROJECT_NAME="test", _BUILD_TYPE="debug")
+        for function in ("build", "rebuild"):
+            for override in (None, str(self.root / "other build")):
+                for targets in ("", "'target one' target-two"):
+                    with self.subTest(function=function, override=override, targets=targets):
+                        shell_env = env.copy()
+                        if override is not None:
+                            shell_env["_PROJECT_BUILD_DIR"] = override
+                        result = subprocess.run(
+                            ["/bin/bash", "-c",
+                             'source "$_PROJECT_LOC/.project_env"\n'
+                             'cmake() { printf "<%s>\\n" "$@"; return 17; }\n'
+                             f'{function} {targets}\n'
+                             'result=$?\nprintf "RETURNED=%s\\n" "$result"\nexit "$result"\n'],
+                            env=shell_env, capture_output=True, text=True, timeout=10,
+                        )
+                        expected = ["--build", override or str(self.build), "--parallel", "12"]
+                        if function == "rebuild":
+                            expected.append("--clean-first")
+                        if targets:
+                            expected.extend(["--target", "target one", "target-two"])
+                        self.assertEqual(result.returncode, 17, result)
+                        self.assertEqual(result.stdout.splitlines(),
+                                         [f"<{arg}>" for arg in expected] + ["RETURNED=17"])
+        self.assertFalse((self.project / "scripts/build").exists())
+        self.assertFalse((self.project / "scripts/rebuild").exists())
+        self.assertTrue((self.project / "scripts/clean").is_file())
+
     def test_setup_real_shell_adds_settings_sdk_to_path(self):
         prefix = self.make_sdk('shell SDK with "quotes"')
         self.select(prefix)
@@ -647,7 +690,7 @@ class SdkDiscoveryTests(unittest.TestCase):
         self.env["CWHIP_SDK"] = str(self.root / "missing")
         output = self.run_configure(setup=True, success=False)
         self.assertIn("CMake configuration failed", output)
-        self.assertIn("cedit: error[CEDIT3001]:", output)
+        self.assertIn("project shell was not started", output)
 
     def test_setup_invalid_sdk_never_opens_shell(self):
         self.select(self.home)

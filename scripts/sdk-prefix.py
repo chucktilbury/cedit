@@ -31,27 +31,31 @@ def read_prefix(settings, tomllib):
 
 def main():
     if len(sys.argv) != 2:
-        diagnostic("CEDIT0001", "usage: sdk-prefix.py CWHIP_CONFIG_DIRECTORY")
+        diagnostic("CEDIT0001", "usage: sdk-prefix.py SETTINGS_FILE_OR_CONFIG_DIRECTORY")
         return 2
-    directory = Path(sys.argv[1])
+    location = Path(sys.argv[1])
     try:
         import tomllib
     except ModuleNotFoundError:
         diagnostic("CEDIT2001",
-                   f"{directory}: reading sdk_prefix requires Python 3.11 or newer")
+                   f"{location}: reading sdk_prefix requires Python 3.11 or newer")
         return 1
 
     # An existing sdk.toml is authoritative; the legacy shared settings.toml is
     # consulted only when sdk.toml is absent. Nothing is ever written.
-    for name in ("sdk.toml", "settings.toml"):
-        settings = directory / name
+    settings_files = ([location / "sdk.toml", location / "settings.toml"]
+                      if location.is_dir() else [location])
+    for settings in settings_files:
         try:
             prefix = read_prefix(settings, tomllib)
         except FileNotFoundError:
             if settings.is_symlink():
                 diagnostic("CEDIT2001", f"{settings}: cannot read sdk_prefix: dangling link")
                 return 1
-            continue
+            if location.is_dir():
+                continue
+            diagnostic("CEDIT2001", f"{settings}: cannot read sdk_prefix: file not found")
+            return 1
         except (OSError, ValueError) as error:
             diagnostic("CEDIT2001", f"{settings}: cannot read sdk_prefix: {error}")
             return 1

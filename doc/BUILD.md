@@ -53,6 +53,9 @@ Follow the upstream [GUI SDK build instructions](https://github.com/chucktilbury
 For example, from an updated Cwhip source checkout, use a **new build directory
 and unused installation prefix** to avoid mixing old and new SDK files:
 
+These raw CMake commands build/install the upstream SDK, not cedit, and set
+SDK-only staging, GUI and registration options.
+
 ```sh
 cmake -S . -B build-cedit-sdk -DCMAKE_BUILD_TYPE=Debug \
   -DCWHIP_STAGE_PREFIX="$PWD/build-cedit-sdk/stage" \
@@ -75,8 +78,9 @@ Back in the cedit checkout, select the complete SDK explicitly (a pre-existing
 `CWHIP_SDK` would otherwise override the newly registered prefix):
 
 ```sh
-CWHIP_SDK="$HOME/opt/cwhip-cedit-updated" cmake -S . -B build
-cmake --build build --parallel 4
+CWHIP_SDK="$HOME/opt/cwhip-cedit-updated" scripts/setup --clean
+# In the project shell:
+build
 ```
 
 Rebuild native packages against this SDK and declare `sdk-abi = "numeric-v2"`
@@ -96,9 +100,11 @@ Run the executable setup script, not `source scripts/setup`:
 
 ```sh
 scripts/setup                 # inherit the SDK application build default
-# Alternatively: scripts/setup release or scripts/setup profile
+# Syntax: scripts/setup [--clean] [debug|release|profile]
+# Alternatively: scripts/setup --clean release or scripts/setup profile
 # In the child Bash, initially in build/:
-cmake --build . --parallel 4
+build
+rebuild cedit                  # optional: clean CMake outputs, then build cedit
 cedit
 exit
 ```
@@ -111,6 +117,24 @@ with spaces in paths. It configures `build/` before
 opening a fresh interactive Bash using `.project_env`; configuration errors
 exit without opening that shell. Nested project shells are rejected. Exiting
 returns to the original shell without changing its environment or directory.
+
+`--clean` invokes the retained `clean` script before SDK discovery and
+configuration, deleting this checkout's default `bin/`, `build/`, `lib/`,
+`doc/out/`, and `share/` trees, including the build cache and private locks.
+It accepts either argument order, rejects unknown or duplicate arguments
+before deleting anything, and refuses to run inside an active project shell.
+With `--clean` and no mode, the SDK's default applies to the fresh cache.
+Custom output directories outside these trees are not removed.
+
+`build [TARGET...]` and `rebuild [TARGET...]` are Bash functions in
+`.project_env`. They use `cmake --build` with 12 parallel jobs, defaulting to
+this checkout's `build/` regardless of the current directory; an optional
+`_PROJECT_BUILD_DIR` overrides that path. Targets are forwarded as separate
+arguments, failures return CMake's status, and neither function replaces the
+shell. `rebuild` adds `--clean-first`, retaining the configured cache.
+The `clean` command instead deletes the entire default generated trees,
+including the current `build/` directory: exit the shell and run setup again
+afterward (or use `scripts/setup --clean` from the original shell).
 
 The environment sources readable `~/.bashrc`, then prepends project `bin/`,
 `scripts/`, and optional `CWHIP_SDK/bin` to PATH. When the shared settings
@@ -126,7 +150,7 @@ are project-owned and can be modified for local conventions.
 
 ## SDK selection
 
-Direct `cmake -S . -B build` and `scripts/setup` select the SDK in this exact
+`scripts/setup` (and direct CMake configuration) select the SDK in this exact
 order:
 
 1. An explicit, non-empty `CWHIP_SDK` environment variable.
@@ -163,9 +187,10 @@ settings.toml exists and `CWHIP_SDK` is unset; the installed SDK still requires
 Python 3.11+ for its CMake/package tooling. A non-empty `CWHIP_SDK` bypasses
 the settings file and config-home checks entirely, even if they are malformed.
 
-cedit-owned setup, launcher and SDK-selection failures use
-`cedit: error[CEDITxxxx]: explanation`; diagnostics go to stderr and setup
-usage errors return 2. CMake's own package-discovery output remains intact.
+cedit-owned launcher and SDK-selection parser failures use
+`cedit: error[CEDITxxxx]: explanation`. Setup matches the shared template's
+plain-text diagnostics; diagnostics go to stderr and setup usage errors
+return 2. CMake's own package-discovery output remains intact.
 See [cedit's diagnostic boundaries](../CEDIT.md#diagnostics) and the shared
 [diagnostic contract](https://github.com/chucktilbury/cwhip/blob/master/doc/DIAGNOSTICS.md).
 
@@ -202,18 +227,26 @@ pass `--prefix` to `cmake --install` or set `-DCMAKE_INSTALL_PREFIX=...` to
 choose another destination. These defaults do not share a build directory or
 propagate arbitrary SDK build flags into the application.
 
-## Direct CMake and installation
+## Building, testing and installation
 
 ```sh
-cmake -S . -B build -DCMAKE_PREFIX_PATH=/path/to/installed/cwhip
-cmake --build build --parallel 4
-ctest --test-dir build --output-on-failure
-cmake --build build --target test-all
-cmake --build build --target check-noop
-cmake --install build --prefix /path/to/cedit
-cmake --build build --target clean
-cmake --build build
+CWHIP_SDK=/path/to/installed/cwhip scripts/setup
+# In the project shell, initially in build/:
+build
+ctest --output-on-failure
+build test-all
+build check-noop
+cmake --install "$_PROJECT_LOC/build" --prefix /path/to/cedit
+rebuild
+clean
+exit
 ```
+
+Installation still uses CMake because the shell has no install wrapper.
+For automation or cache/output options that setup does not accept, direct
+CMake remains available: `cmake -S . -B build -DCWHIP_BIN_DIR=/path/to/bin`
+then `cmake --build build`. Use a separate build tree when needed; setup
+always configures the default `build/` tree.
 
 Run `bin/cedit` or `/path/to/cedit/bin/cedit`. Its native launcher finds
 `cedit.bin` beside its real executable, and the application finds installed

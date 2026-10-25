@@ -2,45 +2,61 @@
 
 set -o errexit -o nounset -o pipefail
 
-diagnostic() {
-    printf 'cedit: error[%s]: %s\n' "$1" "$2" >&2
-}
-
 if [[ -n "${_PROJECT_NAME:-}" ]]; then
-    diagnostic CEDIT0002 \
-        "a project shell is already active ($_PROJECT_NAME); exit it before starting another"
+    printf 'A project shell is already active (%s). Exit it before starting another.\n' \
+        "$_PROJECT_NAME" >&2
     exit 1
 fi
 
-if (( $# > 1 )); then
-    diagnostic CEDIT0001 "usage: $0 [debug|release|profile]"
+usage() {
+    printf 'Usage: %s [--clean] [debug|release|profile]\n' "$0" >&2
     exit 2
-fi
+}
 
+clean_first=false
 build_type=""
-cmake_build_type=""
-if (( $# == 1 )); then
-    build_type="$1"
-    case "$build_type" in
-        debug)
-            cmake_build_type=Debug
+for arg in "$@"; do
+    case "$arg" in
+        --clean)
+            if [[ "$clean_first" == true ]]; then
+                usage
+            fi
+            clean_first=true
             ;;
-        release)
-            cmake_build_type=Release
-            ;;
-        profile)
-            cmake_build_type=RelWithDebInfo
+        debug|release|profile)
+            if [[ -n "$build_type" ]]; then
+                usage
+            fi
+            build_type="$arg"
             ;;
         *)
-            diagnostic CEDIT0001 \
-                "unknown build type '$build_type'; usage: $0 [debug|release|profile]"
-            exit 2
+            printf 'Unknown argument: %s\n' "$arg" >&2
+            usage
             ;;
     esac
-fi
+done
+
+case "$build_type" in
+    "")
+        cmake_build_type=""
+        ;;
+    debug)
+        cmake_build_type=Debug
+        ;;
+    release)
+        cmake_build_type=Release
+        ;;
+    profile)
+        cmake_build_type=RelWithDebInfo
+        ;;
+esac
 
 project_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
 build_dir="$project_root/build"
+
+if [[ "$clean_first" == true ]]; then
+    "$project_root/scripts/clean"
+fi
 
 if [[ -z "${CWHIP_SDK:-}" ]]; then
     config_home="${XDG_CONFIG_HOME:-}"
@@ -48,16 +64,17 @@ if [[ -z "${CWHIP_SDK:-}" ]]; then
         config_home="$HOME/.config"
     fi
     if [[ -n "$config_home" && "$config_home" != /* ]]; then
-        diagnostic CEDIT2001 \
-            "cannot discover sdk_prefix: config home '$config_home' is not absolute"
+        printf "Cannot discover sdk_prefix: config home '%s' is not absolute.\n" \
+            "$config_home" >&2
         exit 1
     fi
-    cwhip_config="$config_home/cwhip"
-    if [[ -n "$config_home" && ( -e "$cwhip_config/sdk.toml" || -L "$cwhip_config/sdk.toml" ||
-        -e "$cwhip_config/settings.toml" || -L "$cwhip_config/settings.toml" ) ]]; then
-        if ! sdk_prefix="$(python3 "$project_root/scripts/sdk-prefix.py" "$cwhip_config")"; then
-            diagnostic CEDIT2001 \
-                "SDK settings discovery failed; project shell was not started"
+    settings="$config_home/cwhip/sdk.toml"
+    if [[ ! -e "$settings" && ! -L "$settings" ]]; then
+        settings="$config_home/cwhip/settings.toml"
+    fi
+    if [[ -n "$config_home" && ( -e "$settings" || -L "$settings" ) ]]; then
+        if ! sdk_prefix="$(python3 "$project_root/scripts/sdk-prefix.py" "$settings")"; then
+            printf 'SDK settings discovery failed; project shell was not started.\n' >&2
             exit 1
         fi
         if [[ -n "$sdk_prefix" ]]; then
@@ -69,23 +86,32 @@ fi
 export _PROJECT_LOC="$project_root"
 export _PROJECT_NAME="$(basename -- "$project_root")"
 
-cmake_args=(-S "$project_root" -B "$build_dir")
+cmake_args=()
 if [[ -n "$cmake_build_type" ]]; then
     cmake_args+=("-DCMAKE_BUILD_TYPE=$cmake_build_type")
 fi
-if ! cmake "${cmake_args[@]}"; then
-    diagnostic CEDIT3001 \
-        "CMake configuration failed; project shell was not started"
+if ! cmake -S "$project_root" -B "$build_dir" "${cmake_args[@]}"; then
+    printf 'CMake configuration failed; project shell was not started.\n' >&2
     exit 1
 fi
 
-cmake_build_type="$(sed -n 's/^CMAKE_BUILD_TYPE:[^=]*=//p' "$build_dir/CMakeCache.txt")"
+cmake_build_type="$(sed -n 's/^CMAKE_BUILD_TYPE:[^=]*=//p' "$build_dir/CMakeCache.txt" | head -n 1)"
 case "$cmake_build_type" in
-    Debug) build_type=debug ;;
-    Release) build_type=release ;;
-    RelWithDebInfo) build_type=profile ;;
-    "") build_type=default ;;
-    *) build_type="${cmake_build_type,,}" ;;
+    Debug)
+        build_type=debug
+        ;;
+    Release)
+        build_type=release
+        ;;
+    RelWithDebInfo)
+        build_type=profile
+        ;;
+    "")
+        build_type=default
+        ;;
+    *)
+        build_type="${cmake_build_type,,}"
+        ;;
 esac
 export _BUILD_TYPE="$build_type"
 export CWHIP_BUILD_TYPE="$cmake_build_type"
