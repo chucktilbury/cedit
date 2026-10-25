@@ -27,6 +27,9 @@ The SDK must also include the syntax cleanup in
 [chucktilbury/cwhip#37](https://github.com/chucktilbury/cwhip/pull/37):
 return operands use `return(expr)`, dictionaries use `[key: value]` or `[:]`,
 and line comments use `#` or `//`, not `;`.
+Conditional chains use `else(condition) { ... }`, not `else if`.
+The SDK's conditional-chain support is tracked in
+[chucktilbury/cwhip#38](https://github.com/chucktilbury/cwhip/pull/38).
 cedit has no type-keyword completion list; bracket/quote auto-completion is
 unchanged. Highlighting is enabled only for recognized source files: a document's
 language is chosen from its `.cw` file suffix and selects `cwhip`,

@@ -5,7 +5,12 @@
 - Adopt Cwhip's syntax cleanup from compiler PR #37: parenthesize return
   operands in the editor and generated test drivers, and require matching SDK
   syntax definitions. Cover hash comments, removal of semicolon-comment
-  highlighting, and multiline bracket dictionary/list literals.
+  highlighting, multiline bracket dictionary/list literals, and
+  `else(condition)` chains from compiler PR #38. Preserve full SDK paths in
+  the long-prefix discovery diagnostic test while accounting for CMake's
+  whitespace wrapping.
+- Isolate test HOME/configuration and clear inherited CMake/Cwhip environment
+  overrides so the host's SDK selection and build type cannot affect tests.
 - Require Cwhip 0.0.2 with SDK ABI `numeric-v2`, rejecting missing or incompatible
   ABI markers during SDK discovery. Migrate editor counts, positions, IDs and
   native test signatures to `int64`, and string conversions to `toInt64`.

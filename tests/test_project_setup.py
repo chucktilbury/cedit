@@ -38,11 +38,13 @@ def main():
         home.mkdir()
         (home / ".bashrc").write_text("export CEDIT_BASHRC_READ=yes\n")
         env = {key: value for key, value in os.environ.items()
-               if key not in ("_PROJECT_NAME", "_PROJECT_LOC", "_BUILD_TYPE",
-                              "CWHIP_BUILD_TYPE", "MAKEFLAGS", "MFLAGS", "MAKELEVEL",
-                              "Cwhip_DIR", "CMAKE_PREFIX_PATH",
-                              "CMAKE_INSTALL_PREFIX", "CMAKE_BUILD_TYPE")}
-        env.update(HOME=str(home), CWHIP_SDK=str(args.sdk))
+               if not key.startswith(("CMAKE_", "CWHIP_", "Cwhip_")) and
+               key not in ("_PROJECT_NAME", "_PROJECT_LOC", "_BUILD_TYPE",
+                           "MAKEFLAGS", "MFLAGS", "MAKELEVEL")}
+        xdg_config = home / "xdg"
+        xdg_config.mkdir()
+        env.update(HOME=str(home), XDG_CONFIG_HOME=str(xdg_config),
+                   CWHIP_SDK=str(args.sdk))
         setup = str(source / "scripts/setup")
         state = (
             "printf 'STATE=%s|%s|%s|%s|%s|%s\\n' "
@@ -62,6 +64,9 @@ def main():
                 line.split("=", 1)[1] for line in cache.splitlines()
                 if line.startswith("CMAKE_BUILD_TYPE:")
             )
+            if not mode:
+                assert cmake_mode == "", (
+                    f"parent CMAKE_BUILD_TYPE leaked into the isolated setup: {cmake_mode!r}")
             shell_mode = {
                 "Debug": "debug",
                 "Release": "release",

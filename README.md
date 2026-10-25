@@ -8,7 +8,9 @@ with the `numeric-v2` ABI (including rebuilt GTK/SourceView packages).
 The SDK must include callable `R<P1,P2>` source syntax and native
 `int`/`uint`/`float` aliases, plus the syntax cleanup in
 [chucktilbury/cwhip#37](https://github.com/chucktilbury/cwhip/pull/37)
-(parenthesized return operands, bracket dictionary literals and `#` comments).
+(parenthesized return operands, bracket dictionary literals and `#` comments)
+and conditional `else(condition)` chains from
+[chucktilbury/cwhip#38](https://github.com/chucktilbury/cwhip/pull/38).
 Earlier numeric-v2 SDKs lack this source support.
 No compiler source or workspace checkout is required. See [the build guide](doc/BUILD.md)
 and [cedit guide](CEDIT.md). It remains a proof of concept, not a production IDE.

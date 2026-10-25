@@ -93,6 +93,12 @@ class NumericChecks {
         require(empty.length == 0 && values.length == 2, "bracket dictionary literals")
         require(sequence.length == 2 && sequence[0] as int32 == 42,
             "multiline literals with trailing commas")
+        int32 branch = 0
+        if (false) { branch = 1 }
+        else(false) { branch = 2 }
+        else(true) { branch = 3 }
+        else { branch = 4 }
+        require(branch == 3, "else(condition) chains")
         Gtk.MenuBar menu = Gtk.MenuBar()
         int64 parent = menu.addMenu("Numeric")
         NumericChecks target = NumericChecks()
@@ -152,7 +158,7 @@ def main():
         with headless(args.xvfb, work, env) as gui_env:
             result = invoke([str(executable)], work, gui_env)
         assert result.returncode == 0, result
-        assert result.stdout == "PASS numeric 40" and not result.stderr, result
+        assert result.stdout == "PASS numeric 41" and not result.stderr, result
 
 
 if __name__ == "__main__":

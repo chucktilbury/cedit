@@ -26,17 +26,22 @@ Native runtime signature literals still use the legacy encoding for ABI
 compatibility; the C fixtures deliberately retain those strings.
 
 It must also include the syntax cleanup from
-[chucktilbury/cwhip#37](https://github.com/chucktilbury/cwhip/pull/37),
+[chucktilbury/cwhip#37](https://github.com/chucktilbury/cwhip/pull/37) and
+conditional-chain support from
+[chucktilbury/cwhip#38](https://github.com/chucktilbury/cwhip/pull/38),
 including matching SourceView definitions. Return operands use `return(expr)`,
 dictionary literals use `[key: value]` (`[:]` when empty), and `#` starts a
 line comment; `;` is no longer a Cwhip comment. Lists still use `[]`.
 Keyword operands such as `raise(expr)` must be parenthesized. Bitwise
 `&`, `^` and `|` bind more tightly than comparisons. This source migration
 does not change the SDK ABI marker or native C signature encodings.
+Conditional chains use `else(condition) { ... }` followed by an optional
+final `else { ... }`; the old `else if` spelling is not supported.
 
 ### Refreshing a stale SDK
 
-Use Cwhip sources containing the syntax cleanup from PR #37,
+Use Cwhip sources containing the syntax cleanup from PR #37 and
+conditional-chain support from PR #38,
 the callable-syntax/native-alias migration,
 the numeric SDK/package migration and
 [chucktilbury/cwhip#25](https://github.com/chucktilbury/cwhip/pull/25)
@@ -254,7 +259,8 @@ bounds, grouped switch ranges, and `next`, plus native `int`/`uint`/`float`
 aliases, callable `R<P1,P2>` syntax, an ordinary `callback` identifier, and
 the still-reserved `unsigned` keyword. It also checks hash comments, the
 absence of semicolon-comment highlighting, parenthesized returns, and
-multiline bracket dictionary/list literals with trailing commas.
+multiline bracket dictionary/list literals with trailing commas, plus
+`else(condition)` conditional chains.
 Application counts and native SDK APIs remain `int64`; widen operands
 before arithmetic when adding literal-only expressions, since assignment does
 not prevent small-integer overflow. Decimal literals default to `fp32`; use an
