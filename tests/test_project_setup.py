@@ -38,8 +38,8 @@ def main():
         home.mkdir()
         (home / ".bashrc").write_text("export CEDIT_BASHRC_READ=yes\n")
         env = {key: value for key, value in os.environ.items()
-               if not key.startswith(("CMAKE_", "CWHIP_", "Cwhip_")) and
-               key not in ("_PROJECT_NAME", "_PROJECT_LOC", "_BUILD_TYPE",
+               if not key.startswith(("CMAKE_", "CWHIP_", "Cwhip_", "_PROJECT_")) and
+               key not in ("_BUILD_TYPE",
                            "MAKEFLAGS", "MFLAGS", "MAKELEVEL")}
         xdg_config = home / "xdg"
         xdg_config.mkdir()
@@ -52,7 +52,7 @@ def main():
             '"$CWHIP_BUILD_TYPE" "$CEDIT_BASHRC_READ"\n'
             '[[ "$PATH" == "$_PROJECT_LOC/bin:$_PROJECT_LOC/scripts:$CWHIP_SDK/bin:"* ]]'
             " || exit 31\n"
-            "declare -F status add commit push all dbg || exit 32\n"
+            "declare -F build rebuild status add commit push all dbg || exit 32\n"
             '"$_PROJECT_LOC/scripts/setup" && exit 33\n'
             "exit 0\n"
         )
@@ -80,28 +80,67 @@ def main():
             assert not (source / "bin").exists()
             assert not (source / "lib").exists()
             assert not (source / "share").exists()
-        for arguments in (["invalid"], ["debug", "extra"]):
+        marker = source / "build/active-shell-marker"
+        marker.touch()
+        for arguments in (["invalid"], ["debug", "extra"], ["debug", "release"],
+                          ["debug", "debug"], ["--clean", "--clean"],
+                          ["--clean", "invalid"]):
             result = run([setup, *arguments], cwd=work, env=env,
                          input="echo UNEXPECTED_SHELL\n", success=False)
             assert result.returncode == 2, result
-            assert "cedit: error[CEDIT0001]:" in result.stderr, result
+            assert "Usage:" in result.stderr, result
             assert "UNEXPECTED_SHELL" not in result.stdout
+            assert marker.exists()
         bad_env = dict(env, CWHIP_SDK=str(work / "missing SDK"))
         result = run([setup], cwd=work, env=bad_env,
                      input="echo UNEXPECTED_SHELL\n", success=False)
         assert "project shell was not started" in result.stderr, result
-        assert "cedit: error[CEDIT3001]:" in result.stderr, result
+        assert "CMake configuration failed" in result.stderr, result
         assert "UNEXPECTED_SHELL" not in result.stdout
-        run([setup, "debug"], cwd=work, env=env, input="exit\n")
+        # Both argument orders clean every default generated tree, not sources.
+        for arguments in (["--clean", "debug"], ["debug", "--clean"]):
+            sentinels = [source / name / "stale-output"
+                         for name in ("bin", "build", "lib", "doc/out", "share")]
+            for path in sentinels:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("old generated output\n")
+            result = run([setup, *arguments], cwd=work, env=env, input=state)
+            assert all(not path.exists() for path in sentinels)
+            assert (source / "src/cedit.cw").is_file()
+            assert "|debug|Debug|yes" in result.stdout, result
+
+        marker.touch()
+        result = run([setup, "--clean", "invalid"], cwd=work,
+                     env=dict(env, _PROJECT_NAME="already active"), success=False)
+        assert result.returncode == 1, result
+        assert "already active" in result.stderr, result
+        assert marker.exists()
 
         build = source / "build"
         cmake = [args.cmake, "--build", str(build)]
-        run(cmake, cwd=work, env=env)
+        result = run([setup, "--clean"], cwd=work, env=env,
+                     input="cd / && build cedit && printf 'BUILD_RETURNED\\n'\nexit $?\n")
+        assert "BUILD_RETURNED" in result.stdout, result
+        assert not marker.exists()
         outputs = [source / "bin/cedit", source / "bin/cedit.bin",
                    source / "share/cwhip/modules/sourceview/0.1.0/language-specs/cwhip.lang"]
         before = [path.stat().st_mtime_ns for path in outputs]
-        run(cmake, cwd=work, env=env)
+        result = run([setup], cwd=work, env=env,
+                     input="build && printf 'BUILD_RETURNED\\n'\nexit $?\n")
+        assert "BUILD_RETURNED" in result.stdout, result
         assert before == [path.stat().st_mtime_ns for path in outputs]
+        result = run([setup], cwd=work, env=env,
+                     input="rebuild cedit && printf 'REBUILD_RETURNED\\n'\nexit $?\n")
+        assert "REBUILD_RETURNED" in result.stdout, result
+        assert before != [path.stat().st_mtime_ns for path in outputs]
+        result = run([setup], cwd=work, env=env,
+                     input="build no-such-target\nresult=$?\n"
+                           "printf 'FAILED_BUILD_RETURNED\\n'\nexit \"$result\"\n",
+                     success=False)
+        assert "FAILED_BUILD_RETURNED" in result.stdout, result
+        result = run([setup], cwd=work, env=env,
+                     input="rebuild && printf 'REBUILD_DEFAULT_RETURNED\\n'\nexit $?\n")
+        assert "REBUILD_DEFAULT_RETURNED" in result.stdout, result
 
         installed = work / "installed app"
         run([args.cmake, "--install", str(build), "--prefix", str(installed)],

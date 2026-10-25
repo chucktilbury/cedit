@@ -15,9 +15,14 @@ Earlier numeric-v2 SDKs lack this source support.
 No compiler source or workspace checkout is required. See [the build guide](doc/BUILD.md)
 and [cedit guide](CEDIT.md). It remains a proof of concept, not a production IDE.
 
-Run `scripts/setup` for a project shell, then `cmake --build . --parallel 4`.
+Run `scripts/setup [--clean] [debug|release|profile]` for a project shell,
+then `build` (or `build cedit` for only the editor target).
 Without an explicit mode, setup inherits the selected SDK's application build
 default; `scripts/setup debug`, `release`, or `profile` selects a mode directly.
+`--clean` removes generated build/staging directories before configuration;
+it may appear before or after the mode. Inside the shell, `rebuild [TARGET...]`
+cleans CMake outputs before building, while `clean` deletes the default generated
+trees entirely. After `clean`, exit and run setup again.
 The SDK is selected by a non-empty `CWHIP_SDK`, then the `sdk_prefix` in
 `$XDG_CONFIG_HOME/cwhip/sdk.toml` (or `~/.config/cwhip/sdk.toml`; legacy
 `settings.toml` only when `sdk.toml` is absent), then normal CMake discovery;

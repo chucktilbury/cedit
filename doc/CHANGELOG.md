@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Match the template setup and project environment byte-for-byte: accept
+  `--clean` in either argument order and expose `build`/`rebuild` as shell
+  functions, retaining the standalone `clean` command. Support settings-file
+  paths in the SDK parser as well as CMake's directory input. Document the
+  setup-first workflow and template-owned plain-text setup diagnostics.
 - Adopt Cwhip's syntax cleanup from compiler PR #37: parenthesize return
   operands in the editor and generated test drivers, and require matching SDK
   syntax definitions. Cover hash comments, removal of semicolon-comment

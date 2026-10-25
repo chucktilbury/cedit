@@ -69,7 +69,7 @@ Start a project shell and build the editor:
 export CWHIP_SDK=/path/to/installed/cwhip
 scripts/setup debug
 # In the new shell, initially in build/:
-cmake --build . --target cedit --parallel 4
+build cedit
 cedit file1.cw file2.cw
 ```
 
@@ -77,9 +77,14 @@ Without an explicit mode, `scripts/setup` inherits the selected SDK's
 application build default; if none is configured, CMake's default applies.
 `debug`, `release`, and `profile` explicitly select Debug, Release, and
 RelWithDebInfo. Exit the child shell to return to the original shell.
+Use `scripts/setup --clean debug` (or `scripts/setup debug --clean`) to
+remove generated build/staging trees before configuring. `--clean` alone
+uses the SDK's default mode after removing the old cache.
 The SDK can also be selected with `Cwhip_DIR` or `CMAKE_PREFIX_PATH`.
-With any generator, use `cmake --build build --target cedit --parallel 4`
-from the repository root. The target uses private SDK package locks and compiles
+Inside the project shell, `build [TARGET...]` and `rebuild [TARGET...]` work
+with any CMake generator and from any directory; `rebuild` cleans CMake outputs
+first. `clean` deletes the default generated trees entirely; exit and run
+setup again afterward. The target uses private SDK package locks and compiles
 the editor only when its inputs change. The executable is `<source>/bin/cedit`
 by default; `CWHIP_BIN_DIR` and `CWHIP_LIB_DIR` override project output locations.
 No manual compiler invocation or package activation is needed. Install with
@@ -112,8 +117,9 @@ GUI diagnostics continue to use the launching terminal's stdout/stderr.
 
 cedit-owned CLI and GUI failures use the shared
 [diagnostic format](https://github.com/chucktilbury/cwhip/blob/master/doc/DIAGNOSTICS.md):
-`cedit: error[CEDITxxxx]: explanation`. CLI diagnostics go to stderr; usage
-errors from `scripts/setup` return 2, and other failures retain their existing
+`cedit: error[CEDITxxxx]: explanation`. The shared template setup script keeps
+its plain-text diagnostics; its usage errors return 2. CLI diagnostics go to
+stderr, and other failures retain their existing
 nonzero exit behavior. Codes identify stable reporting boundaries: `CEDIT0001`
 for usage/startup invocation, `CEDIT0002` for launcher readiness, `CEDIT1001`
 and `CEDIT1002` for document open/save, `CEDIT2001` and `CEDIT2002` for settings
@@ -585,6 +591,7 @@ Run the standalone editor's headless suite (build first), or use `test-all`
 to build and then run it:
 
 ```sh
-ctest --test-dir build --output-on-failure
-cmake --build build --target test-all
+# In the project shell (initially in build/):
+ctest --output-on-failure
+build test-all
 ```
