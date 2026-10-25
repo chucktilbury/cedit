@@ -70,10 +70,10 @@ class PreferencesChecks {
         int64 i = 0
         while (i < editor.keyboardRows.length) {
             KeyboardPreference item = editor.keyboardRows[i] as KeyboardPreference
-            if (item.binding.id.equals(command)) { return item }
+            if (item.binding.id.equals(command)) { return(item) }
             i = i + 1
         }
-        return null
+        return(null)
     }
     void requireAutosaveFailure(EditorDocument document, String label) {
         String message = editor.status.text()

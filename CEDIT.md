@@ -23,6 +23,10 @@ Native numeric aliases `int`, `uint`, and `float` canonicalize to
 `int32`, `uint32`, and `fp32` on the supported target; `unsigned`
 remains reserved. Callable types use `R<P1,P2>` (or `void<>` for an action
 with no parameters); `callback` is an ordinary identifier, not a keyword.
+The SDK must also include the syntax cleanup in
+[chucktilbury/cwhip#37](https://github.com/chucktilbury/cwhip/pull/37):
+return operands use `return(expr)`, dictionaries use `[key: value]` or `[:]`,
+and line comments use `#` or `//`, not `;`.
 cedit has no type-keyword completion list; bracket/quote auto-completion is
 unchanged. Highlighting is enabled only for recognized source files: a document's
 language is chosen from its `.cw` file suffix and selects `cwhip`,

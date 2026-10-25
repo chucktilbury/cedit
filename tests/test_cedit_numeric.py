@@ -12,7 +12,7 @@ DRIVER = r"""
 class NumericChecks {
     int64 checks
     void noop() {}
-    int add(int32 left, int8 right) { return left + right }
+    int add(int32 left, int8 right) { return(left + right) }
     void require(bool condition, String label) {
         if (!condition) {
             System.StandardIO().writeErrorLine(format("FAIL numeric: {}", label))
@@ -73,6 +73,26 @@ class NumericChecks {
         view.setText("case (0, 2..4) { next }")
         require(view.hasContextAt("keyword", 0) && view.hasContextAt("keyword", 17),
             "grouped switch range and next highlighting")
+        view.setText("# comment")
+        require(view.hasContextAt("comment", 2), "hash comment highlighting")
+        view.setText("; not a comment")
+        require(!view.hasContextAt("comment", 2), "semicolon is not a comment")
+        view.setText("return(42)")
+        require(view.hasContextAt("keyword", 0) && view.hasContextAt("number", 7),
+            "parenthesized return highlighting")
+        # Exercise the same syntax accepted in editor buffers and generated drivers.
+        dict empty = [:]
+        dict values = [
+            "answer": targetValue(),
+            "empty": empty,
+        ]
+        list sequence = [
+            values["answer"],
+            7,
+        ]
+        require(empty.length == 0 && values.length == 2, "bracket dictionary literals")
+        require(sequence.length == 2 && sequence[0] as int32 == 42,
+            "multiline literals with trailing commas")
         Gtk.MenuBar menu = Gtk.MenuBar()
         int64 parent = menu.addMenu("Numeric")
         NumericChecks target = NumericChecks()
@@ -90,6 +110,7 @@ class NumericChecks {
         print(format("PASS numeric {}", checks))
         Gtk.Application().quit()
     }
+    int32 targetValue() { return(42) }
 }
 
 start {
@@ -131,7 +152,7 @@ def main():
         with headless(args.xvfb, work, env) as gui_env:
             result = invoke([str(executable)], work, gui_env)
         assert result.returncode == 0, result
-        assert result.stdout == "PASS numeric 35" and not result.stderr, result
+        assert result.stdout == "PASS numeric 40" and not result.stderr, result
 
 
 if __name__ == "__main__":

@@ -64,22 +64,22 @@ class ExplorerChecks {
         }
         checks = checks + 1
     }
-    String path(String name) { return System.FileSystem().join(System.FileSystem().getCwd(), name) }
+    String path(String name) { return(System.FileSystem().join(System.FileSystem().getCwd(), name)) }
     ProjectNode find(String name) {
         String expected = path(name)
         int64 i = 0
         while (i < editor.project.nodes.length) {
             ProjectNode node = editor.project.nodes[i] as ProjectNode
-            if (node.path.equals(expected)) { return node }
+            if (node.path.equals(expected)) { return(node) }
             i = i + 1
         }
         int64 id = editor.project.tree.findValue(expected)
-        if (id == 0) { return null }
-        return ProjectNode(editor.project, id, expected, editor.project.tree.data(id))
+        if (id == 0) { return(null) }
+        return(ProjectNode(editor.project, id, expected, editor.project.tree.data(id)))
     }
     bool ready(String name) {
         ProjectNode node = find(name)
-        return node != null && node.complete
+        return(node != null && node.complete)
     }
     void again() {
         require(ExplorerFixture().now() < deadline, "operation deadline")
