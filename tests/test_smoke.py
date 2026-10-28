@@ -1,4 +1,4 @@
-"""Exercise the actual launcher/application and bundled syntax resources."""
+"""Exercise the actual application and bundled syntax resources."""
 
 import argparse
 from pathlib import Path

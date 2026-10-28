@@ -1641,8 +1641,8 @@ class Cedit {
         int64 index = 1
         while (index < process.argc()) {
             String argument = process.arg(index)
-            if (!argument.equals("--test") && !argument.equals("--foreground")) { explicitRequest = true }
-            if (!argument.equals("--test") && !argument.equals("--foreground") && !argument.contains("://") && System.FileSystem().isDir(argument)) {
+            if (!argument.equals("--test")) { explicitRequest = true }
+            if (!argument.equals("--test") && !argument.contains("://") && System.FileSystem().isDir(argument)) {
                 openRootArgument(argument)
             } else { openFile(argument) }
             index = index + 1
@@ -1666,7 +1666,6 @@ class Cedit {
         if (process.argc() > 1 && process.arg(1).equals("--test")) {
             Gtk.Application().post(testAction)
         }
-        Gtk.Application().ready()
     }
 
     void<> commandAction(String command) {
@@ -2918,7 +2917,7 @@ class Cedit {
     }
 
     EditorDocument openDocument(String requestedPath) {
-        if (requestedPath.equals("") || requestedPath.equals("--test") || requestedPath.equals("--foreground")) {
+        if (requestedPath.equals("") || requestedPath.equals("--test")) {
             return(null)
         }
         if (requestedPath.contains("://")) {

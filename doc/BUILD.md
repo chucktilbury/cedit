@@ -187,7 +187,7 @@ settings.toml exists and `CWHIP_SDK` is unset; the installed SDK still requires
 Python 3.11+ for its CMake/package tooling. A non-empty `CWHIP_SDK` bypasses
 the settings file and config-home checks entirely, even if they are malformed.
 
-cedit-owned launcher and SDK-selection parser failures use
+cedit-owned SDK-selection parser failures use
 `cedit: error[CEDITxxxx]: explanation`. Setup matches the shared template's
 plain-text diagnostics; diagnostics go to stderr and setup usage errors
 return 2. CMake's own package-discovery output remains intact.
@@ -248,8 +248,7 @@ CMake remains available: `cmake -S . -B build -DCWHIP_BIN_DIR=/path/to/bin`
 then `cmake --build build`. Use a separate build tree when needed; setup
 always configures the default `build/` tree.
 
-Run `bin/cedit` or `/path/to/cedit/bin/cedit`. Its native launcher finds
-`cedit.bin` beside its real executable, and the application finds installed
+Run `bin/cedit` or `/path/to/cedit/bin/cedit`. The application finds installed
 SourceView language definitions relative to that executable. The application
 prefix may be moved as a whole. The compiler SDK is a build-time dependency,
 not a runtime source-checkout dependency; system GTK/SourceView libraries
@@ -262,8 +261,7 @@ version or non-GUI SDKs fail at configure time. Builds use the SDK's
 module overrides. Intermediates remain in the binary tree; executables go to
 project-root `bin/`, native libraries to `lib/`, and SourceView resources to
 sibling `share/`. These output directories are not created by configuration.
-The native launcher builds privately and is staged alongside `cedit.bin` only
-at build time. `clean` removes generated outputs, not application source;
+`clean` removes generated outputs, not application source;
 rebuilds recreate removed working directories and resources.
 
 Override output directories with `-DCWHIP_BIN_DIR=/absolute/prefix/bin` and

@@ -35,7 +35,6 @@ without a template dependency or synchronization step.
 ## Source
 
 - `src/cedit.cw` — editor application
-- `src/launcher.c` — application launcher
 - `src/cwhip-shortcuts.conf` — legacy shortcut configuration import
 - `CEDIT.md` — current build, behavior and configuration notes
 

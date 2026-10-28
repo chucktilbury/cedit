@@ -20,7 +20,7 @@ def main() -> None:
         command = [args.cmake, "--build", str(args.build), "--target", "cedit"]
         subprocess.run(command, check=True, env=env, timeout=80)
         assert args.executable.name == "cedit", args.executable
-        outputs = (args.executable, args.executable.with_name("cedit.bin"), args.compiler)
+        outputs = (args.executable, args.compiler)
         before = [path.stat().st_mtime_ns for path in outputs]
         subprocess.run(command, check=True, env=env, timeout=80)
         after = [path.stat().st_mtime_ns for path in outputs]
