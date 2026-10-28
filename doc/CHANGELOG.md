@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Highlight C, Python, and the other GtkSourceView language specs installed
+  with the SDK. `.cw` stays on the bundled Cwhip definition. Untitled buffers,
+  `.txt` files, and unrecognized names stay plain text.
 - Keep `project()` on the C language so CMake still records `CMAKE_BUILD_TYPE`
   after the launcher source was removed.
 - Run the editor as one foreground executable named `cedit`. Remove the native
