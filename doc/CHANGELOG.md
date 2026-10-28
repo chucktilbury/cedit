@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep `project()` on the C language so CMake still records `CMAKE_BUILD_TYPE`
+  after the launcher source was removed.
 - Run the editor as one foreground executable named `cedit`. Remove the native
   launcher, `cedit.bin`, and `--foreground`. Install that program as `bin/cedit`.
 - Match the template setup and project environment byte-for-byte: accept
