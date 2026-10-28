@@ -122,7 +122,7 @@ def main():
                      input="cd / && build cedit && printf 'BUILD_RETURNED\\n'\nexit $?\n")
         assert "BUILD_RETURNED" in result.stdout, result
         assert not marker.exists()
-        outputs = [source / "bin/cedit", source / "bin/cedit.bin",
+        outputs = [source / "bin/cedit",
                    source / "share/cwhip/modules/sourceview/0.1.0/language-specs/cwhip.lang"]
         before = [path.stat().st_mtime_ns for path in outputs]
         result = run([setup], cwd=work, env=env,
@@ -163,7 +163,6 @@ def main():
         assert not private.exists()
         run(cmake, cwd=work, env=env)
         assert (private / "bin/cedit").is_file()
-        assert (private / "bin/cedit.bin").is_file()
         assert (private / "share/cwhip/modules/sourceview/0.1.0/language-specs/cwhip.lang").is_file()
         run(["python3", str(source / "tests/test_smoke.py"),
              "--executable", str(private / "bin/cedit"), "--xvfb", args.xvfb,
@@ -179,7 +178,6 @@ def main():
             env=dict(env, DESTDIR=str(default_stage)))
         staged_app = default_stage / install_prefix.lstrip("/")
         assert (staged_app / "bin/cedit").is_file()
-        assert (staged_app / "bin/cedit.bin").is_file()
         run(["python3", str(source / "tests/test_smoke.py"),
              "--executable", str(staged_app / "bin/cedit"),
              "--xvfb", args.xvfb,

@@ -99,19 +99,13 @@ cedit and native packages together; old SDK binaries are incompatible.
 For continuity, cedit retains `$XDG_CONFIG_HOME/cwhip/settings.toml` (or
 `$HOME/.config/cwhip/settings.toml`), the `cwhip-shortcuts.conf` legacy import,
 and `.cwhip/project.toml` and `.cwhip/workspace.toml` project data.
-It also retains the `org.cw.Editor` application ID for single-instance forwarding
-and the internal `CWHIP_EDITOR_READY_FD` GTK launcher handshake. No user data
-is moved or rewritten as part of the rename.
+It also retains the `org.cw.Editor` application ID for single-instance forwarding.
+No user data is moved or rewritten as part of the rename.
 
-`cedit` starts the GUI in the background and returns the shell prompt
-only after initialization and window presentation. Startup failures remain
-visible on stderr and return a nonzero exit status; startup has a 30-second
-readiness deadline. The window appears normally, not minimized or hidden.
-Use `cedit --foreground ...` when a debugger, script, or test needs to
-own the GUI process and wait for its exit. `--test` also stays in the foreground.
-The launcher and sibling `cedit.bin` must stay together; directly running
-the compiled `.bin` (or compiling the Cwhip source yourself) stays foreground.
-GUI diagnostics continue to use the launching terminal's stdout/stderr.
+`cedit` stays in the foreground until the editor exits. Startup failures remain
+visible on stderr and return a nonzero exit status. The window appears normally,
+not minimized or hidden. `--test` runs the built-in test action in that same
+process. GUI diagnostics continue to use the launching terminal's stdout/stderr.
 
 ## Diagnostics
 
@@ -121,7 +115,7 @@ cedit-owned CLI and GUI failures use the shared
 its plain-text diagnostics; its usage errors return 2. CLI diagnostics go to
 stderr, and other failures retain their existing
 nonzero exit behavior. Codes identify stable reporting boundaries: `CEDIT0001`
-for usage/startup invocation, `CEDIT0002` for launcher readiness, `CEDIT1001`
+for usage/startup invocation, `CEDIT1001`
 and `CEDIT1002` for document open/save, `CEDIT2001` and `CEDIT2002` for settings
 and project metadata, and `CEDIT3001` for process/configuration failures.
 GUI file and project failures keep the affected path and reason visible and

@@ -7,9 +7,7 @@ aborted with "cannot release an in-flight registration".
 
 import argparse
 import ctypes
-import os
 from pathlib import Path
-import shutil
 import subprocess
 import tempfile
 import time
@@ -152,7 +150,7 @@ def scenario(executable: Path, work: Path, env: dict[str, str], name: str, actio
         settings = case / "config/cwhip/settings.toml"
         settings.parent.mkdir(parents=True, exist_ok=True)
         settings.write_text("version = 1\n[editor]\nsave_on_window_loss = true\n")
-    process = subprocess.Popen([str(executable), "--foreground", "a.txt", "b.txt"], cwd=case, env=case_env,
+    process = subprocess.Popen([str(executable), "a.txt", "b.txt"], cwd=case, env=case_env,
                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     display = Display(env["DISPLAY"])
     try:
@@ -236,61 +234,18 @@ def focus_save(display: Display, process: subprocess.Popen, case: Path) -> None:
     finish(process, expect_running=False)
 
 
-def background_startup(executable: Path, work: Path, env: dict[str, str]) -> None:
-    """Reap the detached GUI explicitly instead of leaking a test process."""
-    libc = ctypes.CDLL(None)
-    assert libc.prctl(36, 1, 0, 0, 0) == 0  # PR_SET_CHILD_SUBREAPER (Linux)
-    children_path = Path(f"/proc/{os.getpid()}/task/{os.getpid()}/children")
-    before = set(children_path.read_text().split())
-    case = work / "background"
+
+def display_failure(executable: Path, work: Path, env: dict[str, str]) -> None:
+    """A missing display fails in the editor process."""
+    case = work / "display-failure"
     case.mkdir(parents=True, exist_ok=True)
-    (case / "a.txt").write_text("hello\n")
-    display = Display(env["DISPLAY"])
-    child = None
-    with (case / "output.log").open("w+") as output:
-        process = subprocess.Popen([str(executable), "a.txt"], cwd=case, env=env,
-                                   stdin=subprocess.DEVNULL, stdout=output, stderr=output)
-        try:
-            assert process.wait(timeout=20) == 0, "launcher failed"
-            children = set(children_path.read_text().split()) - before
-            gui = [int(pid) for pid in children
-                   if Path(f"/proc/{pid}/exe").resolve() == executable.with_name("cedit.bin")]
-            if gui:
-                child = gui[0]
-            assert len(gui) == 1, children
-            assert os.kill(child, 0) is None, "GUI child did not survive launcher exit"
-            display.focus_editor()
-            remote = subprocess.run([str(executable)], cwd=case, env=env,
-                                    stdout=output, stderr=output, timeout=20)
-            assert remote.returncode == 0, "forwarded activation reports readiness"
-            display.keys("Control_L+q")
-            deadline = time.monotonic() + 10
-            while time.monotonic() < deadline:
-                pid, status = os.waitpid(child, os.WNOHANG)
-                if pid:
-                    child = None
-                    assert os.waitstatus_to_exitcode(status) == 0, status
-                    break
-                time.sleep(0.05)
-            assert child is None, "background GUI failed to exit normally"
-            output.seek(0)
-            assert output.read() == "", "background startup emitted diagnostics"
-        finally:
-            display.close()
-            if process.poll() is None:
-                process.kill()
-                process.wait()
-            if child is not None:
-                os.kill(child, 9)
-                os.waitpid(child, 0)
     invalid_env = dict(env, DISPLAY=":65530")
     invalid_env.pop("WAYLAND_DISPLAY", None)
     failure = subprocess.run([str(executable)], cwd=case, env=invalid_env,
                              capture_output=True, text=True, timeout=20)
     assert failure.returncode != 0 and "display unavailable" in failure.stderr, failure
-    assert "cedit: error[CEDIT0002]:" in failure.stderr, failure
-    print("PASS background_startup")
-
+    assert "CEDIT0002" not in failure.stderr, failure
+    print("PASS display_failure")
 
 def main() -> None:
     parser = argparse.ArgumentParser()
@@ -305,17 +260,7 @@ def main() -> None:
         env = environment(work)
         env.pop("WAYLAND_DISPLAY", None)
         env["GDK_BACKEND"] = "x11"
-        isolated = work / "launcher-without-application"
-        isolated.mkdir(exist_ok=True)
-        missing_app_launcher = isolated / "cedit"
-        shutil.copy2(executable, missing_app_launcher)
-        failure = subprocess.run([str(missing_app_launcher), "--foreground"],
-                                 cwd=work, env=env, capture_output=True, text=True,
-                                 timeout=20)
-        assert failure.returncode == 1 and not failure.stdout, failure
-        assert "cedit: error[CEDIT3001]:" in failure.stderr, failure
-        with headless(args.xvfb, work, env) as gui_env:
-            background_startup(executable, work, gui_env)
+        display_failure(executable, work, env)
         for name, action in (("close_tabs", close_tabs), ("dirty_close", dirty_close),
                              ("quit_shortcut", quit_shortcut),
                              ("quit_after_close", quit_after_close),

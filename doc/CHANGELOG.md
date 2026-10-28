@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Run the editor as one foreground executable named `cedit`. Remove the native
+  launcher, `cedit.bin`, and `--foreground`. Install that program as `bin/cedit`.
 - Match the template setup and project environment byte-for-byte: accept
   `--clean` in either argument order and expose `build`/`rebuild` as shell
   functions, retaining the standalone `clean` command. Support settings-file

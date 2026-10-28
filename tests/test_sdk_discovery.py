@@ -75,8 +75,8 @@ class SdkDiscoveryTests(unittest.TestCase):
             'function(cwhip_add_program name)\n'
             '    add_custom_target("${name}")\n'
             '    set_target_properties("${name}" PROPERTIES\n'
-            '        CWHIP_EXECUTABLE "${CMAKE_BINARY_DIR}/cedit.bin")\n'
-            '    file(WRITE "${CMAKE_BINARY_DIR}/cedit.bin" "mock executable\\n")\n'
+            '        CWHIP_EXECUTABLE "${CMAKE_BINARY_DIR}/cedit")\n'
+            '    file(WRITE "${CMAKE_BINARY_DIR}/cedit" "mock executable\\n")\n'
             'endfunction()\n'
         )
         (package / "CwhipConfigVersion.cmake").write_text(
@@ -417,7 +417,7 @@ class SdkDiscoveryTests(unittest.TestCase):
         )
         self.assertEqual(install.returncode, 0, install.stdout + install.stderr)
         self.assertTrue((install_prefix / "bin/cedit").is_file())
-        self.assertTrue((install_prefix / "bin/cedit.bin").is_file())
+        self.assertFalse((install_prefix / "bin/cedit.bin").exists())
 
     def test_missing_settings_preserves_prefix_discovery(self):
         self.run_configure(extra=(
