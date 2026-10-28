@@ -31,13 +31,13 @@ Conditional chains use `else(condition) { ... }`, not `else if`.
 The SDK's conditional-chain support is tracked in
 [chucktilbury/cwhip#38](https://github.com/chucktilbury/cwhip/pull/38).
 cedit has no type-keyword completion list; bracket/quote auto-completion is
-unchanged. Highlighting is enabled only for recognized source files: a document's
-language is chosen from its `.cw` file suffix and selects `cwhip`,
-and untitled documents, `.txt` files, and other unrecognized names are plain
-text. Save As re-evaluates the language for the new name. Additional languages
-are added by installing a GtkSourceView `<id>.lang` definition in the
-sourceview package (see [GTK source editing](https://github.com/chucktilbury/cwhip/blob/master/doc/GTK.md#language-definitions));
-only Cwhip is shipped. Documents are represented separately from notebook pages; opening an
+unchanged. Highlighting follows the file name. `.cw` uses the bundled `cwhip`
+definition. Other names use the GtkSourceView language specs installed with
+the SDK, so C, Python, and the other host definitions are highlighted.
+Untitled documents, `.txt` files, and unrecognized names stay plain text.
+Save As re-evaluates the language for the new name. See
+[GTK source editing](https://github.com/chucktilbury/cwhip/blob/master/doc/GTK.md#language-definitions).
+Documents are represented separately from notebook pages; opening an
 already-open path selects its existing tab. `openDocument(path)` returns the
 existing or newly opened document independently of selection, and
 `activateDocument(document)` selects its tab; Project Explorer uses
