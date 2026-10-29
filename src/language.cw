@@ -161,6 +161,18 @@ class LanguageClient {
         return(value)
     }
 
+    EditorDocument documentForUri(String uri) {
+        int64 index = 0
+        while (index < editor.documents.length) {
+            EditorDocument document = editor.documents[index] as EditorDocument
+            if (!document.path.equals("") && fileUri(document.path).equals(uri)) {
+                return(document)
+            }
+            index = index + 1
+        }
+        return(null)
+    }
+
     void accept(String body) {
         if (body.contains("\"id\":1") && body.contains("\"result\"")) {
             ready = true
@@ -176,29 +188,35 @@ class LanguageClient {
         int64 uriAt = body.find("\"uri\":\"")
         if (uriAt < 0) { return }
         String uri = readString(body, uriAt + 7)
-        EditorDocument document = editor.currentDocument()
-        if (document == null || !fileUri(document.path).equals(uri)) { return }
+        EditorDocument document = documentForUri(uri)
+        if (document == null) { return }
+        document.view.clearLineMarks("diagnostic")
         String lines = ""
-        int64 cursor = 0
         int64 count = 0
-        while (cursor < body.length) {
-            int64 messageAt = body.find("\"message\":\"")
-            if (messageAt < 0 || messageAt < cursor) { break }
-            String message = readString(body, messageAt + 11)
-            int64 lineAt = body.find("\"line\":")
+        String rest = body
+        while (true) {
+            int64 messageAt = rest.find("\"message\":\"")
+            if (messageAt < 0) { break }
+            String message = readString(rest, messageAt + 11)
             int64 line = 0
+            int64 lineAt = rest.find("\"line\":")
             if (lineAt >= 0 && lineAt < messageAt) {
-                line = leadingInteger(byteSpan(body, lineAt + 7, messageAt).trim()) + 1
+                line = leadingInteger(byteSpan(rest, lineAt + 7, messageAt).trim()) + 1
+            }
+            if (line > 0) {
+                document.view.addLineMarkTooltip("diagnostic", line, message)
             }
             if (count > 0) { lines.append("\n") }
             lines.append(format("{}:{}: {}", document.baseName, line, message))
             count = count + 1
-            body = byteSpan(body, messageAt + 11, body.length)
-            cursor = 0
+            rest = byteSpan(rest, messageAt + 11, rest.length)
         }
-        diagnostics = lines
-        editor.diagnostics.setText(lines)
-        editor.diagnostics.setVisible(!lines.equals(""))
+        EditorDocument current = editor.currentDocument()
+        if (current == document) {
+            diagnostics = lines
+            editor.diagnostics.setText(lines)
+            editor.diagnostics.setVisible(!lines.equals(""))
+        }
     }
 
     int64 leadingInteger(String text) {

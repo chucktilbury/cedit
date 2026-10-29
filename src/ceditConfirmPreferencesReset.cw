@@ -120,6 +120,34 @@ void Cedit.languageFlush() {
         client.sendChange(currentDocument())
     }
 
+void Cedit.scheduleDiskPoll() {
+        if (!presented || window == null || window.disposed()) { return }
+        Gtk.Application().schedule(2000, diskPollAction)
+    }
+
+void Cedit.diskPoll() {
+        if (!presented || window == null || window.disposed()) { return }
+        checkDiskChange()
+        scheduleDiskPoll()
+    }
+
+void Cedit.openRecentPath(String path) {
+        closeRecent()
+        if (commandsBlocked()) { return }
+        openFile(path)
+    }
+
+bool Cedit.hideRecent() {
+        closeRecent()
+        return(true)
+    }
+
+void Cedit.closeRecent() {
+        if (recentWindow != null && !recentWindow.disposed()) {
+            recentWindow.setVisible(false)
+        }
+    }
+
 void Cedit.syncViewMenu() {
         if (menu == null) { return }
         syncingView = true

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- File > Recent opens a chooser of session files. Right-click the edit pane for
+  Reload. Right-click Project and Files for Refresh. External disk edits are
+  polled while a file is open. Language-server diagnostics mark, underline,
+  and tooltip the reported lines.
 - Split the editor into class and method files under `src/`. The session
   class stays in `src/cedit.cw` and includes the rest.
 - Add File > Reload, a sidebar Close button, and a Files page beside the

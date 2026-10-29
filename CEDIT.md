@@ -153,7 +153,8 @@ identities unchanged. Open/read/write/flush/close failures appear in the status
 line; Open failures from the chooser or binary files also show a modal error
 dialog parented to the editor window. The editor supports local filesystem paths; nonlocal chooser URIs are
 explicitly rejected rather than interpreted as cancellation.
-**Recent** reopens the last unique file added to the session history.
+**Recent** opens a list of files opened or saved in this session (most recent
+first, up to 20). Choosing a path opens that file.
 Command-line file arguments open tabs at startup.
 
 **File > Save All** (`<Control><Alt>s`) saves every modified document with an
@@ -208,9 +209,10 @@ Default shortcuts use GTK trigger notation: `<Control>s` saves,
 and `<Control><Shift>z` redoes. `<Control><Shift>s` opens Save As,
 `<Control>w` closes the active tab, `<Control><Shift>w` closes every tab, and
 `<Control>q` requests Quit. **File > Reload** reads the active file from disk.
-A clean, unchanged buffer reports that it is already current. A modified
-buffer, or one whose file changed underneath the editor, asks to Reload, Save,
-or Close.
+Right-click the edit pane for the same **Reload**. A clean, unchanged buffer
+reports that it is already current. A modified buffer, or one whose file
+changed underneath the editor, asks to Reload, Save, or Close. The editor also
+checks the file on disk every few seconds while it is open.
 `<Control>x`, `<Control>c`, `<Control>v`, and `<Control>a` perform Cut, Copy,
 Paste, and Select All. `<Control><Alt>s` saves all modified named documents,
 and `<Control>comma` opens Preferences. Menus and configurable
@@ -257,20 +259,23 @@ saved with the workspace. The Explorer does not rename or delete files.
 
 The sidebar is a notebook. **Project** is the project tree. **Files** is a
 second tree rooted at the project folder, or at the current directory when no
-project is open. **Close** on the sidebar hides it and remembers the width.
+project is open. Right-click either tree for **Refresh** and **Show Hidden**.
+**Close** on the sidebar hides it and remembers the width.
 **View > Show Project Manager** shows it again. Giving a named file tab focus,
-or returning focus to the window, compares the buffer's last loaded text with
-the file on disk. When they differ, the editor asks to Reload, Save, or Close.
+returning focus to the window, or the periodic disk check compares the
+buffer's last loaded text with the file on disk. When they differ, the editor
+asks to Reload, Save, or Close.
 
 ## Language server
 
 Preferences stores `editor.lsp_command`. An empty command turns the client
 off. `cwhip-lsp` talks to the Cwhip language server. `clangd` talks to clangd.
 Any other command is split on spaces and started as that server. The editor
-keeps a full copy of each named buffer and shows `textDocument/publishDiagnostics`
-under the document when the server reports any. The line stays hidden when it
-is empty. Restart the command by editing the preference; it is saved
-with the other editor settings.
+keeps a full copy of each named buffer. `textDocument/publishDiagnostics`
+marks each reported line in the gutter, underlines it, tints the background,
+and shows the message on mouseover. A summary line under the document lists
+the same messages and stays hidden when empty. Restart the command by editing
+the preference; it is saved with the other editor settings.
 
 ## View
 
