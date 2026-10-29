@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Language-server diagnostics no longer show or hide a strip under the document,
+  so the window does not resize when they arrive. Marks, tooltips, and the
+  status line still report them.
 - Keep the native edit-pane Cut/Copy/Paste menu and add Reload to it. Project
   and Files right-click menus are native menu rows for Refresh and Show Hidden.
 - File > Recent opens a chooser of session files. External disk edits are

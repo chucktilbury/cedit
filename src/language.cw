@@ -211,11 +211,20 @@ class LanguageClient {
             count = count + 1
             rest = byteSpan(rest, messageAt + 11, rest.length)
         }
+        diagnostics = lines
+        if (editor.diagnostics != null) { editor.diagnostics.setText(lines) }
         EditorDocument current = editor.currentDocument()
         if (current == document) {
-            diagnostics = lines
-            editor.diagnostics.setText(lines)
-            editor.diagnostics.setVisible(!lines.equals(""))
+            if (count == 0) {
+                if (editor.status.text().contains("diagnostic")) {
+                    editor.status.setText("Ready")
+                }
+            } else {
+                if (count == 1) { editor.status.setText(lines) }
+                else {
+                    editor.status.setText(format("{} diagnostics (see marked lines)", count))
+                }
+            }
         }
     }
 
