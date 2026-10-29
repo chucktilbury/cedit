@@ -476,13 +476,15 @@ Cwhip repository shown there.
 ## Preferences and settings
 
 **Edit > Preferences...** or **Ctrl+,** opens a non-modal window with Editor,
-Keyboard, and Startup navigation on the left. Closing it hides it; reopening
-preserves the selected page. Changes apply immediately to all open documents
-and to subsequently created/opened documents, without changing file contents,
-modified state, language detection, or search options. The Editor page has
-**Configure Project...** when a project is open, and **Save to global settings**.
-When that checkbox is off, preferences write to `.cedit/settings.toml` under
-the project root or current folder instead of the global file.
+Keyboard, Project, and Startup navigation on the left. Closing it hides it;
+reopening preserves the selected page. Changes apply immediately to all open
+documents and to subsequently created/opened documents, without changing file
+contents, modified state, language detection, or search options. **Project**
+opens Configure Project when a project is open (same size as the other
+category buttons). Preferences always use the full settings schema under
+`.cedit/settings.toml` for the active project or folder; local settings take
+precedence. **Save to global settings** also copies the current preferences
+into the global template used to seed new directories.
 
 The **Editor** page controls an installed monospace font family (or the generic
 `monospace`), font size, tab width, insertion of spaces vs tabs, line numbers,
@@ -523,11 +525,14 @@ binding unless its default would conflict. Each section's **Reset to Defaults**
 requires **Confirm Reset**; **Cancel** changes nothing. Named command
 shortcuts are configurable; GTK's ordinary text navigation remains native.
 
-With **Save to global settings** checked, preferences save automatically to
-`$XDG_CONFIG_HOME/cwhip/settings.toml`, or `$HOME/.config/cwhip/settings.toml`
-when XDG_CONFIG_HOME is unset/empty. Unchecked, they save to
-`.cedit/settings.toml` in the active project or folder. Opening a root that
-already has that local file loads it. Settings in older product-named
+Preferences save automatically to `.cedit/settings.toml` in the active project
+or folder. That local file uses the same schema as the global template at
+`$XDG_CONFIG_HOME/cwhip/settings.toml` (or `$HOME/.config/cwhip/settings.toml`
+when XDG_CONFIG_HOME is unset/empty). Starting in a directory without a local
+file replicates the global template there. Opening a root that already has a
+local file loads it instead. **Save to global settings** keeps writing the
+local file and also updates the global template. Startup reopen of the last
+project is remembered in the global template. Settings in older product-named
 directories are ignored and left untouched; the editor does not copy or
 migrate them.
 The config root must be absolute. The settings file is user-editable UTF-8 TOML,

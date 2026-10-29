@@ -2,8 +2,10 @@
 
 ## Unreleased
 
-- Preferences can open Configure Project, and a checkbox chooses global
-  `settings.toml` vs project/folder `.cedit/settings.toml`.
+- Preferences navigation is Editor, Keyboard, Project, Startup. Project opens
+  Configure Project. Each folder uses a full `.cedit/settings.toml` seeded
+  from the global template, with local precedence; an optional checkbox also
+  updates the global defaults.
 - File > Recent is a submenu; the sidebar close control is a flat X; View has
   Show Line Ends.
 - The project sidebar cannot be dragged to zero width, and the editor notebook

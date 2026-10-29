@@ -35,6 +35,7 @@ void Cedit.activate() {
         confirmOp = ""
         overrideRows = []
         hasAutomaticSaveErrors = false
+        mirrorGlobal = false
         settings = CeditSettings()
         int64 commandIndex = 0
         while (commandIndex < settings.commands.length) {
@@ -218,6 +219,11 @@ void Cedit.activate() {
         window.onFocusChanged(_self().windowFocusChanged)
 
         System.Process process = System.Process()
+        ensureGlobalSettingsFile()
+        // Startup reopen comes from the global template before a local folder is adopted.
+        bool reopen = settings.reopenLast
+        String lastRoot = settings.lastRoot
+        adoptSettingsRoot(System.FileSystem().getCwd())
         bool explicitRequest = false
         int64 index = 1
         while (index < process.argc()) {
@@ -228,10 +234,9 @@ void Cedit.activate() {
             } else { openFile(argument) }
             index = index + 1
         }
-        adoptSettingsRoot(System.FileSystem().getCwd())
         // Explicit files or folders on the command line take precedence over reopening.
-        if (!explicitRequest && settings.reopenLast && !settings.lastRoot.equals("")) {
-            CwhipProject last = loadProject(settings.lastRoot, "Could not reopen last project")
+        if (!explicitRequest && reopen && !lastRoot.equals("")) {
+            CwhipProject last = loadProject(lastRoot, "Could not reopen last project")
             if (last != null) { activateProject(last, true) }
         }
         if (notebook.pageCount() == 0) {

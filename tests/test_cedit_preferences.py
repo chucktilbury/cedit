@@ -276,8 +276,8 @@ class PreferencesChecks {
         }
         if (mode.equals("old-settings")) {
             require(editor.settings.fontSize == 12 &&
-                editor.settings.path.contains("cwhip/settings.toml"), "old settings path is ignored")
-            require(!System.FileSystem().exists(editor.settings.path), "old settings are not copied")
+                editor.settings.path.contains(".cedit/settings.toml"), "old settings path is ignored")
+            require(System.FileSystem().exists(editor.settings.path), "local settings are seeded from global")
             editor.quitAction()
             print(format("PASS old-settings {}", checks))
             return
@@ -300,7 +300,9 @@ class PreferencesChecks {
         }
         if (mode.equals("quit-saving") || mode.equals("fallback")) {
             editor.showPreferences()
-            require(!System.FileSystem().exists(editor.settings.path), "first run does not write until edited")
+            require(System.FileSystem().exists(editor.settings.path) &&
+                editor.settings.path.contains(".cedit/settings.toml"),
+                "new directory is seeded with local settings")
             editor.sizeEntry.setText("20")
             require(editor.savePending, "asynchronous save queued")
             editor.quitAction()
@@ -571,9 +573,12 @@ def main():
                 assert path.read_text() == config, "invalid settings clobbered"
             if name == "old-settings":
                 assert old_settings.read_text() == "version = 1\n[editor]\nfont_size = 16\n"
-                assert not path.exists(), "old settings were copied to the new path"
+                assert (case / ".cedit/settings.toml").exists(), "local settings were not seeded"
             if name == "old-shortcuts":
                 assert old_shortcuts.read_text() == "<Control><Alt>e=save\n"
+            local = case / ".cedit/settings.toml"
+            if local.exists() and not name.startswith("invalid"):
+                return local
             return path
 
         if selected("ui"):

@@ -81,8 +81,6 @@ class CeditSettings {
         load()
     }
 
-    bool saveToGlobal() { return(path.equals(globalPath)) }
-
     String localPath(String root) {
         return(System.FileSystem().join(root, ".cedit/settings.toml"))
     }

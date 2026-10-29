@@ -49,12 +49,15 @@ void Cedit.createPreferences() {
         Gtk.Box categories = Gtk.Box(Gtk.Box.VERTICAL, 6)
         Gtk.Button editorCategory = Gtk.Button("Editor")
         Gtk.Button keyboardCategory = Gtk.Button("Keyboard")
+        configureProjectButton = Gtk.Button("Project")
         Gtk.Button startupCategory = Gtk.Button("Startup")
         categories.append(editorCategory)
         categories.append(keyboardCategory)
+        categories.append(configureProjectButton)
         categories.append(startupCategory)
         editorCategory.onClicked(_self().showEditorPreferences)
         keyboardCategory.onClicked(_self().showKeyboardPreferences)
+        configureProjectButton.onClicked(_self().showProjectPreferences)
         startupCategory.onClicked(_self().showStartupPreferences)
         content.append(categories)
         Gtk.Box pages = Gtk.Box(Gtk.Box.VERTICAL, 8)
@@ -65,14 +68,11 @@ void Cedit.createPreferences() {
         editorPreferences.append(Gtk.Label("Editor"))
         projectNote = Gtk.Label("")
         editorPreferences.append(projectNote)
-        configureProjectButton = Gtk.Button("Configure Project...")
-        configureProjectButton.onClicked(_self().showConfigure)
-        editorPreferences.append(configureProjectButton)
         fontEntry = preferenceEntry(editorPreferences, "Monospace font family", settings.fontFamily)
         sizeEntry = preferenceEntry(editorPreferences, "Font size (6-72 pt)", format("{}", settings.fontSize))
         tabsEntry = preferenceEntry(editorPreferences, "Tab width (1-16 columns)", format("{}", settings.tabWidth))
         saveGlobalCheck = Gtk.CheckButton("Save to global settings")
-        saveGlobalCheck.setActive(settings.saveToGlobal())
+        saveGlobalCheck.setActive(mirrorGlobal)
         saveGlobalCheck.onToggled(_self().saveGlobalChanged)
         editorPreferences.append(saveGlobalCheck)
         spacesCheck = preferenceCheck("Insert spaces instead of tabs", settings.insertSpaces)
@@ -180,11 +180,6 @@ void Cedit.refreshProjectNote() {
 void Cedit.refreshSettingsPathLabel() {
         if (settingsPathLabel == null) { return }
         settingsPathLabel.setText(format("Automatically saved to {}", settings.path))
-        if (saveGlobalCheck != null && !refreshingPreferences) {
-            refreshingPreferences = true
-            saveGlobalCheck.setActive(settings.saveToGlobal())
-            refreshingPreferences = false
-        }
     }
 
 String Cedit.settingsRoot() {
@@ -192,36 +187,68 @@ String Cedit.settingsRoot() {
         return(System.FileSystem().getCwd())
     }
 
+void Cedit.ensureGlobalSettingsFile() {
+        if (System.FileSystem().isFile(settings.globalPath)) { return }
+        if (!settings.path.equals(settings.globalPath)) { return }
+        if (!settings.errors.equals("")) { return }
+        String text = settings.serialize()
+        if (!writeSettingsFile(settings.globalPath, text)) { return }
+        settings.original = text
+        persistedText = text
+    }
+
+bool Cedit.writeSettingsFile(String path, String text) {
+        String directory = System.FileSystem().dirname(path)
+        if (!makeSettingsDirectory(directory)) { return(false) }
+        System.File output = null
+        try { output = System.File(path, "w") }
+        except(Exception) { return(false) }
+        int64 written = output.write(text)
+        String writeError = System.System().lastError()
+        if (written != text.length) {
+            output.close()
+            return(false)
+        }
+        output.flush()
+        String flushError = System.System().lastError()
+        output.close()
+        String closeError = System.System().lastError()
+        if (!writeError.equals("") || !flushError.equals("") || !closeError.equals("")) { return(false) }
+        return(true)
+    }
+
+void Cedit.writeStartupToGlobal() {
+        String disk = readSettingsDisk(settings.globalPath)
+        String patch = format("version = 1\n[project]\nreopen_last = {}\nlast_root = {}\n",
+            settings.reopenLast, Gtk.Config().quote(settings.lastRoot))
+        writeSettingsFile(settings.globalPath, Gtk.Config().merge(disk, patch))
+    }
+
 void Cedit.adoptSettingsRoot(String root) {
         if (root.equals("")) { return }
         String local = settings.localPath(root)
-        if (System.FileSystem().isFile(local)) {
-            if (!settings.path.equals(local)) {
-                settings.path = local
-                settings.errors = ""
-                settings.writable = true
-                settings.resetEditor()
-                settings.resetKeyboard()
-                settings.load()
-                persistedText = settings.original
-                reapplyDocumentSettings()
-                syncViewMenu()
-                refreshSettingsPathLabel()
+        if (!System.FileSystem().isFile(local)) {
+            ensureGlobalSettingsFile()
+            String seed = readSettingsDisk(settings.globalPath)
+            // Only invent a template when the global file is truly missing, not unreadable.
+            if (seed.equals("") && settings.path.equals(settings.globalPath) &&
+                settings.errors.equals("") && !System.FileSystem().isFile(settings.globalPath)) {
+                seed = settings.serialize()
             }
-            return
+            if (!seed.equals("")) { writeSettingsFile(local, seed) }
         }
-        if (!settings.saveToGlobal()) {
-            settings.path = settings.globalPath
-            settings.errors = ""
-            settings.writable = true
-            settings.resetEditor()
-            settings.resetKeyboard()
-            settings.load()
-            persistedText = settings.original
-            reapplyDocumentSettings()
-            syncViewMenu()
-            refreshSettingsPathLabel()
-        }
+        if (!System.FileSystem().isFile(local)) { return }
+        if (settings.path.equals(local)) { return }
+        settings.path = local
+        settings.errors = ""
+        settings.writable = true
+        settings.resetEditor()
+        settings.resetKeyboard()
+        settings.load()
+        persistedText = settings.original
+        reapplyDocumentSettings()
+        syncViewMenu()
+        refreshSettingsPathLabel()
     }
 
 void Cedit.reopenChanged(bool active) {
@@ -230,6 +257,7 @@ void Cedit.reopenChanged(bool active) {
         settings.lastRoot = ""
         if (active && activeProject != null) { settings.lastRoot = activeProject.root }
         settingsChanged()
+        writeStartupToGlobal()
     }
 
 void Cedit.persistSettings() {
@@ -241,6 +269,7 @@ void Cedit.rememberProject(String root) {
         if (settings.reopenLast && !settings.lastRoot.equals(root)) {
             settings.lastRoot = root
             persistSettings()
+            writeStartupToGlobal()
         }
     }
 
@@ -248,6 +277,7 @@ void Cedit.forgetProject(String root) {
         if (settings.lastRoot.equals(root)) {
             settings.lastRoot = ""
             persistSettings()
+            writeStartupToGlobal()
         }
     }
 
@@ -290,6 +320,11 @@ void Cedit.showKeyboardPreferences() {
         keyboardPreferences.setVisible(true)
         startupPreferences.setVisible(false)
         preferencesWindow.present()
+    }
+
+void Cedit.showProjectPreferences() {
+        if (activeProject == null || commandsBlocked()) { return }
+        showConfigure()
     }
 
 void Cedit.showStartupPreferences() {
@@ -362,16 +397,18 @@ void Cedit.editorSettingChanged(String text) {
 
 void Cedit.saveGlobalChanged(bool active) {
         if (refreshingPreferences) { return }
-        if (active == settings.saveToGlobal()) {
-            refreshSettingsPathLabel()
-            return
+        mirrorGlobal = active
+        if (active) {
+            String text = settings.serialize()
+            if (!writeSettingsFile(settings.globalPath, text)) {
+                if (preferencesMessage != null) {
+                    preferencesMessage.setText(diagnostic("CEDIT2001", format(
+                        "Could not update global settings at {}", settings.globalPath)))
+                }
+                return
+            }
         }
-        if (active) { settings.path = settings.globalPath }
-        else { settings.path = settings.localPath(settingsRoot()) }
-        settings.original = readSettingsDisk(settings.path)
-        persistedText = settings.original
         refreshSettingsPathLabel()
-        settingsChanged()
     }
 
 String Cedit.readSettingsDisk(String path) {
