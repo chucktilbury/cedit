@@ -5,6 +5,7 @@ class CeditSettings {
     bool insertSpaces
     bool lineNumbers
     bool showWhitespace
+    bool showLineEnds
     bool showIndentMarkers
     bool showProjectManager
     String lspCommand
@@ -17,6 +18,7 @@ class CeditSettings {
     bool reopenLast
     String lastRoot
     list commands
+    String globalPath
     String path
     String original
     String errors
@@ -55,6 +57,7 @@ class CeditSettings {
             CommandBinding("project-close", "Close project", ""),
             CommandBinding("view-line-numbers", "Show line numbers", ""),
             CommandBinding("view-whitespace", "Show white space", ""),
+            CommandBinding("view-line-ends", "Show line ends", ""),
             CommandBinding("view-indent-markers", "Show indent markers", ""),
             CommandBinding("view-project-manager", "Show project manager", ""),
             CommandBinding("about", "About cedit", "")
@@ -70,11 +73,18 @@ class CeditSettings {
         if (configHome.equals("")) {
             configHome = System.FileSystem().join(System.Process().getEnv("HOME"), ".config")
         }
-        path = System.FileSystem().join(configHome, "cwhip/settings.toml")
+        globalPath = System.FileSystem().join(configHome, "cwhip/settings.toml")
+        path = globalPath
         if (!configHome.startsWith("/")) {
             error("XDG_CONFIG_HOME (or HOME fallback) must be an absolute path")
         }
         load()
+    }
+
+    bool saveToGlobal() { return(path.equals(globalPath)) }
+
+    String localPath(String root) {
+        return(System.FileSystem().join(root, ".cedit/settings.toml"))
     }
 
     void resetEditor() {
@@ -84,6 +94,7 @@ class CeditSettings {
         insertSpaces = true
         lineNumbers = true
         showWhitespace = false
+        showLineEnds = false
         showIndentMarkers = false
         showProjectManager = true
         lspCommand = ""
@@ -296,6 +307,7 @@ class CeditSettings {
         insertSpaces = boolean("insert_spaces", insertSpaces)
         lineNumbers = boolean("line_numbers", lineNumbers)
         showWhitespace = boolean("show_whitespace", showWhitespace)
+        showLineEnds = boolean("show_line_ends", showLineEnds)
         showIndentMarkers = boolean("show_indent_markers", showIndentMarkers)
         showProjectManager = boolean("show_project_manager", showProjectManager)
         String languageServer = value("editor", "lsp_command")
@@ -349,11 +361,11 @@ class CeditSettings {
     }
 
     String serialize() {
-        String text = format("version = 1\n[editor]\nfont_family = {}\nfont_size = {}\ntab_width = {}\ninsert_spaces = {}\nline_numbers = {}\nshow_whitespace = {}\nshow_indent_markers = {}\nshow_project_manager = {}\nlsp_command = {}\nwrap = {}\nhighlight_current_line = {}\nsave_on_tab_loss = {}\nsave_on_window_loss = {}\nstrip_trailing_spaces = {}\nauto_complete_brackets = {}\n[keyboard]\n",
+        String text = format("version = 1\n[editor]\nfont_family = {}\nfont_size = {}\ntab_width = {}\ninsert_spaces = {}\nline_numbers = {}\nshow_whitespace = {}\nshow_line_ends = {}\nshow_indent_markers = {}\nshow_project_manager = {}\nlsp_command = {}\nwrap = {}\nhighlight_current_line = {}\nsave_on_tab_loss = {}\nsave_on_window_loss = {}\nstrip_trailing_spaces = {}\nauto_complete_brackets = {}\n[keyboard]\n",
             Gtk.Config().quote(fontFamily), fontSize, tabWidth, insertSpaces, lineNumbers,
-            showWhitespace, showIndentMarkers, showProjectManager, Gtk.Config().quote(lspCommand),
-            wrap, highlightLine, saveOnTabLoss, saveOnWindowLoss, stripTrailingSpaces,
-            autoCompleteBrackets)
+            showWhitespace, showLineEnds, showIndentMarkers, showProjectManager,
+            Gtk.Config().quote(lspCommand), wrap, highlightLine, saveOnTabLoss, saveOnWindowLoss,
+            stripTrailingSpaces, autoCompleteBrackets)
         int64 i = 0
         while (i < commands.length) {
             CommandBinding binding = commands[i] as CommandBinding

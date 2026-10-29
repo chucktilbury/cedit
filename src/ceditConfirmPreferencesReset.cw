@@ -87,6 +87,14 @@ void Cedit.whitespaceChecked(bool active) {
 
 void Cedit.toggleWhitespace() { whitespaceChecked(!settings.showWhitespace) }
 
+void Cedit.lineEndsChecked(bool active) {
+        if (syncingView) { return }
+        settings.showLineEnds = active
+        settingsChanged()
+    }
+
+void Cedit.toggleLineEnds() { lineEndsChecked(!settings.showLineEnds) }
+
 void Cedit.indentMarkersChecked(bool active) {
         if (syncingView) { return }
         settings.showIndentMarkers = active
@@ -132,20 +140,8 @@ void Cedit.diskPoll() {
     }
 
 void Cedit.openRecentPath(String path) {
-        closeRecent()
         if (commandsBlocked()) { return }
         openFile(path)
-    }
-
-bool Cedit.hideRecent() {
-        closeRecent()
-        return(true)
-    }
-
-void Cedit.closeRecent() {
-        if (recentWindow != null && !recentWindow.disposed()) {
-            recentWindow.setVisible(false)
-        }
     }
 
 void Cedit.syncViewMenu() {
@@ -153,6 +149,7 @@ void Cedit.syncViewMenu() {
         syncingView = true
         menu.setItemChecked(lineNumbersItem, effectiveLineNumbers())
         menu.setItemChecked(whitespaceItem, settings.showWhitespace)
+        menu.setItemChecked(lineEndsItem, settings.showLineEnds)
         menu.setItemChecked(indentMarkersItem, settings.showIndentMarkers)
         menu.setItemChecked(projectManagerItem, settings.showProjectManager)
         syncingView = false

@@ -18,6 +18,7 @@ void Cedit.applyDocumentSettings(EditorDocument document) {
         }
         document.view.configure(font, size, tabs, spaces, numbers, wrapLines, highlight)
         document.view.setShowWhitespace(settings.showWhitespace)
+        document.view.setShowLineEnds(settings.showLineEnds)
         document.view.setShowIndentMarkers(settings.showIndentMarkers)
         document.view.setAutoCompleteBrackets(settings.autoCompleteBrackets)
         if (document.shortcutRevision == settings.shortcutRevision) { return }
@@ -61,12 +62,19 @@ void Cedit.createPreferences() {
         pages.setVExpand(true)
         content.append(pages)
         editorPreferences = Gtk.Box(Gtk.Box.VERTICAL, 6)
-        editorPreferences.append(Gtk.Label("Editor (global settings)"))
+        editorPreferences.append(Gtk.Label("Editor"))
         projectNote = Gtk.Label("")
         editorPreferences.append(projectNote)
+        configureProjectButton = Gtk.Button("Configure Project...")
+        configureProjectButton.onClicked(_self().showConfigure)
+        editorPreferences.append(configureProjectButton)
         fontEntry = preferenceEntry(editorPreferences, "Monospace font family", settings.fontFamily)
         sizeEntry = preferenceEntry(editorPreferences, "Font size (6-72 pt)", format("{}", settings.fontSize))
         tabsEntry = preferenceEntry(editorPreferences, "Tab width (1-16 columns)", format("{}", settings.tabWidth))
+        saveGlobalCheck = Gtk.CheckButton("Save to global settings")
+        saveGlobalCheck.setActive(settings.saveToGlobal())
+        saveGlobalCheck.onToggled(_self().saveGlobalChanged)
+        editorPreferences.append(saveGlobalCheck)
         spacesCheck = preferenceCheck("Insert spaces instead of tabs", settings.insertSpaces)
         numbersCheck = preferenceCheck("Show line numbers", settings.lineNumbers)
         wrapCheck = preferenceCheck("Wrap long lines", settings.wrap)
@@ -115,7 +123,8 @@ void Cedit.createPreferences() {
         }
         preferencesMessage = Gtk.Label(settingsError)
         root.append(preferencesMessage)
-        root.append(Gtk.Label(format("Automatically saved to {}", settings.path)))
+        settingsPathLabel = Gtk.Label(format("Automatically saved to {}", settings.path))
+        root.append(settingsPathLabel)
         resetChoices = Gtk.Box(Gtk.Box.HORIZONTAL, 6)
         resetChoices.append(Gtk.Label("Reset this section?"))
         confirmResetButton = Gtk.Button("Confirm Reset")
@@ -161,7 +170,58 @@ void Cedit.refreshProjectNote() {
         String overrides = ""
         if (activeProject != null) { overrides = activeProject.overrideSummary() }
         if (overrides.equals("")) { projectNote.setText("") }
-        else { projectNote.setText(format("Project {} overrides: {} (Project > Configure Project...)", activeProject.name, overrides)) }
+        else { projectNote.setText(format("Project {} overrides: {}", activeProject.name, overrides)) }
+        if (configureProjectButton != null) {
+            configureProjectButton.setSensitive(activeProject != null && !commandsBlocked())
+        }
+        refreshSettingsPathLabel()
+    }
+
+void Cedit.refreshSettingsPathLabel() {
+        if (settingsPathLabel == null) { return }
+        settingsPathLabel.setText(format("Automatically saved to {}", settings.path))
+        if (saveGlobalCheck != null && !refreshingPreferences) {
+            refreshingPreferences = true
+            saveGlobalCheck.setActive(settings.saveToGlobal())
+            refreshingPreferences = false
+        }
+    }
+
+String Cedit.settingsRoot() {
+        if (activeProject != null) { return(activeProject.root) }
+        return(System.FileSystem().getCwd())
+    }
+
+void Cedit.adoptSettingsRoot(String root) {
+        if (root.equals("")) { return }
+        String local = settings.localPath(root)
+        if (System.FileSystem().isFile(local)) {
+            if (!settings.path.equals(local)) {
+                settings.path = local
+                settings.errors = ""
+                settings.writable = true
+                settings.resetEditor()
+                settings.resetKeyboard()
+                settings.load()
+                persistedText = settings.original
+                reapplyDocumentSettings()
+                syncViewMenu()
+                refreshSettingsPathLabel()
+            }
+            return
+        }
+        if (!settings.saveToGlobal()) {
+            settings.path = settings.globalPath
+            settings.errors = ""
+            settings.writable = true
+            settings.resetEditor()
+            settings.resetKeyboard()
+            settings.load()
+            persistedText = settings.original
+            reapplyDocumentSettings()
+            syncViewMenu()
+            refreshSettingsPathLabel()
+        }
     }
 
 void Cedit.reopenChanged(bool active) {
@@ -266,6 +326,7 @@ void Cedit.editorCheckChanged(bool active) { editorSettingChanged("") }
 
 void Cedit.editorSettingChanged(String text) {
         if (refreshingPreferences) { return }
+        if (fontEntry == null || sizeEntry == null || tabsEntry == null) { return }
         String problem = settings.fontError(fontEntry.text())
         int64 size = preferenceNumber(sizeEntry.text(), 6, 72)
         int64 tabs = preferenceNumber(tabsEntry.text(), 1, 16)
@@ -297,6 +358,35 @@ void Cedit.editorSettingChanged(String text) {
             if (client != null) { client.launch(settings.lspCommand) }
         }
         settingsChanged()
+    }
+
+void Cedit.saveGlobalChanged(bool active) {
+        if (refreshingPreferences) { return }
+        if (active == settings.saveToGlobal()) {
+            refreshSettingsPathLabel()
+            return
+        }
+        if (active) { settings.path = settings.globalPath }
+        else { settings.path = settings.localPath(settingsRoot()) }
+        settings.original = readSettingsDisk(settings.path)
+        persistedText = settings.original
+        refreshSettingsPathLabel()
+        settingsChanged()
+    }
+
+String Cedit.readSettingsDisk(String path) {
+        if (!System.FileSystem().isFile(path)) { return("") }
+        System.File file = null
+        try { file = System.File(path, "r") }
+        except(Exception) { return("") }
+        String text = ""
+        try { text = file.readAll() }
+        except(Exception) {
+            file.close()
+            return("")
+        }
+        file.close()
+        return(text)
     }
 
 void Cedit.resetEditorPreferences() {

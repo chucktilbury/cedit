@@ -153,7 +153,7 @@ identities unchanged. Open/read/write/flush/close failures appear in the status
 line; Open failures from the chooser or binary files also show a modal error
 dialog parented to the editor window. The editor supports local filesystem paths; nonlocal chooser URIs are
 explicitly rejected rather than interpreted as cancellation.
-**Recent** opens a list of files opened or saved in this session (most recent
+**Recent** is a submenu of files opened or saved in this session (most recent
 first, up to 20). Choosing a path opens that file.
 Command-line file arguments open tabs at startup.
 
@@ -290,14 +290,15 @@ it is saved with the other editor settings.
   the View item while an override is active updates that override and saves
   `project.toml`, so the buffer matches the check.
 - **Show White Space** (`editor.show_whitespace`, default off) draws spaces,
-  tabs, newlines, and non-breaking spaces.
+  tabs, and non-breaking spaces.
+- **Show Line Ends** (`editor.show_line_ends`, default off) draws newline marks.
 - **Show Indent Markers** (`editor.show_indent_markers`, default off) draws a
   vertical guide at each tab-width step of leading indentation.
 - **Show Project Manager** (`editor.show_project_manager`, default on) hides or
   shows the sidebar notebook. The project stays open, the Project menu keeps
   working, and the last sidebar width is kept. Hiding the sidebar does not
-  store a zero width in the workspace. The sidebar **Close** button uses the
-  same setting.
+  store a zero width in the workspace. The sidebar close control is a flat **X**
+  like a tab close and uses the same setting.
 
 ## Projects
 
@@ -474,11 +475,14 @@ Cwhip repository shown there.
 
 ## Preferences and settings
 
-**Edit > Preferences...** or **Ctrl+,** opens a non-modal window with Editor
-Keyboard, and Startup navigation on the left. Closing it hides it; reopening preserves
-the selected page. Settings are global: changes apply immediately to all open
-documents and to subsequently created/opened documents, without changing file
-contents, modified state, language detection, or search options.
+**Edit > Preferences...** or **Ctrl+,** opens a non-modal window with Editor,
+Keyboard, and Startup navigation on the left. Closing it hides it; reopening
+preserves the selected page. Changes apply immediately to all open documents
+and to subsequently created/opened documents, without changing file contents,
+modified state, language detection, or search options. The Editor page has
+**Configure Project...** when a project is open, and **Save to global settings**.
+When that checkbox is off, preferences write to `.cedit/settings.toml` under
+the project root or current folder instead of the global file.
 
 The **Editor** page controls an installed monospace font family (or the generic
 `monospace`), font size, tab width, insertion of spaces vs tabs, line numbers,
@@ -519,10 +523,13 @@ binding unless its default would conflict. Each section's **Reset to Defaults**
 requires **Confirm Reset**; **Cancel** changes nothing. Named command
 shortcuts are configurable; GTK's ordinary text navigation remains native.
 
-New settings save automatically to `$XDG_CONFIG_HOME/cwhip/settings.toml`, or
-`$HOME/.config/cwhip/settings.toml` when XDG_CONFIG_HOME is unset/empty.
-Settings in older product-named directories are ignored and left untouched;
-the editor does not copy or migrate them.
+With **Save to global settings** checked, preferences save automatically to
+`$XDG_CONFIG_HOME/cwhip/settings.toml`, or `$HOME/.config/cwhip/settings.toml`
+when XDG_CONFIG_HOME is unset/empty. Unchecked, they save to
+`.cedit/settings.toml` in the active project or folder. Opening a root that
+already has that local file loads it. Settings in older product-named
+directories are ignored and left untouched; the editor does not copy or
+migrate them.
 The config root must be absolute. The settings file is user-editable UTF-8 TOML,
 with a 64 KiB limit and this version-1 schema:
 
@@ -536,6 +543,7 @@ tab_width = 4
 insert_spaces = true
 line_numbers = true
 show_whitespace = false
+show_line_ends = false
 show_indent_markers = false
 show_project_manager = true
 wrap = false
