@@ -464,6 +464,7 @@ class Cedit {
     void cursorMoved()
 
     void pageChanged()
+    void pageChangedDeferred()
 
     void automaticSave(EditorDocument document)
 
