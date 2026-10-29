@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Split the editor into class and method files under `src/`. The session
+  class stays in `src/cedit.cw` and includes the rest.
+- Add File > Reload, a sidebar Close button, and a Files page beside the
+  project tree. Focusing a file tab compares it with the copy on disk and can
+  reload, save over that copy, or close the tab. Preferences can start
+  `cwhip-lsp`, `clangd`, or another language server command.
 - Add a View menu for line numbers, white space, indent markers, and the
   project sidebar. Those choices are saved in the user settings. File > Close
   All closes every tab, and Project > Close Project detaches the project

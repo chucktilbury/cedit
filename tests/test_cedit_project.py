@@ -127,17 +127,34 @@ class ProjectChecks {
         if (mode.equals("external")) { external() }
         if (mode.equals("external-restore")) { externalRestore() }
         if (mode.equals("view")) { viewOptions() }
+        if (mode.equals("disk")) { diskChange() }
+    }
+    void diskChange() {
+        if (stage == 0) {
+            require(editor.sideNotebook.pageCount() == 2, "project and file pages")
+            editor.openFile(path("proj/a.cw"))
+            require(editor.currentDocument().diskText.contains("value = 1"), "remembers disk text")
+            System.File output = System.File(path("proj/a.cw"), "w")
+            output.write("class A {\n    int64 value = 2\n}\n")
+            output.close()
+            editor.checkDiskChange()
+            require(editor.diskChoices.visible(), "disk prompt")
+            editor.reloadFromDisk()
+            require(editor.currentDocument().view.text().contains("value = 2"), "reloaded from disk")
+            require(!editor.diskChoices.visible(), "prompt closed")
+            finish()
+        }
     }
     void viewOptions() {
         if (stage == 0) {
             require(editor.activeProject != null, "project open for view options")
-            require(editor.project.sidebar.visible() && editor.menu.itemChecked(editor.projectManagerItem), "project manager shown")
+            require(editor.project.sidebar.visible() && editor.sidePanel.visible() && editor.sideNotebook.pageCount() == 2 && editor.menu.itemChecked(editor.projectManagerItem), "project manager shown")
             require(editor.menu.itemChecked(editor.lineNumbersItem), "line numbers shown")
             editor.menu.activateItem(editor.whitespaceItem)
             editor.menu.activateItem(editor.indentMarkersItem)
             editor.menu.activateItem(editor.projectManagerItem)
             require(editor.settings.showWhitespace && editor.settings.showIndentMarkers, "display settings")
-            require(!editor.menu.itemChecked(editor.projectManagerItem) && !editor.project.sidebar.visible(), "project manager hidden")
+            require(!editor.menu.itemChecked(editor.projectManagerItem) && !editor.project.sidebar.visible() && !editor.sidePanel.visible(), "project manager hidden")
             advance()
             return
         }
@@ -558,6 +575,9 @@ def main():
             "    app.onActivate(checks.activate)")
         source = work / "project.cw"
         source.write_text(text[:index] + DRIVER + setup)
+        for extra in args.source.parent.glob("*.cw"):
+            if extra.name != args.source.name:
+                (work / extra.name).write_text(extra.read_text())
         executable = work / "project"
         result = invoke([str(args.compiler.resolve()), str(source), str(native),
                          "-o", str(executable)], work, env)
@@ -658,6 +678,7 @@ def main():
             assert '"show_project_manager" = false' in saved, saved
             assert (proj / ".cwhip/project.toml").is_file()
             assert (proj / "a.cw").read_text() == "class A {\n    int64 value = 1\n}\n"
+            run("disk", "proj")
 
             run("about")
 

@@ -419,7 +419,7 @@ class PreferencesChecks {
             editor.highlightCheck.setActive(true)
             require(PreferenceFixture().click("Keyboard"), "Keyboard category control")
             editor.commandSearch.setText("save")
-            require(editor.keyboardRows.length == 30, "named command rows")
+            require(editor.keyboardRows.length == 31, "named command rows")
             require(PreferenceFixture().commandVisible("Save") && !PreferenceFixture().commandVisible("Quit"), "command search filters actual rows")
             editor.commandSearch.setText("")
             KeyboardPreference save = row("save")
@@ -517,6 +517,9 @@ def main():
             "    checks.shutdownAction = checks.shutdownSaved\n"
             "    app.onActivate(checks.activate)")
         source = work / "preferences.cw"
+        for extra in args.source.parent.glob("*.cw"):
+            if extra.name != args.source.name:
+                (work / extra.name).write_text(extra.read_text())
         source.write_text(text[:index] + DRIVER + setup)
         executable = work / "preferences"
         result = invoke([str(args.compiler.resolve()), str(source), str(native),
