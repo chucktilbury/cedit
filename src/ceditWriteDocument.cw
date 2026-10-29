@@ -276,12 +276,8 @@ void Cedit.rememberRecent(String path) {
 
 void Cedit.attachDocumentMenu(EditorDocument document) {
         if (document == null || document.view == null) { return }
-        Gtk.ContextMenu menu = Gtk.ContextMenu(document.view.widget())
-        Gtk.Box actions = Gtk.Box(Gtk.Box.VERTICAL, 4)
-        Gtk.Button reload = Gtk.Button("Reload")
-        reload.onClicked(_self().reloadCurrent)
-        actions.append(reload)
-        menu.setChild(actions)
+        // Append to the native edit menu; do not replace Cut/Copy/Paste.
+        document.view.addContextAction("Reload", _self().reloadCurrent)
     }
 
 int64 Cedit.searchOptions() {

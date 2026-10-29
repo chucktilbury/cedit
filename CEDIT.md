@@ -209,10 +209,11 @@ Default shortcuts use GTK trigger notation: `<Control>s` saves,
 and `<Control><Shift>z` redoes. `<Control><Shift>s` opens Save As,
 `<Control>w` closes the active tab, `<Control><Shift>w` closes every tab, and
 `<Control>q` requests Quit. **File > Reload** reads the active file from disk.
-Right-click the edit pane for the same **Reload**. A clean, unchanged buffer
-reports that it is already current. A modified buffer, or one whose file
-changed underneath the editor, asks to Reload, Save, or Close. The editor also
-checks the file on disk every few seconds while it is open.
+Right-click the edit pane keeps the usual Cut/Copy/Paste menu and adds
+**Reload** to it. A clean, unchanged buffer reports that it is already current.
+A modified buffer, or one whose file changed underneath the editor, asks to
+Reload, Save, or Close. The editor also checks the file on disk every few
+seconds while it is open.
 `<Control>x`, `<Control>c`, `<Control>v`, and `<Control>a` perform Cut, Copy,
 Paste, and Select All. `<Control><Alt>s` saves all modified named documents,
 and `<Control>comma` opens Preferences. Menus and configurable

@@ -176,7 +176,8 @@ class ExplorerChecks {
             editor.project.activateFile(find("project/loop").id)
             require(editor.status.text().contains("not a regular file"), "directory symlink not followed by tree")
             require(ExplorerFixture().context(true) && editor.project.hidden.active() &&
-                editor.project.contextHidden.active(), "right-click Show Hidden shares checked state")
+                editor.project.contextMenu.itemChecked(editor.project.contextHidden),
+                "right-click Show Hidden shares checked state")
             advance()
             return
         }
