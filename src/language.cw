@@ -56,6 +56,52 @@ class LanguageClient {
         return(uri)
     }
 
+    String executableName() {
+        String executable = command.trim()
+        if (executable.equals("")) { return("") }
+        list parts = executable.split(" ")
+        int64 index = 0
+        while (index < parts.length) {
+            String part = parts[index] as String
+            if (!part.equals("")) { return(System.FileSystem().basename(part).toLower()) }
+            index = index + 1
+        }
+        return("")
+    }
+
+    bool isCwhipServer() {
+        String name = executableName()
+        return(name.equals("cwhip-lsp") || name.endsWith("-cwhip-lsp"))
+    }
+
+    bool isClangServer() {
+        String name = executableName()
+        return(name.equals("clangd") || name.startsWith("clangd-"))
+    }
+
+    String languageId(String path) {
+        String lower = path.toLower()
+        if (lower.endsWith(".cw")) { return("cwhip") }
+        if (lower.endsWith(".c") || lower.endsWith(".h")) { return("c") }
+        if (lower.endsWith(".cc") || lower.endsWith(".cpp") || lower.endsWith(".cxx") ||
+            lower.endsWith(".hpp") || lower.endsWith(".hxx") || lower.endsWith(".hh")) {
+            return("cpp")
+        }
+        String language = GtkSource.Content().languageFor(path)
+        if (!language.equals("")) { return(language) }
+        return("")
+    }
+
+    // cwhip-lsp only sees .cw; clangd only C/C++ headers and sources; other
+    // servers skip plain text (empty GtkSource language), including .txt/.md.
+    bool handles(String path) {
+        if (path.equals("")) { return(false) }
+        String language = languageId(path)
+        if (isCwhipServer()) { return(language.equals("cwhip")) }
+        if (isClangServer()) { return(language.equals("c") || language.equals("cpp")) }
+        return(!language.equals(""))
+    }
+
     void writeFrame(String body) {
         if (!running) { return }
         String frame = format("Content-Length: {}\r\n\r\n{}", body.length, body)
@@ -109,14 +155,15 @@ class LanguageClient {
     }
 
     void sendOpen(EditorDocument document) {
-        if (!running || document == null || document.path.equals("")) { return }
-        String body = format("{{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{{\"textDocument\":{{\"uri\":\"{}\",\"languageId\":\"cwhip\",\"version\":{},\"text\":\"{}\"}}}}}}",
-            fileUri(document.path), document.lspVersion, escape(document.view.text()))
+        if (!running || document == null || !handles(document.path)) { return }
+        String body = format("{{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{{\"textDocument\":{{\"uri\":\"{}\",\"languageId\":\"{}\",\"version\":{},\"text\":\"{}\"}}}}}}",
+            fileUri(document.path), languageId(document.path), document.lspVersion,
+            escape(document.view.text()))
         writeFrame(body)
     }
 
     void sendChange(EditorDocument document) {
-        if (!running || !ready || document == null || document.path.equals("")) { return }
+        if (!running || !ready || document == null || !handles(document.path)) { return }
         document.lspVersion = document.lspVersion + 1
         String body = format("{{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didChange\",\"params\":{{\"textDocument\":{{\"uri\":\"{}\",\"version\":{}}},\"contentChanges\":[{{\"text\":\"{}\"}}]}}}}",
             fileUri(document.path), document.lspVersion, escape(document.view.text()))
@@ -125,13 +172,15 @@ class LanguageClient {
     }
 
     void sendClose(String path) {
-        if (!running || path.equals("")) { return }
+        if (!running || !handles(path)) { return }
         writeFrame(format("{{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didClose\",\"params\":{{\"textDocument\":{{\"uri\":\"{}\"}}}}}}",
             fileUri(path)))
     }
 
     void noteEdit() {
         if (!running) { return }
+        EditorDocument document = editor.currentDocument()
+        if (document == null || !handles(document.path)) { return }
         generation = generation + 1
         Gtk.Application().schedule(200, editor.languageFlushAction)
     }
@@ -189,7 +238,7 @@ class LanguageClient {
         if (uriAt < 0) { return }
         String uri = readString(body, uriAt + 7)
         EditorDocument document = documentForUri(uri)
-        if (document == null) { return }
+        if (document == null || !handles(document.path)) { return }
         document.view.clearLineMarks("diagnostic")
         String lines = ""
         int64 count = 0
