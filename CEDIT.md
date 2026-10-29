@@ -276,9 +276,9 @@ spaces and started as that server; plain-text names such as `.txt` and `.md`
 are not sent. The editor keeps a full copy of each named buffer.
 `textDocument/publishDiagnostics` marks each reported line in the gutter,
 underlines it, tints the background, and shows the message on mouseover. The
-status line notes how many diagnostics arrived; the window size does not change
-when they appear. Restart the command by editing the preference; it is saved
-with the other editor settings.
+status line only notes the count (never the full messages), so the window size
+does not change when they appear. Restart the command by editing the preference;
+it is saved with the other editor settings.
 
 ## View
 

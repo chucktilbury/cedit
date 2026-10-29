@@ -184,11 +184,6 @@ void Cedit.activate() {
         diskCloseButton.onClicked(_self().closeDiskDocument)
         layout.append(diskChoices)
         diskChoices.setVisible(false)
-        // Kept for the language client to update; not packed into the window so
-        // publishDiagnostics cannot change the window size. Marks and tooltips
-        // carry the diagnostics in the edit pane.
-        diagnostics = Gtk.Label("")
-        diagnostics.setVisible(false)
         confirmChoices = Gtk.Box(Gtk.Box.HORIZONTAL, 4)
         confirmLabel = Gtk.Label("")
         confirmButton = Gtk.Button("Confirm")
@@ -201,6 +196,7 @@ void Cedit.activate() {
         layout.append(confirmChoices)
         confirmChoices.setVisible(false)
         status = Gtk.Label("Ready")
+        status.setHExpand(true)
         layout.append(status)
         client = LanguageClient(_self())
         client.launch(settings.lspCommand)

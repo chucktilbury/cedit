@@ -60,7 +60,6 @@ class Cedit {
     Gtk.Button sideClose
     Gtk.Paned workspace
     LanguageClient client
-    Gtk.Label diagnostics
     Gtk.Box diskChoices
     Gtk.Button diskReloadButton
     Gtk.Button diskSaveButton

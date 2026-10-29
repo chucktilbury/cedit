@@ -4,9 +4,9 @@
 
 - `cwhip-lsp` only receives `.cw` buffers; `clangd` only C/C++ names; other
   servers skip plain text such as `.txt` and `.md`.
-- Language-server diagnostics no longer show or hide a strip under the document,
-  so the window does not resize when they arrive. Marks, tooltips, and the
-  status line still report them.
+- Language-server diagnostics no longer show a message strip under the document,
+  and the status line only notes the count, so the window does not resize when
+  they arrive. Marks and tooltips still carry the messages.
 - Keep the native edit-pane Cut/Copy/Paste menu and add Reload to it. Project
   and Files right-click menus are native menu rows for Refresh and Show Hidden.
 - File > Recent opens a chooser of session files. External disk edits are
