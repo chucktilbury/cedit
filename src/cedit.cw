@@ -209,7 +209,7 @@ class CeditSettings {
         String raw = value("editor", key)
         if (raw.equals("")) { return(fallback) }
         if (raw.startsWith("i")) {
-            int64 number = raw.slice(1, raw.length).toInt64()
+            int64 number = byteSpan(raw, 1, raw.length).toInt64()
             if (number >= minimum && number <= maximum) { return(number) }
         }
         error(format("editor.{} must be an integer from {} to {}", key, minimum, maximum))
@@ -291,13 +291,13 @@ class CeditSettings {
         if (!last.equals("") && !last.equals("s")) {
             if (!last.startsWith("s/") || last.contains("\n") || last.length > 4097) {
                 error("project.last_root must be an absolute folder path")
-            } else { lastRoot = last.slice(1, last.length) }
+            } else { lastRoot = byteSpan(last, 1, last.length) }
         }
         String font = value("editor", "font_family")
         if (!font.equals("")) {
             if (!font.startsWith("s")) { error("editor.font_family must be a string") }
             else {
-                String name = font.slice(1, font.length)
+                String name = byteSpan(font, 1, font.length)
                 String problem = fontError(name)
                 if (problem.equals("")) { fontFamily = name } else { error(problem) }
             }
@@ -319,7 +319,7 @@ class CeditSettings {
             String raw = value("keyboard", binding.id)
             if (!raw.equals("")) {
                 if (!raw.startsWith("s")) { error(format("keyboard.{} must be a string", binding.id)) }
-                else { binding.setTrigger(raw.slice(1, raw.length)) }
+                else { binding.setTrigger(byteSpan(raw, 1, raw.length)) }
             }
             i = i + 1
         }
@@ -363,6 +363,20 @@ class CeditSettings {
         }
         text.append(format("[project]\nreopen_last = {}\nlast_root = {}\n", reopenLast, Gtk.Config().quote(lastRoot)))
         return(Gtk.Config().merge(original, text))
+    }
+
+    int64 byteSpanBound(int64 value, int64 length) {
+        int64 index = value
+        if (index < 0) { index = index + length }
+        if (index < 0) { return(0) }
+        if (index > length) { return(length) }
+        return(index)
+    }
+    String byteSpan(String text, int64 first, int64 last) {
+        int64 lower = byteSpanBound(first, text.length)
+        int64 end = byteSpanBound(last, text.length)
+        if (end <= lower) { return("") }
+        return(text[lower..(end - 1)])
     }
 }
 
@@ -587,7 +601,7 @@ class CwhipProject {
     String relative(String path) {
         String head = prefix()
         if (!path.startsWith(head) || path.length == head.length) { return("") }
-        String rest = path.slice(head.length, path.length)
+        String rest = byteSpan(path, head.length, path.length)
         if (!validRelative(rest)) { return("") }
         return(rest)
     }
@@ -703,7 +717,7 @@ class CwhipProject {
         String raw = value("editor", key)
         if (raw.equals("")) { return(-1) }
         if (raw.startsWith("i")) {
-            int64 number = raw.slice(1, raw.length).toInt64()
+            int64 number = byteSpan(raw, 1, raw.length).toInt64()
             if (number >= minimum && number <= maximum) { return(number) }
         }
         error(format("editor.{} must be an integer from {} to {}", key, minimum, maximum))
@@ -739,7 +753,7 @@ class CwhipProject {
         if (!raw.equals("")) {
             if (!raw.startsWith("s")) { error("project.name must be a string") }
             else {
-                String text = raw.slice(1, raw.length)
+                String text = byteSpan(raw, 1, raw.length)
                 String nameProblem = nameError(text)
                 if (nameProblem.equals("")) { name = text } else { error(nameProblem) }
             }
@@ -753,7 +767,7 @@ class CwhipProject {
                 while (!item.equals("")) {
                     if (!item.startsWith("s")) { error("explorer.exclude must be an array of strings") }
                     else {
-                        String pattern = item.slice(1, item.length)
+                        String pattern = byteSpan(item, 1, item.length)
                         String patternProblem = excludeError(pattern)
                         if (patternProblem.equals("")) { excludes.append(pattern) } else { error(patternProblem) }
                     }
@@ -766,7 +780,7 @@ class CwhipProject {
         if (!raw.equals("")) {
             if (!raw.startsWith("s")) { error("editor.font_family must be a string") }
             else {
-                String font = raw.slice(1, raw.length)
+                String font = byteSpan(raw, 1, raw.length)
                 String fontProblem = settings.fontError(font)
                 if (fontProblem.equals("")) {
                     hasFont = true
@@ -814,7 +828,7 @@ class CwhipProject {
         String raw = Gtk.Config().value(text, "workspace", key)
         if (raw.equals("")) { return("") }
         if (raw.startsWith("i")) {
-            int64 number = raw.slice(1, raw.length).toInt64()
+            int64 number = byteSpan(raw, 1, raw.length).toInt64()
             if (number >= minimum && number <= maximum) { return(format("{}", number)) }
         }
         return(format("workspace.{} must be an integer from {} to {}", key, minimum, maximum))
@@ -823,7 +837,7 @@ class CwhipProject {
     int64 wsNumber(String text, String key) {
         String raw = Gtk.Config().value(text, "workspace", key)
         if (raw.equals("")) { return(-1) }
-        return(raw.slice(1, raw.length).toInt64())
+        return(byteSpan(raw, 1, raw.length).toInt64())
     }
 
     // Parses workspace TOML; returns "" or the first problem. Any problem
@@ -838,10 +852,10 @@ class CwhipProject {
         if (!kind.equals("t")) { return("workspace must be a table") }
         String raw = Gtk.Config().value(text, "workspace", "active")
         if (!raw.equals("")) {
-            if (!raw.startsWith("s") || !validRelative(raw.slice(1, raw.length))) {
+            if (!raw.startsWith("s") || !validRelative(byteSpan(raw, 1, raw.length))) {
                 return("workspace.active must be a root-relative path")
             }
-            active = raw.slice(1, raw.length)
+            active = byteSpan(raw, 1, raw.length)
         }
         // wsInteger yields digits when valid; messages always contain spaces.
         String problem = wsInteger(text, "explorer_width", 0, 5000)
@@ -858,11 +872,11 @@ class CwhipProject {
         int64 i = 0
         String item = Gtk.Config().item(text, "workspace", "expanded", 0, "")
         while (!item.equals("")) {
-            if (!item.startsWith("s") || !validRelative(item.slice(1, item.length))) {
+            if (!item.startsWith("s") || !validRelative(byteSpan(item, 1, item.length))) {
                 resetWorkspace()
                 return("workspace.expanded must contain root-relative paths")
             }
-            expanded.append(item.slice(1, item.length))
+            expanded.append(byteSpan(item, 1, item.length))
             i = i + 1
             item = Gtk.Config().item(text, "workspace", "expanded", i, "")
         }
@@ -874,13 +888,13 @@ class CwhipProject {
             String path = Gtk.Config().item(text, "workspace", "files", i, "path")
             String line = Gtk.Config().item(text, "workspace", "files", i, "line")
             String column = Gtk.Config().item(text, "workspace", "files", i, "column")
-            if (!item.equals("t") || !path.startsWith("s") || !validRelative(path.slice(1, path.length)) ||
+            if (!item.equals("t") || !path.startsWith("s") || !validRelative(byteSpan(path, 1, path.length)) ||
                 !validPosition(line) || !validPosition(column)) {
                 resetWorkspace()
                 return("workspace.files entries must be tables with a root-relative path and positive line/column")
             }
-            files.append(WorkspaceFile(path.slice(1, path.length), line.slice(1, line.length).toInt64(),
-                column.slice(1, column.length).toInt64()))
+            files.append(WorkspaceFile(byteSpan(path, 1, path.length), byteSpan(line, 1, line.length).toInt64(),
+                byteSpan(column, 1, column.length).toInt64()))
             i = i + 1
             item = Gtk.Config().item(text, "workspace", "files", i, "")
         }
@@ -889,7 +903,7 @@ class CwhipProject {
 
     bool validPosition(String raw) {
         if (!raw.startsWith("i")) { return(false) }
-        int64 number = raw.slice(1, raw.length).toInt64()
+        int64 number = byteSpan(raw, 1, raw.length).toInt64()
         return(number >= 1 && number <= 100000000)
     }
 
@@ -988,6 +1002,20 @@ class CwhipProject {
             i = i + 1
         }
         return(text)
+    }
+
+    int64 byteSpanBound(int64 value, int64 length) {
+        int64 index = value
+        if (index < 0) { index = index + length }
+        if (index < 0) { return(0) }
+        if (index > length) { return(length) }
+        return(index)
+    }
+    String byteSpan(String text, int64 first, int64 last) {
+        int64 lower = byteSpanBound(first, text.length)
+        int64 end = byteSpanBound(last, text.length)
+        if (end <= lower) { return("") }
+        return(text[lower..(end - 1)])
     }
 }
 
@@ -1945,7 +1973,7 @@ class Cedit {
         if (text.length == 0 || text.length > 2) { return(-1) }
         int64 i = 0
         while (i < text.length) {
-            if (!"0123456789".contains(text.slice(i, i + 1))) { return(-1) }
+            if (!"0123456789".contains(byteSpan(text, i, i + 1))) { return(-1) }
             i = i + 1
         }
         int64 number = text.toInt64()
@@ -2531,7 +2559,7 @@ class Cedit {
         if (op.equals("delete")) { deleteProjectMetadata() }
         if (op.equals("replace-new")) { startNewProject("new") }
         if (op.equals("replace-save-as")) { startNewProject("save-as") }
-        if (op.startsWith("continue-")) { performProjectOp(op.slice(9, op.length)) }
+        if (op.startsWith("continue-")) { performProjectOp(byteSpan(op, 9, op.length)) }
     }
 
     void cancelConfirm() {
@@ -3996,6 +4024,20 @@ class Cedit {
               searched && replaced && undoRestored && undoRedo && dirtyBlocked &&
               dirtyCloseCancelled && tabCloseCancelled && saved && savedTabClosed &&
               closeProtected && tabDiscarded && windowCloseCancelled && windowDiscarded)
+    }
+
+    int64 byteSpanBound(int64 value, int64 length) {
+        int64 index = value
+        if (index < 0) { index = index + length }
+        if (index < 0) { return(0) }
+        if (index > length) { return(length) }
+        return(index)
+    }
+    String byteSpan(String text, int64 first, int64 last) {
+        int64 lower = byteSpanBound(first, text.length)
+        int64 end = byteSpanBound(last, text.length)
+        if (end <= lower) { return("") }
+        return(text[lower..(end - 1)])
     }
 }
 

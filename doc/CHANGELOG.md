@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Read string bytes with `text[index]` and copy half-open spans through an
+  inclusive range. The SDK no longer provides `String.byteAt` or `String.slice`.
+  Empty spans stay empty, including a typed value whose payload is only its
+  type prefix.
 - Highlight C, Python, and the other GtkSourceView language specs installed
   with the SDK. `.cw` stays on the bundled Cwhip definition. Untitled buffers,
   `.txt` files, and unrecognized names stay plain text.
