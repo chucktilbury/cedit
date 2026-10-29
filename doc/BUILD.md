@@ -32,7 +32,10 @@ conditional-chain support from
 including matching SourceView definitions. Return operands use `return(expr)`,
 dictionary literals use `[key: value]` (`[:]` when empty), and `#` starts a
 line comment; `;` is no longer a Cwhip comment. Lists still use `[]`.
-Keyword operands such as `raise(expr)` must be parenthesized. Bitwise
+Keyword operands such as `raise(expr)` must be parenthesized. A string byte
+is `text[index]` and has type `uint8`. `String.slice` and `String.byteAt` are
+not methods; a half-open byte span is an inclusive range, and an empty span
+has no range spelling. Bitwise
 `&`, `^` and `|` bind more tightly than comparisons. This source migration
 does not change the SDK ABI marker or native C signature encodings.
 Conditional chains use `else(condition) { ... }` followed by an optional
