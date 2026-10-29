@@ -240,7 +240,9 @@ results are cached until that rebuild. Replacing the root, refreshing, or
 closing the editor cancels obsolete work and prevents stale results from
 repopulating the tree. A plain folder opened this way has no saved state; the
 hidden-files toggle is never saved. Expansion, tabs and layout are saved only
-for Cwhip projects (below). The Explorer does not rename/delete files or add
+for Cwhip projects (below). A file opened or saved outside the current root
+is listed under that root by its absolute path and, for a Cwhip project, is
+saved with the workspace. The Explorer does not rename/delete files or add
 Git, build settings or LSP integration.
 
 ## Projects
@@ -268,7 +270,8 @@ to the editor; cancelling one changes nothing.
 - **Save Project As...** chooses a different folder and writes a copy of the
   project configuration plus the workspace state rebased to that folder. Saved
   tabs and expanded folders whose relative paths do not exist under the new
-  root are dropped. Source trees are not copied or moved, the original
+  root are dropped. A file outside the original root is kept when that file
+  still exists. Source trees are not copied or moved, the original
   project's metadata is left untouched, and open documents stay open. The new
   folder becomes the active project. Existing metadata in the target requires
   **Replace Metadata**; choosing the current root is refused.
@@ -347,15 +350,24 @@ explorer_width = 300
 window_width = 980
 window_height = 720
 expanded = ["src"]
-files = [{ path = "src/a.cw", line = 2, column = 3 }]
+files = [
+    { path = "src/a.cw", line = 2, column = 3 },
+    { path = "/home/me/notes/outside.txt", line = 1, column = 1 }
+]
 ```
 
-All paths are relative to the project root; absolute paths, `..` segments
-and paths escaping the root are rejected. Only saved files with a path are
-recorded (untitled tabs are not). On restore, missing files, binary/invalid
-UTF-8 files and read errors are skipped and reported; cursors are clamped to
-the file. Widths are 0-5000 and window sizes 200-10000 x 150-10000; GTK may
-enlarge the window to its minimum size or the screen.
+Paths inside the project are relative to the project root. A file opened or
+saved outside that root is stored as an absolute path and shown in the
+Explorer under the project, labeled with that path. `..` segments, `.`
+segments and absolute paths that escape through those segments are rejected.
+An absolute path that is actually inside the root is stored in root-relative
+form. **Save Project As** keeps an outside file when that file still exists.
+Only saved files with a path are recorded (untitled tabs are not). Closing an
+outside file leaves it in the Explorer; the next project save still records
+it. On restore, missing files, binary/invalid UTF-8 files and read errors are
+skipped and reported; cursors are clamped to the file. Widths are 0-5000 and
+window sizes 200-10000 x 150-10000; GTK may enlarge the window to its minimum
+size or the screen.
 
 For version control, commit `.cwhip/project.toml` and ignore the local state:
 
@@ -370,8 +382,8 @@ missing `version`, wrong types/ranges, oversized files and read errors are
 reported in an alert. Invalid values are ignored, and saving the invalid file
 is disabled until it is repaired and the project reopened, so it is never
 overwritten automatically. Write failures are reported and never shown as
-saved. Persisted paths are only used to open files under the root; they never
-authorize deletion or execution.
+saved. Persisted paths are only used to open text files; they never authorize
+deletion or execution.
 
 ### Reopening the last project
 

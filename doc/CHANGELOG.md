@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Open and save files that live outside the project root. Those files appear
+  in the Explorer and are stored in `.cwhip/workspace.toml` as absolute paths.
+  Paths inside the project stay root-relative.
 - Read string bytes with `text[index]` and copy half-open spans through an
   inclusive range. The SDK no longer provides `String.byteAt` or `String.slice`.
   Empty spans stay empty, including a typed value whose payload is only its

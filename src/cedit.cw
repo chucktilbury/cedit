@@ -540,6 +540,7 @@ class CwhipProject {
     String readError
     bool readMissing
     bool readContent
+    String acceptedPath
 
     CwhipProject(String projectRoot) {
         root = projectRoot
@@ -568,6 +569,7 @@ class CwhipProject {
         highlightLine = false
         resetWorkspace()
         readError = ""
+        acceptedPath = ""
     }
 
     void resetWorkspace() {
@@ -619,6 +621,34 @@ class CwhipProject {
             if (part.equals("") || part.equals(".") || part.equals("..")) { return(false) }
             i = i + 1
         }
+        return(true)
+    }
+
+    // Absolute file path that is not inside this project. `.` and `..` segments are rejected.
+    bool validExternal(String path) {
+        if (!path.startsWith("/") || path.equals("/") || path.length > 4096 || hasControl(path)) { return(false) }
+        if (path.equals(root) || !relative(path).equals("")) { return(false) }
+        String body = byteSpan(path, 1, path.length)
+        if (body.endsWith("/")) { return(false) }
+        return(validRelative(body))
+    }
+
+    // Accepts a root-relative path, or an absolute path outside the root.
+    // An absolute path inside the root is stored in root-relative form.
+    bool acceptWorkspacePath(String stored) {
+        acceptedPath = ""
+        if (stored.startsWith("/")) {
+            String rel = relative(stored)
+            if (!rel.equals("")) {
+                acceptedPath = rel
+                return(true)
+            }
+            if (!validExternal(stored)) { return(false) }
+            acceptedPath = stored
+            return(true)
+        }
+        if (!validRelative(stored)) { return(false) }
+        acceptedPath = stored
         return(true)
     }
 
@@ -852,10 +882,10 @@ class CwhipProject {
         if (!kind.equals("t")) { return("workspace must be a table") }
         String raw = Gtk.Config().value(text, "workspace", "active")
         if (!raw.equals("")) {
-            if (!raw.startsWith("s") || !validRelative(byteSpan(raw, 1, raw.length))) {
-                return("workspace.active must be a root-relative path")
+            if (!raw.startsWith("s") || !acceptWorkspacePath(byteSpan(raw, 1, raw.length))) {
+                return("workspace.active must be a path inside the project or an absolute path outside it")
             }
-            active = byteSpan(raw, 1, raw.length)
+            active = acceptedPath
         }
         // wsInteger yields digits when valid; messages always contain spaces.
         String problem = wsInteger(text, "explorer_width", 0, 5000)
@@ -888,12 +918,13 @@ class CwhipProject {
             String path = Gtk.Config().item(text, "workspace", "files", i, "path")
             String line = Gtk.Config().item(text, "workspace", "files", i, "line")
             String column = Gtk.Config().item(text, "workspace", "files", i, "column")
-            if (!item.equals("t") || !path.startsWith("s") || !validRelative(byteSpan(path, 1, path.length)) ||
+            if (!item.equals("t") || !path.startsWith("s") ||
+                !acceptWorkspacePath(byteSpan(path, 1, path.length)) ||
                 !validPosition(line) || !validPosition(column)) {
                 resetWorkspace()
-                return("workspace.files entries must be tables with a root-relative path and positive line/column")
+                return("workspace.files entries must be tables with a path inside the project or an absolute path outside it, and a positive line/column")
             }
-            files.append(WorkspaceFile(byteSpan(path, 1, path.length), byteSpan(line, 1, line.length).toInt64(),
+            files.append(WorkspaceFile(acceptedPath, byteSpan(line, 1, line.length).toInt64(),
                 byteSpan(column, 1, column.length).toInt64()))
             i = i + 1
             item = Gtk.Config().item(text, "workspace", "files", i, "")
@@ -1158,6 +1189,7 @@ class ProjectNode {
             complete = true
             scan = null
             error = message
+            explorer.showExternal()
             if (!error.equals("")) {
                 explorer.addMessage(id, format("Could not read directory: {}", error), "dialog-error-symbolic")
             } else {
@@ -1170,6 +1202,7 @@ class ProjectNode {
         }
         scan.append(explorer.tree, id, explorer.nextId + 1, count, explorer.icons)
         explorer.nextId = explorer.nextId + count
+        explorer.showExternal()
     }
 }
 ProjectNode ProjectNode._self() from "cwhip_gtk_self"
@@ -1188,6 +1221,7 @@ class ProjectExplorer {
     String excludes
     list pending
     list nodes
+    list externalFiles
     int64 nextId
     int64 generation
     String rootPath
@@ -1197,6 +1231,7 @@ class ProjectExplorer {
     ProjectExplorer(void<String> openFile) {
         open = openFile
         nodes = []
+        externalFiles = []
         rootPath = ""
         excludes = ""
         pending = []
@@ -1258,10 +1293,47 @@ class ProjectExplorer {
     void setProject(String path, String label, String patterns, list expandedPaths) {
         rootPath = path
         excludes = patterns
+        externalFiles = []
         title.setText(label)
         refreshButton.setSensitive(true)
         contextRefresh.setSensitive(true)
         rebuild(expandedPaths)
+    }
+
+    bool inRoot(String path) {
+        if (rootPath.equals("") || !path.startsWith("/")) { return(false) }
+        String head = rootPath
+        if (!head.endsWith("/")) { head = format("{}/", head) }
+        return(path.startsWith(head))
+    }
+
+    // Remember a file that lives outside the project root and show it in the tree.
+    void noteFile(String path) {
+        if (rootPath.equals("") || tree.disposed() || !path.startsWith("/")) { return }
+        if (inRoot(path)) { return }
+        int64 i = 0
+        bool found = false
+        while (i < externalFiles.length) {
+            if ((externalFiles[i] as String).equals(path)) { found = true }
+            i = i + 1
+        }
+        if (!found) { externalFiles.append(path) }
+        showExternal()
+    }
+
+    void showExternal() {
+        if (rootPath.equals("") || tree.disposed()) { return }
+        int64 parent = tree.findValue(rootPath)
+        if (parent == 0) { return }
+        int64 i = 0
+        while (i < externalFiles.length) {
+            String path = externalFiles[i] as String
+            if (tree.findValue(path) == 0) {
+                nextId = nextId + 1
+                tree.add(parent, nextId, path, "text-x-generic-symbolic", false, path, 0)
+            }
+            i = i + 1
+        }
     }
 
     void restoreChildren(String parent) {
@@ -1306,9 +1378,12 @@ class ProjectExplorer {
     }
 
     void fileSaved(String path) {
-        generation = generation + 1
         if (rootPath.equals("") || tree.disposed()) { return }
-        if (!path.startsWith(rootPath)) { return }
+        if (!inRoot(path)) {
+            noteFile(path)
+            return
+        }
+        generation = generation + 1
         int64 id = tree.findValue(path)
         if (id > 0) { return }
         refresh()
@@ -1322,6 +1397,7 @@ class ProjectExplorer {
         pending = expanded
         tree.add(0, 1, rootPath, "folder-open-symbolic", true, rootPath, 1)
         tree.setExpanded(1, true)
+        showExternal()
     }
 
     void hiddenChanged(bool value) {
@@ -2220,6 +2296,7 @@ class Cedit {
             return
         }
         project.setRoot(root)
+        noteOpenFiles()
     }
 
     void chooseProjectFolder(String purpose) {
@@ -2359,6 +2436,7 @@ class Cedit {
         System.FileSystem().rmdir(target.directory)
         detachProject()
         project.setRoot(target.root)
+        noteOpenFiles()
         forgetProject(target.root)
         status.setText(format("Deleted project metadata; {} remains open as a folder", target.root))
     }
@@ -2533,6 +2611,7 @@ class Cedit {
             detachProject()
             project.setRoot(nextFolder)
             nextFolder = ""
+            noteOpenFiles()
             return
         }
         if (op.equals("quit")) {
@@ -2635,7 +2714,8 @@ class Cedit {
             int64 index = 0
             while (index < target.files.length) {
                 WorkspaceFile item = target.files[index] as WorkspaceFile
-                String path = System.FileSystem().join(target.root, item.path)
+                String path = item.path
+                if (!path.startsWith("/")) { path = System.FileSystem().join(target.root, item.path) }
                 if (!System.FileSystem().exists(path)) {
                     openFailures.append(format("Missing: {}", path))
                 } else {
@@ -2661,6 +2741,7 @@ class Cedit {
                 openFailures = []
             }
         }
+        noteOpenFiles()
         rememberProject(target.root)
         updateMenu()
         status.setText(format("Project: {} ({})", target.name, target.root))
@@ -2672,8 +2753,9 @@ class Cedit {
         }
     }
 
-    // Workspace TOML for documents/explorer state under source, written relative
-    // to target. When they differ (Save As) only paths existing under target are kept.
+    // Workspace TOML for open documents and explorer state. Paths inside source
+    // are root-relative. Files outside source are absolute. When source and
+    // target differ (Save As), a path is kept only when that file exists.
     String captureWorkspace(String source, String target) {
         CwhipProject origin = CwhipProject(source)
         bool filter = !source.equals(target)
@@ -2681,13 +2763,12 @@ class Cedit {
         EditorDocument current = currentDocument()
         String activePath = ""
         String fileList = "["
+        list recorded = []
         int64 count = 0
         int64 index = 0
         while (index < documents.length) {
             EditorDocument document = documents[index] as EditorDocument
-            String rel = ""
-            if (!document.path.equals("")) { rel = origin.relative(document.path) }
-            if (!rel.equals("") && filter && !System.FileSystem().isFile(System.FileSystem().join(target, rel))) { rel = "" }
+            String rel = storedDocumentPath(origin, document.path, target, filter)
             if (!rel.equals("")) {
                 if (count > 0) { fileList.append(", ") }
                 fileList.append("{ path = ")
@@ -2695,9 +2776,32 @@ class Cedit {
                 fileList.append(format(", line = {}, column = {} ", document.view.line(), document.view.column()))
                 fileList.append("}")
                 count = count + 1
+                recorded.append(rel)
                 if (document == current) { activePath = rel }
             }
             index = index + 1
+        }
+        if (project.rootPath.equals(source)) {
+            index = 0
+            while (index < project.externalFiles.length) {
+                String external = project.externalFiles[index] as String
+                String rel = storedDocumentPath(origin, external, target, filter)
+                bool seen = false
+                int64 seenIndex = 0
+                while (seenIndex < recorded.length) {
+                    if ((recorded[seenIndex] as String).equals(rel)) { seen = true }
+                    seenIndex = seenIndex + 1
+                }
+                if (!rel.equals("") && !seen) {
+                    if (count > 0) { fileList.append(", ") }
+                    fileList.append("{ path = ")
+                    fileList.append(Gtk.Config().quote(rel))
+                    fileList.append(", line = 1, column = 1 }")
+                    count = count + 1
+                    recorded.append(rel)
+                }
+                index = index + 1
+            }
         }
         fileList.append("]")
         if (!activePath.equals("")) { text.append(format("active = {}\n", Gtk.Config().quote(activePath))) }
@@ -2724,6 +2828,26 @@ class Cedit {
         text.append(fileList)
         text.append("\n")
         return(text)
+    }
+
+    // Root-relative path inside origin, or an absolute path outside it.
+    String storedDocumentPath(CwhipProject origin, String path, String target, bool filter) {
+        if (path.equals("")) { return("") }
+        String stored = origin.relative(path)
+        if (stored.equals("") && origin.validExternal(path)) { stored = path }
+        if (stored.equals("") || !filter) { return(stored) }
+        String check = stored
+        if (!stored.startsWith("/")) { check = System.FileSystem().join(target, stored) }
+        if (!System.FileSystem().isFile(check)) { return("") }
+        return(stored)
+    }
+
+    void noteOpenFiles() {
+        int64 index = 0
+        while (index < documents.length) {
+            project.noteFile((documents[index] as EditorDocument).path)
+            index = index + 1
+        }
     }
 
     // ---- Configure Project ------------------------------------------------
@@ -3006,6 +3130,7 @@ class Cedit {
         notebook.appendClosablePage(document.scroller, document.tabTitle(), document.close)
         configureShortcuts(document)
         rememberRecent(absolutePath)
+        project.noteFile(absolutePath)
         return(document)
     }
 
@@ -3258,6 +3383,7 @@ class Cedit {
             return
         }
         project.setRoot(System.FileSystem().normalize(path))
+        noteOpenFiles()
     }
 
     void opened(list paths) {
