@@ -124,6 +124,44 @@ class ProjectChecks {
         if (mode.equals("about")) { about() }
         if (mode.equals("switch-scan")) { switchScan() }
         if (mode.equals("old-metadata")) { oldMetadata() }
+        if (mode.equals("external")) { external() }
+        if (mode.equals("external-restore")) { externalRestore() }
+    }
+    void external() {
+        if (stage == 0) {
+            require(editor.activeProject != null && editor.activeProject.root.equals(path("proj")), "project open")
+            editor.openFile(path("other.txt"))
+            require(editor.currentDocument().path.endsWith("/other.txt"), "opened outside file")
+            advance()
+            return
+        }
+        if (stage == 1) {
+            String saved = editor.currentDocument().path
+            if (!loaded("proj") || editor.project.tree.findValue(saved) == 0) {
+                again()
+                return
+            }
+            menu(item(0))
+            advance()
+            return
+        }
+        require(editor.status.text().contains("Project saved"), "outside file saved in project")
+        finish()
+    }
+    void externalRestore() {
+        String outside = ""
+        int64 i = 0
+        while (i < editor.documents.length) {
+            String file = (editor.documents[i] as EditorDocument).path
+            if (file.endsWith("/other.txt")) { outside = file }
+            i = i + 1
+        }
+        require(outside.startsWith("/") && !outside.startsWith(format("{}/", path("proj"))), "outside file restored")
+        if (!loaded("proj") || editor.project.tree.findValue(outside) == 0) {
+            again()
+            return
+        }
+        finish()
     }
     void create() {
         if (stage == 0) {
@@ -563,6 +601,16 @@ def main():
             run("missing")
             remember(False, "")
 
+            run("external", "proj")
+            external_state = toml(proj / ".cwhip/workspace.toml")["workspace"]
+            external_paths = [item["path"] for item in external_state["files"]]
+            assert "a.cw" in external_paths, external_state
+            outside = [item for item in external_paths if item.startswith("/")]
+            assert len(outside) == 1, external_state
+            assert Path(outside[0]).resolve() == (case / "other.txt").resolve()
+            assert not Path(outside[0]).is_relative_to(proj)
+            run("external-restore", "proj")
+
             run("about")
 
         if selected("switching"):
@@ -625,6 +673,15 @@ def main():
             (escape / ".cwhip/workspace.toml").write_text(bad_state)
             run("bad-workspace", "escape")
             assert (escape / ".cwhip/workspace.toml").read_text() == bad_state
+
+            escape_abs = case / "escape-abs"
+            sources(escape_abs)
+            (escape_abs / ".cwhip").mkdir()
+            (escape_abs / ".cwhip/project.toml").write_text('version = 1\n[project]\nname = "Escape"\n')
+            bad_absolute = 'version = 1\n[workspace]\nfiles = [{ path = "/tmp/../outside.txt", line = 1, column = 1 }]\n'
+            (escape_abs / ".cwhip/workspace.toml").write_text(bad_absolute)
+            run("bad-workspace", "escape-abs")
+            assert (escape_abs / ".cwhip/workspace.toml").read_text() == bad_absolute
 
             if os.getuid() != 0:
                 locked = case / "locked"
