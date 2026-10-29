@@ -146,7 +146,9 @@ void Cedit.folderOpened(String path) {
             beginSwitch("folder")
             return
         }
-        project.setRoot(System.FileSystem().normalize(path))
+        String root = System.FileSystem().normalize(path)
+        project.setRoot(root)
+        adoptSettingsRoot(root)
         noteOpenFiles()
     }
 
@@ -220,37 +222,23 @@ void Cedit.savedAs(String path) {
 
 void Cedit.quit() { window.close() }
 
-void Cedit.openRecent() {
-        if (commandsBlocked()) { return }
-        if (recentFiles.length == 0) {
-            status.setText("No recent files in this session")
-            return
-        }
-        if (recentWindow == null || recentWindow.disposed()) {
-            recentWindow = Gtk.TransientWindow("Recent Files")
-            recentWindow.setTransientFor(window)
-            recentWindow.setDefaultSize(520, 360)
-            recentWindow.onCloseRequest(_self().hideRecent)
-        }
-        recentList = Gtk.Box(Gtk.Box.VERTICAL, 4)
+void Cedit.refreshRecentMenu() {
+        if (menu == null) { return }
+        menu.clearMenu(recentMenu)
+        recentEntries = []
+        if (recentFiles.length == 0) { return }
         int64 index = recentFiles.length - 1
         while (index >= 0) {
             RecentEntry entry = RecentEntry(_self(), recentFiles[index] as String)
-            recentList.append(entry.button)
+            recentEntries.append(entry)
+            menu.addItem(recentMenu, entry.path, entry._self().choose)
             index = index - 1
         }
-        Gtk.ScrolledWindow scroll = Gtk.ScrolledWindow()
-        scroll.setHExpand(true)
-        scroll.setVExpand(true)
-        scroll.setChild(recentList)
-        Gtk.Box root = Gtk.Box(Gtk.Box.VERTICAL, 8)
-        root.append(Gtk.Label("Open a recent file"))
-        root.append(scroll)
-        Gtk.Button dismiss = Gtk.Button("Close")
-        dismiss.onClicked(_self().closeRecent)
-        root.append(dismiss)
-        recentWindow.setChild(root)
-        recentWindow.present()
+    }
+
+void Cedit.openRecent() {
+        // Kept for command wiring; Recent is a submenu rebuilt by refreshRecentMenu.
+        if (recentFiles.length == 0) { status.setText("No recent files in this session") }
     }
 
 void Cedit.rememberRecent(String path) {
@@ -272,6 +260,7 @@ void Cedit.rememberRecent(String path) {
             }
             recentFiles = trimmed
         }
+        refreshRecentMenu()
     }
 
 void Cedit.attachDocumentMenu(EditorDocument document) {

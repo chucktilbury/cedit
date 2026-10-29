@@ -57,8 +57,9 @@ void Cedit.activate() {
         newItem = menu.addItem(fileMenu, "New", commandAction("new"))
         openItem = menu.addItem(fileMenu, "Open...", commandAction("open"))
         openFolderItem = menu.addItem(fileMenu, "Open Folder...", _self().chooseFolder)
-        recentItem = menu.addItem(fileMenu, "Recent", recentAction)
+        recentMenu = menu.addSubmenu(fileMenu, "Recent")
         menu.addSeparator(fileMenu)
+        refreshRecentMenu()
         documentItems.append(menu.addItem(fileMenu, "Save", commandAction("save")))
         documentItems.append(menu.addItem(fileMenu, "Save As...", commandAction("save-as")))
         documentItems.append(menu.addItem(fileMenu, "Save All", commandAction("save-all")))
@@ -83,6 +84,7 @@ void Cedit.activate() {
         int64 viewMenu = menu.addMenu("View")
         lineNumbersItem = menu.addCheckItem(viewMenu, "Show Line Numbers", effectiveLineNumbers(), _self().lineNumbersChecked)
         whitespaceItem = menu.addCheckItem(viewMenu, "Show White Space", settings.showWhitespace, _self().whitespaceChecked)
+        lineEndsItem = menu.addCheckItem(viewMenu, "Show Line Ends", settings.showLineEnds, _self().lineEndsChecked)
         indentMarkersItem = menu.addCheckItem(viewMenu, "Show Indent Markers", settings.showIndentMarkers, _self().indentMarkersChecked)
         projectManagerItem = menu.addCheckItem(viewMenu, "Show Project Manager", settings.showProjectManager, _self().projectManagerChecked)
         int64 projectMenu = menu.addMenu("Project")
@@ -144,7 +146,10 @@ void Cedit.activate() {
         sidePanel.setWidthRequest(160)
         Gtk.Box sideHeader = Gtk.Box(Gtk.Box.HORIZONTAL, 4)
         sideHeader.append(Gtk.Label("Sidebar"))
-        sideClose = Gtk.Button("Close")
+        sideClose = Gtk.Button("")
+        sideClose.setIconName("window-close-symbolic")
+        sideClose.addCssClass("flat")
+        sideClose.setTooltip("Close sidebar")
         sideClose.onClicked(_self().closeSidePanel)
         sideHeader.append(sideClose)
         sidePanel.append(sideHeader)
@@ -223,6 +228,7 @@ void Cedit.activate() {
             } else { openFile(argument) }
             index = index + 1
         }
+        adoptSettingsRoot(System.FileSystem().getCwd())
         // Explicit files or folders on the command line take precedence over reopening.
         if (!explicitRequest && settings.reopenLast && !settings.lastRoot.equals("")) {
             CwhipProject last = loadProject(settings.lastRoot, "Could not reopen last project")
@@ -274,7 +280,9 @@ void<> Cedit.commandAction(String command) {
         if (command.equals("project-close")) { return(_self().closeProject) }
         if (command.equals("view-line-numbers")) { return(_self().toggleLineNumbers) }
         if (command.equals("view-whitespace")) { return(_self().toggleWhitespace) }
+        if (command.equals("view-line-ends")) { return(_self().toggleLineEnds) }
         if (command.equals("view-indent-markers")) { return(_self().toggleIndentMarkers) }
+
         if (command.equals("view-project-manager")) { return(_self().toggleProjectManager) }
         if (command.equals("about")) { return(_self().showAbout) }
         return(null)

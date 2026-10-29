@@ -98,6 +98,7 @@ void Cedit.deleteProjectMetadata() {
         System.FileSystem().rmdir(target.directory)
         detachProject()
         project.setRoot(target.root)
+        adoptSettingsRoot(target.root)
         noteOpenFiles()
         forgetProject(target.root)
         status.setText(format("Deleted project metadata; {} remains open as a folder", target.root))
@@ -253,6 +254,7 @@ void Cedit.performProjectOp(String op) {
             String root = activeProject.root
             detachProject()
             project.setRoot(root)
+            adoptSettingsRoot(root)
             noteOpenFiles()
             forgetProject(root)
             status.setText(format("Closed project; {} remains open as a folder", root))
@@ -278,8 +280,10 @@ void Cedit.performProjectOp(String op) {
             return
         }
         if (op.equals("folder")) {
+            String root = nextFolder
             detachProject()
-            project.setRoot(nextFolder)
+            project.setRoot(root)
+            adoptSettingsRoot(root)
             nextFolder = ""
             noteOpenFiles()
             return

@@ -70,15 +70,14 @@ class Cedit {
     void<> languagePollAction
     void<> languageFlushAction
     void<> diskPollAction
-    Gtk.TransientWindow recentWindow
-    Gtk.Box recentList
+    int64 recentMenu
+    list recentEntries
     int64 openFolderItem
     list documentItems
     int64 undoItem
     int64 redoItem
     int64 cutItem
     int64 copyItem
-    int64 recentItem
     int64 newItem
     int64 openItem
     int64 quitItem
@@ -86,7 +85,6 @@ class Cedit {
     bool menuInitialized
     bool menuReady
     bool menuEditable
-    bool menuRecent
     bool menuQuit
     bool menuProjectActive
     bool menuCanUndo
@@ -171,6 +169,7 @@ class Cedit {
     int64 projectCloseItem
     int64 lineNumbersItem
     int64 whitespaceItem
+    int64 lineEndsItem
     int64 indentMarkersItem
     int64 projectManagerItem
     bool syncingView
@@ -184,6 +183,9 @@ class Cedit {
     Gtk.Button confirmCancelButton
     String confirmOp
     Gtk.CheckButton reopenCheck
+    Gtk.CheckButton saveGlobalCheck
+    Gtk.Button configureProjectButton
+    Gtk.Label settingsPathLabel
     Gtk.Label projectNote
     Gtk.TransientWindow aboutWindow
     Gtk.TransientWindow configureWindow
@@ -210,6 +212,9 @@ class Cedit {
 
     void showPreferences()
     void refreshProjectNote()
+    void refreshSettingsPathLabel()
+    String settingsRoot()
+    void adoptSettingsRoot(String root)
     void reopenChanged(bool active)
     void persistSettings()
     // The user config stores only the root locator; workspace state stays with the project.
@@ -224,6 +229,8 @@ class Cedit {
     int64 preferenceNumber(String text, int64 minimum, int64 maximum)
     void editorCheckChanged(bool active)
     void editorSettingChanged(String text)
+    void saveGlobalChanged(bool active)
+    String readSettingsDisk(String path)
     void resetEditorPreferences()
     void resetKeyboardPreferences()
     void cancelPreferencesReset()
@@ -235,6 +242,8 @@ class Cedit {
     void toggleLineNumbers()
     void whitespaceChecked(bool active)
     void toggleWhitespace()
+    void lineEndsChecked(bool active)
+    void toggleLineEnds()
     void indentMarkersChecked(bool active)
     void toggleIndentMarkers()
     void projectManagerChecked(bool active)
@@ -246,8 +255,6 @@ class Cedit {
     void scheduleDiskPoll()
     void diskPoll()
     void openRecentPath(String path)
-    bool hideRecent()
-    void closeRecent()
     void syncViewMenu()
     void applyProjectManagerVisibility()
     void keyboardSettingsChanged()
@@ -408,6 +415,7 @@ class Cedit {
 
     void quit()
 
+    void refreshRecentMenu()
     void openRecent()
     void rememberRecent(String path)
     void attachDocumentMenu(EditorDocument document)

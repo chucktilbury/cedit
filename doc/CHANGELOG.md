@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Preferences can open Configure Project, and a checkbox chooses global
+  `settings.toml` vs project/folder `.cedit/settings.toml`.
+- File > Recent is a submenu; the sidebar close control is a flat X; View has
+  Show Line Ends.
 - The project sidebar cannot be dragged to zero width, and the editor notebook
   scrolls its tabs so the sidebar can grow past the old maximum.
 - `cwhip-lsp` only receives `.cw` buffers; `clangd` only C/C++ names; other

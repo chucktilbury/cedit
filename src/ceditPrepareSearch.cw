@@ -205,7 +205,6 @@ void Cedit.updateMenu() {
         bool ready = !commandsBlocked()
         EditorDocument document = currentDocument()
         bool editable = ready && document != null
-        bool recent = ready && recentFiles.length > 0
         bool quit = fileDialog == null
         bool projectActive = ready && activeProject != null
 
@@ -220,10 +219,6 @@ void Cedit.updateMenu() {
             findRow.setSensitive(ready)
             replaceRow.setSensitive(ready)
             optionsRow.setSensitive(ready)
-        }
-        if (!menuInitialized || recent != menuRecent) {
-            menuRecent = recent
-            menu.setItemEnabled(recentItem, recent)
         }
         if (!menuInitialized || quit != menuQuit) {
             menuQuit = quit
