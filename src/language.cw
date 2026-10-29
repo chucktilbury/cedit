@@ -260,8 +260,9 @@ class LanguageClient {
             count = count + 1
             rest = byteSpan(rest, messageAt + 11, rest.length)
         }
+        // Keep only a short single-line status note. Putting the full message
+        // list (or even one long message) into a packed label grows the window.
         diagnostics = lines
-        if (editor.diagnostics != null) { editor.diagnostics.setText(lines) }
         EditorDocument current = editor.currentDocument()
         if (current == document) {
             if (count == 0) {
@@ -269,8 +270,9 @@ class LanguageClient {
                     editor.status.setText("Ready")
                 }
             } else {
-                if (count == 1) { editor.status.setText(lines) }
-                else {
+                if (count == 1) {
+                    editor.status.setText("1 diagnostic (see marked line)")
+                } else {
                     editor.status.setText(format("{} diagnostics (see marked lines)", count))
                 }
             }
