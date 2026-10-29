@@ -3,7 +3,7 @@
 `src/cedit.cw` is a GTK editor written in Cwhip. Its compiler
 is `cwhip`; runtime and package ABI names use the `cwhip_*` prefix. The editor uses the optional GTK
 package and a separate GtkSourceView-backed `sourceview` package. It provides
-File, Edit, Project and Help menus, native open/save-as file choosers, multiple notebook tabs,
+File, Edit, View, Project and Help menus, native open/save-as file choosers, multiple notebook tabs,
 duplicate-path focusing, open/save/save-as, session
 recent files, dirty tab titles, close protection, undo/redo, find/replace,
 line/column status, a non-modal Preferences window, and configurable GTK keyboard shortcuts. GTK's text view
@@ -188,8 +188,12 @@ A modified tab is marked with `*`. Tabs have borders and a close icon; an icon
 closes that tab even when it is not selected, using the same dirty-buffer
 protection as the menu. **File > Close** (`<Control>w`) closes only
 the active tab; closing the last tab leaves the window open with a fresh
-untitled document. Only **Quit** (`<Control>q`) and a window-close request exit
-the editor. Close, Quit, and a window-close request offer in-app **Save**,
+untitled document. **File > Close All** (`<Control><Shift>w`) walks every tab
+the same way: each modified document gets Save, Discard, or Cancel, and when
+the batch finishes one untitled document remains. Cancel stops the batch and
+keeps the remaining tabs. Only **Quit** (`<Control>q`) and a window-close
+request exit the editor. Close, Close All, Quit, and a window-close request
+offer in-app **Save**,
 **Discard**, and **Cancel** controls for modified documents. Saving an
 untitled document during close opens Save As; cancelling that chooser cancels
 the pending close without discarding changes. For a window close with several
@@ -199,7 +203,8 @@ Default shortcuts use GTK trigger notation: `<Control>s` saves,
 `<Control>o` opens the file chooser, `<Control>n` creates a tab,
 `<Control>f` focuses Find, `<Control>h` focuses Replace, `<Control>z` undoes,
 and `<Control><Shift>z` redoes. `<Control><Shift>s` opens Save As,
-`<Control>w` closes the active tab, and `<Control>q` requests Quit.
+`<Control>w` closes the active tab, `<Control><Shift>w` closes every tab, and
+`<Control>q` requests Quit.
 `<Control>x`, `<Control>c`, `<Control>v`, and `<Control>a` perform Cut, Copy,
 Paste, and Select All. `<Control><Alt>s` saves all modified named documents,
 and `<Control>comma` opens Preferences. Menus and configurable
@@ -245,6 +250,23 @@ is listed under that root by its absolute path and, for a Cwhip project, is
 saved with the workspace. The Explorer does not rename/delete files or add
 Git, build settings or LSP integration.
 
+## View
+
+**View** checkboxes apply immediately and are saved in the user settings file:
+
+- **Show Line Numbers** is `editor.line_numbers` (default on). It stays in step
+  with the same checkbox in Preferences. A project override still wins; changing
+  the View item while an override is active updates that override and saves
+  `project.toml`, so the buffer matches the check.
+- **Show White Space** (`editor.show_whitespace`, default off) draws spaces,
+  tabs, newlines, and non-breaking spaces.
+- **Show Indent Markers** (`editor.show_indent_markers`, default off) draws a
+  vertical guide at each tab-width step of leading indentation.
+- **Show Project Manager** (`editor.show_project_manager`, default on) hides or
+  shows the Explorer sidebar. The project stays open, the Project menu keeps
+  working, and the last sidebar width is kept. Hiding the sidebar does not
+  store a zero width in the workspace.
+
 ## Projects
 
 A Cwhip project is a folder containing `.cwhip/project.toml`. Ordinary folders
@@ -266,6 +288,9 @@ to the editor; cancelling one changes nothing.
   `.cwhip/project.toml`, otherwise an alert explains how to create one.
   Running `cedit DIR` opens `DIR` as a project when it contains that file and
   as a plain folder otherwise.
+- **Close Project** writes the workspace, then leaves the same folder open
+  without project settings. Documents stay open. `.cwhip` stays on disk. If
+  that folder was the remembered startup project, the startup entry is cleared.
 - **Save Project** writes the current configuration and workspace state.
 - **Save Project As...** chooses a different folder and writes a copy of the
   project configuration plus the workspace state rebased to that folder. Saved
@@ -478,6 +503,9 @@ font_size = 12
 tab_width = 4
 insert_spaces = true
 line_numbers = true
+show_whitespace = false
+show_indent_markers = false
+show_project_manager = true
 wrap = false
 highlight_current_line = false
 save_on_tab_loss = false

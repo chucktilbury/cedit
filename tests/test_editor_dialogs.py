@@ -237,15 +237,15 @@ class EditorChecks {
         }
         if (stage == 12) {
             require(editor.currentDocument().view.text().equals("undo this\n"), "Paste clipboard")
-            editor.menu.activateItem(editor.documentItems[5] as int64)
+            editor.menu.activateItem(editor.documentItems[6] as int64)
             require(editor.currentDocument().view.hasSelection(), "menu Select All")
             editor.findEntry.setText("undo")
-            editor.menu.activateItem(editor.documentItems[6] as int64)
+            editor.menu.activateItem(editor.documentItems[7] as int64)
             require(Fixture().entryFocus("undo"), "Find menu focuses query")
             editor.findAction()
             require(editor.currentDocument().view.hasSelection(), "Find selection")
             editor.replaceEntry.setText("replace")
-            editor.menu.activateItem(editor.documentItems[7] as int64)
+            editor.menu.activateItem(editor.documentItems[8] as int64)
             require(Fixture().entryFocus("replace"), "Replace menu focuses replacement")
             editor.replaceAction()
             require(editor.currentDocument().view.text().contains("replace this"), "Replace contents")

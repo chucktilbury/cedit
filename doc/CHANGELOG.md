@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add a View menu for line numbers, white space, indent markers, and the
+  project sidebar. Those choices are saved in the user settings. File > Close
+  All closes every tab, and Project > Close Project detaches the project
+  without deleting its metadata.
 - Open and save files that live outside the project root. Those files appear
   in the Explorer and are stored in `.cwhip/workspace.toml` as absolute paths.
   Paths inside the project stay root-relative.

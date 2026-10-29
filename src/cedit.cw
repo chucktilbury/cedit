@@ -30,6 +30,9 @@ class CeditSettings {
     int64 tabWidth
     bool insertSpaces
     bool lineNumbers
+    bool showWhitespace
+    bool showIndentMarkers
+    bool showProjectManager
     bool wrap
     bool highlightLine
     bool saveOnTabLoss
@@ -55,6 +58,7 @@ class CeditSettings {
             CommandBinding("save-as", "Save as", "<Control><Shift>s"),
             CommandBinding("save-all", "Save all", "<Control><Alt>s"),
             CommandBinding("close", "Close tab", "<Control>w"),
+            CommandBinding("close-all", "Close all tabs", "<Control><Shift>w"),
             CommandBinding("quit", "Quit", "<Control>q"),
             CommandBinding("find", "Find", "<Control>f"),
             CommandBinding("replace", "Find and replace", "<Control>h"),
@@ -72,6 +76,11 @@ class CeditSettings {
             CommandBinding("project-save-as", "Save project as", ""),
             CommandBinding("project-delete", "Delete project metadata", ""),
             CommandBinding("project-configure", "Configure project", ""),
+            CommandBinding("project-close", "Close project", ""),
+            CommandBinding("view-line-numbers", "Show line numbers", ""),
+            CommandBinding("view-whitespace", "Show white space", ""),
+            CommandBinding("view-indent-markers", "Show indent markers", ""),
+            CommandBinding("view-project-manager", "Show project manager", ""),
             CommandBinding("about", "About cedit", "")
         ]
         reopenLast = false
@@ -98,6 +107,9 @@ class CeditSettings {
         tabWidth = 4
         insertSpaces = true
         lineNumbers = true
+        showWhitespace = false
+        showIndentMarkers = false
+        showProjectManager = true
         wrap = false
         highlightLine = false
         saveOnTabLoss = false
@@ -306,6 +318,9 @@ class CeditSettings {
         tabWidth = integer("tab_width", tabWidth, 1, 16)
         insertSpaces = boolean("insert_spaces", insertSpaces)
         lineNumbers = boolean("line_numbers", lineNumbers)
+        showWhitespace = boolean("show_whitespace", showWhitespace)
+        showIndentMarkers = boolean("show_indent_markers", showIndentMarkers)
+        showProjectManager = boolean("show_project_manager", showProjectManager)
         wrap = boolean("wrap", wrap)
         highlightLine = boolean("highlight_current_line", highlightLine)
         saveOnTabLoss = boolean("save_on_tab_loss", saveOnTabLoss)
@@ -352,8 +367,9 @@ class CeditSettings {
     }
 
     String serialize() {
-        String text = format("version = 1\n[editor]\nfont_family = {}\nfont_size = {}\ntab_width = {}\ninsert_spaces = {}\nline_numbers = {}\nwrap = {}\nhighlight_current_line = {}\nsave_on_tab_loss = {}\nsave_on_window_loss = {}\nstrip_trailing_spaces = {}\nauto_complete_brackets = {}\n[keyboard]\n",
-            Gtk.Config().quote(fontFamily), fontSize, tabWidth, insertSpaces, lineNumbers, wrap, highlightLine,
+        String text = format("version = 1\n[editor]\nfont_family = {}\nfont_size = {}\ntab_width = {}\ninsert_spaces = {}\nline_numbers = {}\nshow_whitespace = {}\nshow_indent_markers = {}\nshow_project_manager = {}\nwrap = {}\nhighlight_current_line = {}\nsave_on_tab_loss = {}\nsave_on_window_loss = {}\nstrip_trailing_spaces = {}\nauto_complete_brackets = {}\n[keyboard]\n",
+            Gtk.Config().quote(fontFamily), fontSize, tabWidth, insertSpaces, lineNumbers,
+            showWhitespace, showIndentMarkers, showProjectManager, wrap, highlightLine,
             saveOnTabLoss, saveOnWindowLoss, stripTrailingSpaces, autoCompleteBrackets)
         int64 i = 0
         while (i < commands.length) {
@@ -1518,6 +1534,7 @@ class Cedit {
     list recentFiles
     EditorDocument pendingCloseDocument
     bool pendingCloseAll
+    bool closingAll
     bool allowWindowClose
     bool searchDialogOpen
     int64 pageChanges
@@ -1565,6 +1582,13 @@ class Cedit {
     bool quitReady
     bool presented
     int64 projectNewItem
+    int64 projectCloseItem
+    int64 lineNumbersItem
+    int64 whitespaceItem
+    int64 indentMarkersItem
+    int64 projectManagerItem
+    bool syncingView
+    int64 projectManagerWidth
     int64 projectOpenItem
     list projectItems
     int64 aboutItem
@@ -1599,6 +1623,8 @@ class Cedit {
         collectingFailures = false
         pendingCloseDocument = null
         pendingCloseAll = false
+        closingAll = false
+        syncingView = false
         allowWindowClose = false
         searchDialogOpen = false
         fileDialog = null
@@ -1641,10 +1667,14 @@ class Cedit {
         openItem = menu.addItem(fileMenu, "Open...", commandAction("open"))
         openFolderItem = menu.addItem(fileMenu, "Open Folder...", _self().chooseFolder)
         recentItem = menu.addItem(fileMenu, "Recent", recentAction)
+        menu.addSeparator(fileMenu)
         documentItems.append(menu.addItem(fileMenu, "Save", commandAction("save")))
         documentItems.append(menu.addItem(fileMenu, "Save As...", commandAction("save-as")))
         documentItems.append(menu.addItem(fileMenu, "Save All", commandAction("save-all")))
+        menu.addSeparator(fileMenu)
         documentItems.append(menu.addItem(fileMenu, "Close", commandAction("close")))
+        documentItems.append(menu.addItem(fileMenu, "Close All", commandAction("close-all")))
+        menu.addSeparator(fileMenu)
         quitItem = menu.addItem(fileMenu, "Quit", commandAction("quit"))
         int64 editMenu = menu.addMenu("Edit")
         undoItem = menu.addItem(editMenu, "Undo", commandAction("undo"))
@@ -1657,14 +1687,27 @@ class Cedit {
         documentItems.append(menu.addItem(editMenu, "Replace", commandAction("replace")))
         documentItems.append(menu.addItem(editMenu, "Strip Trailing Spaces", commandAction("strip-trailing-spaces")))
         preferencesItem = menu.addItem(editMenu, "Preferences...", commandAction("preferences"))
+        int64 viewMenu = menu.addMenu("View")
+        lineNumbersItem = menu.addCheckItem(viewMenu, "Show Line Numbers", effectiveLineNumbers(), _self().lineNumbersChecked)
+        whitespaceItem = menu.addCheckItem(viewMenu, "Show White Space", settings.showWhitespace, _self().whitespaceChecked)
+        indentMarkersItem = menu.addCheckItem(viewMenu, "Show Indent Markers", settings.showIndentMarkers, _self().indentMarkersChecked)
+        projectManagerItem = menu.addCheckItem(viewMenu, "Show Project Manager", settings.showProjectManager, _self().projectManagerChecked)
         int64 projectMenu = menu.addMenu("Project")
         projectNewItem = menu.addItem(projectMenu, "New Project...", commandAction("project-new"))
         projectOpenItem = menu.addItem(projectMenu, "Open Project...", commandAction("project-open"))
+        projectCloseItem = menu.addItem(projectMenu, "Close Project", commandAction("project-close"))
+        menu.addSeparator(projectMenu)
+        int64 saveProjectItem = menu.addItem(projectMenu, "Save Project", commandAction("project-save"))
+        int64 saveProjectAsItem = menu.addItem(projectMenu, "Save Project As...", commandAction("project-save-as"))
+        menu.addSeparator(projectMenu)
+        int64 configureProjectItem = menu.addItem(projectMenu, "Configure Project...", commandAction("project-configure"))
+        menu.addSeparator(projectMenu)
+        int64 deleteProjectItem = menu.addItem(projectMenu, "Delete Project...", commandAction("project-delete"))
         projectItems = []
-        projectItems.append(menu.addItem(projectMenu, "Save Project", commandAction("project-save")))
-        projectItems.append(menu.addItem(projectMenu, "Save Project As...", commandAction("project-save-as")))
-        projectItems.append(menu.addItem(projectMenu, "Delete Project...", commandAction("project-delete")))
-        projectItems.append(menu.addItem(projectMenu, "Configure Project...", commandAction("project-configure")))
+        projectItems.append(saveProjectItem)
+        projectItems.append(saveProjectAsItem)
+        projectItems.append(deleteProjectItem)
+        projectItems.append(configureProjectItem)
         int64 helpMenu = menu.addMenu("Help")
         aboutItem = menu.addItem(helpMenu, "About cedit...", commandAction("about"))
         searchWindow = Gtk.TransientWindow("Find")
@@ -1705,7 +1748,9 @@ class Cedit {
         workspace.setVExpand(true)
         workspace.append(project.sidebar)
         workspace.append(notebook)
-        workspace.setPosition(250)
+        projectManagerWidth = 250
+        workspace.setPosition(projectManagerWidth)
+        applyProjectManagerVisibility()
         layout.append(workspace)
         notebook.onPageChanged(pageChangedAction)
         closeChoices = Gtk.Box(Gtk.Box.HORIZONTAL, 4)
@@ -1780,6 +1825,7 @@ class Cedit {
         if (command.equals("open")) { return(openAction) }
         if (command.equals("new")) { return(newAction) }
         if (command.equals("close")) { return(closeTabAction) }
+        if (command.equals("close-all")) { return(_self().closeAll) }
         if (command.equals("quit")) { return(quitAction) }
         if (command.equals("find")) { return(showFindAction) }
         if (command.equals("replace")) { return(showReplaceAction) }
@@ -1796,6 +1842,11 @@ class Cedit {
         if (command.equals("project-save-as")) { return(_self().saveProjectAs) }
         if (command.equals("project-delete")) { return(_self().deleteProject) }
         if (command.equals("project-configure")) { return(_self().showConfigure) }
+        if (command.equals("project-close")) { return(_self().closeProject) }
+        if (command.equals("view-line-numbers")) { return(_self().toggleLineNumbers) }
+        if (command.equals("view-whitespace")) { return(_self().toggleWhitespace) }
+        if (command.equals("view-indent-markers")) { return(_self().toggleIndentMarkers) }
+        if (command.equals("view-project-manager")) { return(_self().toggleProjectManager) }
         if (command.equals("about")) { return(_self().showAbout) }
         return(null)
     }
@@ -1826,6 +1877,8 @@ class Cedit {
             if (current.hasHighlight) { highlight = current.highlightLine }
         }
         document.view.configure(font, size, tabs, spaces, numbers, wrapLines, highlight)
+        document.view.setShowWhitespace(settings.showWhitespace)
+        document.view.setShowIndentMarkers(settings.showIndentMarkers)
         document.view.setAutoCompleteBrackets(settings.autoCompleteBrackets)
         if (document.shortcutRevision == settings.shortcutRevision) { return }
         document.shortcutRevision = settings.shortcutRevision
@@ -2073,6 +2126,12 @@ class Cedit {
         settings.tabWidth = tabs
         settings.insertSpaces = spacesCheck.active()
         settings.lineNumbers = numbersCheck.active()
+        if (activeProject != null && activeProject.hasNumbers) {
+            activeProject.lineNumbers = settings.lineNumbers
+            if (activeProject.writable && projectSaves == 0 && projectOp.equals("")) {
+                writeProject(activeProject, true, false, "configure")
+            }
+        }
         settings.wrap = wrapCheck.active()
         settings.highlightLine = highlightCheck.active()
         settings.saveOnTabLoss = saveTabCheck.active()
@@ -2128,10 +2187,14 @@ class Cedit {
             applyDocumentSettings(documents[i] as EditorDocument)
             i = i + 1
         }
+        applyProjectManagerVisibility()
+        syncViewMenu()
         if (!settings.writable) {
-            preferencesMessage.setText(diagnostic("CEDIT2001", format(
+            String message = diagnostic("CEDIT2001", format(
                 "{}: {}; changes apply for this session only and saving is disabled.",
-                settings.path, settings.errors)))
+                settings.path, settings.errors))
+            if (preferencesMessage != null) { preferencesMessage.setText(message) }
+            else { status.setText(message) }
             return
         }
         if (savePending) {
@@ -2139,6 +2202,68 @@ class Cedit {
             return
         }
         saveSettings()
+    }
+    bool effectiveLineNumbers() {
+        if (activeProject != null && activeProject.hasNumbers) { return(activeProject.lineNumbers) }
+        return(settings.lineNumbers)
+    }
+    void publishLineNumbers(bool active) {
+        settings.lineNumbers = active
+        if (activeProject != null && activeProject.hasNumbers) {
+            activeProject.lineNumbers = active
+            if (activeProject.writable && projectSaves == 0 && projectOp.equals("")) {
+                writeProject(activeProject, true, false, "configure")
+            }
+        }
+        if (numbersCheck != null) {
+            refreshingPreferences = true
+            numbersCheck.setActive(active)
+            refreshingPreferences = false
+        }
+    }
+    void lineNumbersChecked(bool active) {
+        if (syncingView) { return }
+        publishLineNumbers(active)
+        settingsChanged()
+    }
+    void toggleLineNumbers() { lineNumbersChecked(!effectiveLineNumbers()) }
+    void whitespaceChecked(bool active) {
+        if (syncingView) { return }
+        settings.showWhitespace = active
+        settingsChanged()
+    }
+    void toggleWhitespace() { whitespaceChecked(!settings.showWhitespace) }
+    void indentMarkersChecked(bool active) {
+        if (syncingView) { return }
+        settings.showIndentMarkers = active
+        settingsChanged()
+    }
+    void toggleIndentMarkers() { indentMarkersChecked(!settings.showIndentMarkers) }
+    void projectManagerChecked(bool active) {
+        if (syncingView) { return }
+        settings.showProjectManager = active
+        settingsChanged()
+    }
+    void toggleProjectManager() { projectManagerChecked(!settings.showProjectManager) }
+    void syncViewMenu() {
+        if (menu == null) { return }
+        syncingView = true
+        menu.setItemChecked(lineNumbersItem, effectiveLineNumbers())
+        menu.setItemChecked(whitespaceItem, settings.showWhitespace)
+        menu.setItemChecked(indentMarkersItem, settings.showIndentMarkers)
+        menu.setItemChecked(projectManagerItem, settings.showProjectManager)
+        syncingView = false
+    }
+    void applyProjectManagerVisibility() {
+        if (workspace == null || project == null) { return }
+        if (!settings.showProjectManager) {
+            int64 width = workspace.position()
+            if (width > 0) { projectManagerWidth = width }
+        }
+        project.sidebar.setVisible(settings.showProjectManager)
+        if (settings.showProjectManager && projectManagerWidth > 0) {
+            workspace.setPosition(projectManagerWidth)
+        }
     }
     void keyboardSettingsChanged() {
         settings.shortcutRevision = settings.shortcutRevision + 1
@@ -2187,7 +2312,7 @@ class Cedit {
         }
         savingText = text
         savePending = true
-        preferencesMessage.setText("Saving settings...")
+        if (preferencesMessage != null) { preferencesMessage.setText("Saving settings...") }
         Gtk.Config().save(settings.path, text, persistedText, _self().settingsSaved)
         return(true)
     }
@@ -2205,9 +2330,11 @@ class Cedit {
         status.setText(diagnostic(code, explanation))
     }
     void settingsSaveFailure(String detail) {
-        preferencesMessage.setText(diagnostic("CEDIT2001", format(
+        String message = diagnostic("CEDIT2001", format(
             "Settings save failed: {} at {}; changes remain session-only. Check the settings path and permissions, then retry.",
-            detail, settings.path)))
+            detail, settings.path))
+        if (preferencesMessage != null) { preferencesMessage.setText(message) }
+        else { status.setText(message) }
     }
     void settingsSaved(String error) {
         savePending = false
@@ -2215,12 +2342,12 @@ class Cedit {
             settingsSaveFailure(error)
             saveAgain = false
             closeAfterSave = false
-            preferencesWindow.present()
+            if (preferencesWindow != null && !preferencesWindow.disposed()) { preferencesWindow.present() }
             return
         }
         persistedText = savingText
         settings.original = savingText
-        preferencesMessage.setText("Settings saved")
+        if (preferencesMessage != null) { preferencesMessage.setText("Settings saved") }
         if (saveAgain) {
             saveAgain = false
             if (!saveSettings()) {
@@ -2473,7 +2600,7 @@ class Cedit {
         projectOp = op
         projectSaveErrors = ""
         savingProject = target
-        bool explicit = op.equals("save") || op.equals("activate") || op.equals("configure")
+        bool explicit = op.equals("save") || op.equals("activate") || op.equals("configure") || op.equals("close")
         String problem = target.metadataProblem()
         if (!config && !workspaceState) { problem = "" }
         String configText = ""
@@ -2586,6 +2713,15 @@ class Cedit {
         if (op.equals("configure")) {
             if (configureMessage != null) { configureMessage.setText("Project configuration saved") }
             status.setText("Project configuration saved")
+            return
+        }
+        if (op.equals("close")) {
+            String root = activeProject.root
+            detachProject()
+            project.setRoot(root)
+            noteOpenFiles()
+            forgetProject(root)
+            status.setText(format("Closed project; {} remains open as a folder", root))
             return
         }
         if (op.equals("open")) {
@@ -2806,6 +2942,7 @@ class Cedit {
         fileList.append("]")
         if (!activePath.equals("")) { text.append(format("active = {}\n", Gtk.Config().quote(activePath))) }
         int64 width = workspace.position()
+        if (!settings.showProjectManager && projectManagerWidth > 0) { width = projectManagerWidth }
         if (width >= 0 && width <= 5000) { text.append(format("explorer_width = {}\n", width)) }
         int64 windowWidth = window.defaultWidth()
         int64 windowHeight = window.defaultHeight()
@@ -3815,6 +3952,7 @@ class Cedit {
                 menu.setItemEnabled(projectItems[projectIndex] as int64, projectActive)
                 projectIndex = projectIndex + 1
             }
+            menu.setItemEnabled(projectCloseItem, projectActive)
         }
         if (!menuInitialized || editable != menuEditable) {
             menuEditable = editable
@@ -3825,6 +3963,7 @@ class Cedit {
             }
         }
         updateEditActions()
+        syncViewMenu()
         menuInitialized = true
     }
 
@@ -3902,6 +4041,42 @@ class Cedit {
         }
     }
 
+    void closeAll() {
+        if (commandsBlocked()) { return }
+        closingAll = true
+        closeNextInBatch()
+    }
+
+    void closeNextInBatch() {
+        if (!closingAll) { return }
+        EditorDocument dirty = firstModifiedDocument()
+        if (dirty != null) {
+            pendingCloseDocument = dirty
+            activateDocument(dirty)
+            closeChoices.setVisible(true)
+            status.setText(format("Unsaved changes in {}: Save, Discard, or Cancel", dirty.tabTitle()))
+            updateMenu()
+            return
+        }
+        closeAllDocuments()
+        closingAll = false
+        pendingCloseDocument = null
+        closeChoices.setVisible(false)
+        newDocument()
+        status.setText("Closed all documents")
+        updateMenu()
+    }
+
+    void closeProject() {
+        if (commandsBlocked()) { return }
+        if (activeProject == null) {
+            status.setText("No project is open")
+            return
+        }
+        activeProject.workspaceText = captureWorkspace(activeProject.root, activeProject.root)
+        writeProject(activeProject, false, true, "close")
+    }
+
     void closeCurrentDocument() {
         if (commandsBlocked()) { return }
         EditorDocument document = currentDocument()
@@ -3953,7 +4128,7 @@ class Cedit {
                 if (!pendingCloseAll) {
                     closeChoices.setVisible(false)
                 }
-                if (documents.length == 0 && !pendingCloseAll) {
+                if (documents.length == 0 && !pendingCloseAll && !closingAll) {
                     newDocument()
                 } else {
                     updateStatus()
@@ -3963,7 +4138,7 @@ class Cedit {
                     }
                 }
                 // The closing shortcut's controller must unwind before restoring focus.
-                if (!pendingCloseAll) { Gtk.Application().post(_self().focusAfterClose) }
+                if (!pendingCloseAll && !closingAll) { Gtk.Application().post(_self().focusAfterClose) }
                 return
             }
             index = index + 1
@@ -4011,6 +4186,11 @@ class Cedit {
     }
 
     void continueSavedClose() {
+        if (closingAll) {
+            pendingCloseDocument = null
+            closeNextInBatch()
+            return
+        }
         if (!pendingCloseAll) {
             finishPendingClose()
             return
@@ -4023,6 +4203,14 @@ class Cedit {
     }
 
     void discardPendingClose() {
+        if (closingAll) {
+            EditorDocument document = pendingCloseDocument
+            if (document == null) { document = firstModifiedDocument() }
+            pendingCloseDocument = null
+            if (document != null) { removeDocument(document) }
+            closeNextInBatch()
+            return
+        }
         if (pendingCloseAll && !switchOp.equals("")) {
             pendingCloseAll = false
             closeChoices.setVisible(false)
@@ -4055,6 +4243,7 @@ class Cedit {
         }
         pendingCloseDocument = null
         pendingCloseAll = false
+        closingAll = false
         closeChoices.setVisible(false)
         updateStatus()
     }

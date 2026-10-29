@@ -126,6 +126,46 @@ class ProjectChecks {
         if (mode.equals("old-metadata")) { oldMetadata() }
         if (mode.equals("external")) { external() }
         if (mode.equals("external-restore")) { externalRestore() }
+        if (mode.equals("view")) { viewOptions() }
+    }
+    void viewOptions() {
+        if (stage == 0) {
+            require(editor.activeProject != null, "project open for view options")
+            require(editor.project.sidebar.visible() && editor.menu.itemChecked(editor.projectManagerItem), "project manager shown")
+            require(editor.menu.itemChecked(editor.lineNumbersItem), "line numbers shown")
+            editor.menu.activateItem(editor.whitespaceItem)
+            editor.menu.activateItem(editor.indentMarkersItem)
+            editor.menu.activateItem(editor.projectManagerItem)
+            require(editor.settings.showWhitespace && editor.settings.showIndentMarkers, "display settings")
+            require(!editor.menu.itemChecked(editor.projectManagerItem) && !editor.project.sidebar.visible(), "project manager hidden")
+            advance()
+            return
+        }
+        if (stage == 1) {
+            if (busy()) {
+                again()
+                return
+            }
+            editor.openFile(path("proj/a.cw"))
+            editor.currentDocument().view.setText("changed\n")
+            editor.closeAll()
+            require(editor.closingAll && editor.pendingCloseDocument != null, "close all prompts")
+            editor.cancelPendingClose()
+            require(!editor.closingAll && editor.currentDocument().view.modified(), "cancel keeps the edit")
+            editor.closeAll()
+            editor.discardPendingClose()
+            require(editor.documents.length == 1 && editor.currentDocument().path.equals(""), "close all leaves one untitled tab")
+            editor.menu.activateItem(editor.projectCloseItem)
+            advance()
+            return
+        }
+        if (busy()) {
+            again()
+            return
+        }
+        require(editor.activeProject == null && editor.project.rootPath.equals(path("proj")), "close project keeps the folder")
+        require(System.FileSystem().isFile(path("proj/.cwhip/project.toml")), "close project keeps metadata")
+        finish()
     }
     void external() {
         if (stage == 0) {
@@ -610,6 +650,14 @@ def main():
             assert Path(outside[0]).resolve() == (case / "other.txt").resolve()
             assert not Path(outside[0]).is_relative_to(proj)
             run("external-restore", "proj")
+
+            run("view", "proj")
+            saved = settings.read_text()
+            assert '"show_whitespace" = true' in saved, saved
+            assert '"show_indent_markers" = true' in saved, saved
+            assert '"show_project_manager" = false' in saved, saved
+            assert (proj / ".cwhip/project.toml").is_file()
+            assert (proj / "a.cw").read_text() == "class A {\n    int64 value = 1\n}\n"
 
             run("about")
 
