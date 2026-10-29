@@ -218,6 +218,9 @@ bool Cedit.saveSettings() {
         savePending = true
         if (preferencesMessage != null) { preferencesMessage.setText("Saving settings...") }
         Gtk.Config().save(settings.path, text, persistedText, _self().settingsSaved)
+        if (mirrorGlobal && !settings.path.equals(settings.globalPath)) {
+            writeSettingsFile(settings.globalPath, text)
+        }
         return(true)
     }
 
@@ -330,6 +333,7 @@ void Cedit.openRootArgument(String path) {
             return
         }
         project.setRoot(root)
+        adoptSettingsRoot(root)
         noteOpenFiles()
     }
 

@@ -184,6 +184,7 @@ class Cedit {
     String confirmOp
     Gtk.CheckButton reopenCheck
     Gtk.CheckButton saveGlobalCheck
+    bool mirrorGlobal
     Gtk.Button configureProjectButton
     Gtk.Label settingsPathLabel
     Gtk.Label projectNote
@@ -214,6 +215,9 @@ class Cedit {
     void refreshProjectNote()
     void refreshSettingsPathLabel()
     String settingsRoot()
+    void ensureGlobalSettingsFile()
+    bool writeSettingsFile(String path, String text)
+    void writeStartupToGlobal()
     void adoptSettingsRoot(String root)
     void reopenChanged(bool active)
     void persistSettings()
@@ -224,6 +228,7 @@ class Cedit {
     void stopRecording()
     void showEditorPreferences()
     void showKeyboardPreferences()
+    void showProjectPreferences()
     void showStartupPreferences()
     void filterCommands(String query)
     int64 preferenceNumber(String text, int64 minimum, int64 maximum)

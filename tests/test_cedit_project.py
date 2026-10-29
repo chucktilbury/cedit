@@ -527,7 +527,8 @@ class ProjectChecks {
 
 def digest(root):
     return {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest()
-            for p in sorted(root.rglob("*")) if p.is_file() and ".cwhip" not in p.parts}
+            for p in sorted(root.rglob("*"))
+            if p.is_file() and ".cwhip" not in p.parts and ".cedit" not in p.parts}
 
 
 # Groups that build on the project saved by "create" repeat it as their setup;
@@ -587,6 +588,7 @@ def main():
         case.mkdir()
         case_env = environment(case)
         settings = Path(case_env["XDG_CONFIG_HOME"]) / "cwhip/settings.toml"
+        local_settings = None
 
         def sources(root, extra=()):
             root.mkdir()
@@ -644,7 +646,10 @@ def main():
             assert state["expanded"] == ["sub"], state
             assert state["window_width"] == 980 and state["window_height"] == 720, state
             assert state["explorer_width"] == 300, state
-            assert toml(settings)["editor"]["tab_width"] == 5
+            nonlocal local_settings
+            local_settings = proj / ".cedit/settings.toml"
+            assert local_settings.is_file(), "project local settings were not seeded"
+            assert toml(local_settings)["editor"]["tab_width"] == 5
             assert digest(proj) == before, "source files changed"
             assert (proj / ".cwhip/project.toml").stat().st_mode & 0o777 == 0o600
 
@@ -672,7 +677,7 @@ def main():
             run("external-restore", "proj")
 
             run("view", "proj")
-            saved = settings.read_text()
+            saved = local_settings.read_text()
             assert '"show_whitespace" = true' in saved, saved
             assert '"show_indent_markers" = true' in saved, saved
             assert '"show_project_manager" = false' in saved, saved
