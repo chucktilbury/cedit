@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The project sidebar cannot be dragged to zero width, and the editor notebook
+  scrolls its tabs so the sidebar can grow past the old maximum.
 - `cwhip-lsp` only receives `.cw` buffers; `clangd` only C/C++ names; other
   servers skip plain text such as `.txt` and `.md`.
 - Language-server diagnostics no longer show a message strip under the document,

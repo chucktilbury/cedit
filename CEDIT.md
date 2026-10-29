@@ -261,8 +261,9 @@ saved with the workspace. The Explorer does not rename or delete files.
 The sidebar is a notebook. **Project** is the project tree. **Files** is a
 second tree rooted at the project folder, or at the current directory when no
 project is open. Right-click either tree for **Refresh** and **Show Hidden**.
-**Close** on the sidebar hides it and remembers the width.
-**View > Show Project Manager** shows it again. Giving a named file tab focus,
+Dragging the splitter cannot collapse the sidebar to zero, and the editor tab
+strip scrolls so the sidebar can grow wider. **Close** on the sidebar hides it
+and remembers the width. **View > Show Project Manager** shows it again. Giving a named file tab focus,
 returning focus to the window, or the periodic disk check compares the
 buffer's last loaded text with the file on disk. When they differ, the editor
 asks to Reload, Save, or Close.
