@@ -64,6 +64,14 @@ void Cedit.cursorMoved() {
 void Cedit.pageChanged() {
         pageChanges = pageChanges + 1
         if (changingDocuments || window.disposed()) { return }
+        // Defer tab-loss work so it does not run inside GtkNotebook's arrow
+        // press handler (which can drop the matching release and stick the
+        // scroll arrows until another tab is clicked).
+        Gtk.Application().post(_self().pageChangedDeferred)
+    }
+
+void Cedit.pageChangedDeferred() {
+        if (changingDocuments || window.disposed()) { return }
         EditorDocument previous = focusedDocument
         focusedDocument = currentDocument()
         if (!changingDocuments && previous != focusedDocument && settings.saveOnTabLoss) {
