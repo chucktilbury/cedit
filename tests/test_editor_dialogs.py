@@ -459,6 +459,9 @@ def main():
             "    app.onActivate(checks.activate)")
         source = work / "editor.cw"
         source.write_text(text[:index] + DRIVER + setup)
+        for extra in args.source.parent.glob("*.cw"):
+            if extra.name != args.source.name:
+                (work / extra.name).write_text(extra.read_text())
         (work / "overwrite.cw").write_text("original\n")
         (work / "other.cw").write_text("other\n")
         (work / "vanishing.cw").write_text("removed before reading\n")

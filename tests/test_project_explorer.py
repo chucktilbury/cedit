@@ -438,6 +438,9 @@ def main() -> None:
             "    }")
         source = work / "explorer.cw"
         source.write_text(text[:index] + DRIVER + setup)
+        for extra in args.source.parent.glob("*.cw"):
+            if extra.name != args.source.name:
+                (work / extra.name).write_text(extra.read_text())
         project = work / "project"
         project.mkdir()
         for name in ("empty", "gone", "sub", ".hidden-dir"):

@@ -151,6 +151,9 @@ def main():
         text = args.source.read_text()
         source = work / "numeric.cw"
         source.write_text(text[:text.rindex("\nstart {")] + DRIVER)
+        for extra in args.source.parent.glob("*.cw"):
+            if extra.name != args.source.name:
+                (work / extra.name).write_text(extra.read_text())
         executable = work / "numeric"
         result = invoke([str(args.compiler.resolve()), str(source), "-o",
                          str(executable)], work, env)

@@ -18,7 +18,7 @@ def headless(xvfb: str, work: Path, env: dict[str, str]):
     read_fd, write_fd = os.pipe()
     with (work / "xvfb.log").open("w") as log:
         server = subprocess.Popen(
-            [xvfb, "-displayfd", str(write_fd), "-screen", "0", "1024x768x24",
+            [xvfb, "-displayfd", str(write_fd), "-screen", "0", "1280x1024x24",
              "-nolisten", "tcp"], pass_fds=(write_fd,), stdout=log, stderr=log, env=env)
         os.close(write_fd)
         try:

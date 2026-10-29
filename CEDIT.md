@@ -81,6 +81,9 @@ Use `scripts/setup --clean debug` (or `scripts/setup debug --clean`) to
 remove generated build/staging trees before configuring. `--clean` alone
 uses the SDK's default mode after removing the old cache.
 The SDK can also be selected with `Cwhip_DIR` or `CMAKE_PREFIX_PATH`.
+The editor needs the SDK's `Gtk.Application.schedule` callback. `src/cedit.cw`
+holds the session fields and `start`; the other files in `src/` are classes
+and method groups included from there.
 Inside the project shell, `build [TARGET...]` and `rebuild [TARGET...]` work
 with any CMake generator and from any directory; `rebuild` cleans CMake outputs
 first. `clean` deletes the default generated trees entirely; exit and run
@@ -204,7 +207,10 @@ Default shortcuts use GTK trigger notation: `<Control>s` saves,
 `<Control>f` focuses Find, `<Control>h` focuses Replace, `<Control>z` undoes,
 and `<Control><Shift>z` redoes. `<Control><Shift>s` opens Save As,
 `<Control>w` closes the active tab, `<Control><Shift>w` closes every tab, and
-`<Control>q` requests Quit.
+`<Control>q` requests Quit. **File > Reload** reads the active file from disk.
+A clean, unchanged buffer reports that it is already current. A modified
+buffer, or one whose file changed underneath the editor, asks to Reload, Save,
+or Close.
 `<Control>x`, `<Control>c`, `<Control>v`, and `<Control>a` perform Cut, Copy,
 Paste, and Select All. `<Control><Alt>s` saves all modified named documents,
 and `<Control>comma` opens Preferences. Menus and configurable
@@ -247,8 +253,24 @@ repopulating the tree. A plain folder opened this way has no saved state; the
 hidden-files toggle is never saved. Expansion, tabs and layout are saved only
 for Cwhip projects (below). A file opened or saved outside the current root
 is listed under that root by its absolute path and, for a Cwhip project, is
-saved with the workspace. The Explorer does not rename/delete files or add
-Git, build settings or LSP integration.
+saved with the workspace. The Explorer does not rename or delete files.
+
+The sidebar is a notebook. **Project** is the project tree. **Files** is a
+second tree rooted at the project folder, or at the current directory when no
+project is open. **Close** on the sidebar hides it and remembers the width.
+**View > Show Project Manager** shows it again. Giving a named file tab focus,
+or returning focus to the window, compares the buffer's last loaded text with
+the file on disk. When they differ, the editor asks to Reload, Save, or Close.
+
+## Language server
+
+Preferences stores `editor.lsp_command`. An empty command turns the client
+off. `cwhip-lsp` talks to the Cwhip language server. `clangd` talks to clangd.
+Any other command is split on spaces and started as that server. The editor
+keeps a full copy of each named buffer and shows `textDocument/publishDiagnostics`
+under the document when the server reports any. The line stays hidden when it
+is empty. Restart the command by editing the preference; it is saved
+with the other editor settings.
 
 ## View
 
@@ -263,9 +285,10 @@ Git, build settings or LSP integration.
 - **Show Indent Markers** (`editor.show_indent_markers`, default off) draws a
   vertical guide at each tab-width step of leading indentation.
 - **Show Project Manager** (`editor.show_project_manager`, default on) hides or
-  shows the Explorer sidebar. The project stays open, the Project menu keeps
+  shows the sidebar notebook. The project stays open, the Project menu keeps
   working, and the last sidebar width is kept. Hiding the sidebar does not
-  store a zero width in the workspace.
+  store a zero width in the workspace. The sidebar **Close** button uses the
+  same setting.
 
 ## Projects
 

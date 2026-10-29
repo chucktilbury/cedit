@@ -81,6 +81,17 @@ static gboolean accept_file(gpointer data) {
     return G_SOURCE_REMOVE;
 }
 
+static GtkWidget *find_file_notebook(GtkWidget *widget) {
+    if (GTK_IS_NOTEBOOK(widget) && gtk_widget_has_css_class(widget, "cwhip-file-tabs"))
+        return widget;
+    for (GtkWidget *child = gtk_widget_get_first_child(widget); child;
+         child = gtk_widget_get_next_sibling(child)) {
+        GtkWidget *found = find_file_notebook(child);
+        if (found) return found;
+    }
+    return NULL;
+}
+
 static GtkWidget *find_type(GtkWidget *widget, GType type) {
     if (G_TYPE_CHECK_INSTANCE_TYPE(widget, type)) return widget;
     for (GtkWidget *child = gtk_widget_get_first_child(widget); child;
@@ -480,13 +491,13 @@ bool fixture_preferences_grid_readonly(void *self) {
         }
     }
     g_clear_object(&window);
-    return valid && entries == 30;
+    return valid && entries == 31;
 }
 
 bool fixture_editor_tabs(void *self) {
     (void)self;
-    GtkWidget *notebook = find_type(GTK_WIDGET(editor_window()), GTK_TYPE_NOTEBOOK);
-    if (!notebook || !gtk_widget_has_css_class(notebook, "cwhip-file-tabs")) return false;
+    GtkWidget *notebook = find_file_notebook(GTK_WIDGET(editor_window()));
+    if (!notebook) return false;
     int count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(notebook));
     for (int i = 0; i < count; ++i) {
         GtkWidget *page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), i);
@@ -503,7 +514,7 @@ bool fixture_editor_tabs(void *self) {
 
 bool fixture_editor_close_tab(void *self, int64_t index) {
     (void)self;
-    GtkWidget *notebook = find_type(GTK_WIDGET(editor_window()), GTK_TYPE_NOTEBOOK);
+    GtkWidget *notebook = find_file_notebook(GTK_WIDGET(editor_window()));
     if (!notebook || index < 0 || index >= gtk_notebook_get_n_pages(GTK_NOTEBOOK(notebook)))
         return false;
     GtkWidget *page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), (int)index);
