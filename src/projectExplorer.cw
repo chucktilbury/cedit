@@ -6,8 +6,8 @@ class ProjectExplorer {
     Gtk.CheckButton hidden
     Gtk.Button refreshButton
     Gtk.ContextMenu contextMenu
-    Gtk.CheckButton contextHidden
-    Gtk.Button contextRefresh
+    int64 contextRefresh
+    int64 contextHidden
     bool syncingHidden
     String excludes
     list pending
@@ -34,22 +34,16 @@ class ProjectExplorer {
         refreshButton = Gtk.Button("Refresh")
         refreshButton.setSensitive(false)
         refreshButton.onClicked(_self().refresh)
-        // Refresh and hidden-file toggles live in the tree context menu; these
-        // unparented widgets keep the shared state and callbacks.
+        // Refresh and hidden-file toggles live in the tree context menu; this
+        // unparented check button keeps the shared Show Hidden state.
         hidden = Gtk.CheckButton("Show Hidden Files")
         hidden.onToggled(_self().hiddenChanged)
         tree = Gtk.Tree(_self().expand, _self().activateFile)
         tree.setSingleClickActivate(true)
         contextMenu = Gtk.ContextMenu(tree)
-        Gtk.Box actions = Gtk.Box(Gtk.Box.VERTICAL, 4)
-        contextRefresh = Gtk.Button("Refresh")
-        contextRefresh.setSensitive(false)
-        contextRefresh.onClicked(_self().refresh)
-        contextHidden = Gtk.CheckButton("Show Hidden")
-        contextHidden.onToggled(_self().contextHiddenChanged)
-        actions.append(contextRefresh)
-        actions.append(contextHidden)
-        contextMenu.setChild(actions)
+        contextRefresh = contextMenu.addItem("Refresh", _self().refresh)
+        contextMenu.setItemEnabled(contextRefresh, false)
+        contextHidden = contextMenu.addCheckItem("Show Hidden", false, _self().contextHiddenChanged)
         tree.setHExpand(true)
         tree.setVExpand(true)
         Gtk.ScrolledWindow scroll = Gtk.ScrolledWindow()
@@ -87,7 +81,7 @@ class ProjectExplorer {
         externalFiles = []
         title.setText(label)
         refreshButton.setSensitive(true)
-        contextRefresh.setSensitive(true)
+        contextMenu.setItemEnabled(contextRefresh, true)
         rebuild(expandedPaths)
     }
 
@@ -194,7 +188,7 @@ class ProjectExplorer {
     void hiddenChanged(bool value) {
         if (syncingHidden) { return }
         syncingHidden = true
-        contextHidden.setActive(value)
+        contextMenu.setItemChecked(contextHidden, value)
         syncingHidden = false
         refresh()
     }

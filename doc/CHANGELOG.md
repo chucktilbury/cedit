@@ -2,8 +2,9 @@
 
 ## Unreleased
 
-- File > Recent opens a chooser of session files. Right-click the edit pane for
-  Reload. Right-click Project and Files for Refresh. External disk edits are
+- Keep the native edit-pane Cut/Copy/Paste menu and add Reload to it. Project
+  and Files right-click menus are native menu rows for Refresh and Show Hidden.
+- File > Recent opens a chooser of session files. External disk edits are
   polled while a file is open. Language-server diagnostics mark, underline,
   and tooltip the reported lines.
 - Split the editor into class and method files under `src/`. The session

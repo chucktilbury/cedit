@@ -87,6 +87,31 @@ bool explorer_single_click(void *self) {
     return gtk_list_view_get_single_click_activate(GTK_LIST_VIEW(explorer_list()));
 }
 
+static bool explorer_activate_labeled(GtkWidget *menu, const char *label, bool check_on) {
+    GMenuModel *model = gtk_popover_menu_get_menu_model(GTK_POPOVER_MENU(menu));
+    GActionMap *actions = g_object_get_data(G_OBJECT(menu), "cwhip-actions");
+    if (!model || !actions) return false;
+    gint count = g_menu_model_get_n_items(model);
+    for (gint i = 0; i < count; ++i) {
+        gchar *text = NULL;
+        gchar *action_name = NULL;
+        g_menu_model_get_item_attribute(model, i, G_MENU_ATTRIBUTE_LABEL, "s", &text);
+        g_menu_model_get_item_attribute(model, i, G_MENU_ATTRIBUTE_ACTION, "s", &action_name);
+        bool match = text && action_name && strcmp(text, label) == 0 &&
+                     g_str_has_prefix(action_name, "menu.");
+        if (match) {
+            GAction *action = g_action_map_lookup_action(actions, action_name + 5);
+            if (!action) match = false;
+            else if (check_on) g_action_change_state(action, g_variant_new_boolean(TRUE));
+            else g_action_activate(action, NULL);
+        }
+        g_free(text);
+        g_free(action_name);
+        if (match) return true;
+    }
+    return false;
+}
+
 bool explorer_context(void *self, bool toggle_hidden) {
     (void)self;
     GtkWidget *list = explorer_list();
@@ -102,16 +127,13 @@ bool explorer_context(void *self, bool toggle_hidden) {
         g_object_unref(controller);
     }
     g_object_unref(controllers);
-    GtkWidget *menu = find_type(list, GTK_TYPE_POPOVER);
-    GtkWidget *hidden = menu ? find_type(menu, GTK_TYPE_CHECK_BUTTON) : NULL;
-    GtkWidget *refresh = menu ? find_button(menu, "Refresh") : NULL;
-    if (!opened || !menu || !gtk_widget_get_visible(menu) || !hidden || !refresh) return false;
-    if (toggle_hidden)
-        gtk_check_button_set_active(GTK_CHECK_BUTTON(hidden),
-            !gtk_check_button_get_active(GTK_CHECK_BUTTON(hidden)));
-    else g_signal_emit_by_name(refresh, "clicked");
+    GtkWidget *menu = find_type(list, GTK_TYPE_POPOVER_MENU);
+    if (!menu) menu = find_type(list, GTK_TYPE_POPOVER);
+    if (!opened || !menu || !gtk_widget_get_visible(menu) || !GTK_IS_POPOVER_MENU(menu)) return false;
+    bool acted = explorer_activate_labeled(menu, toggle_hidden ? "Show Hidden" : "Refresh",
+                                           toggle_hidden);
     gtk_popover_popdown(GTK_POPOVER(menu));
-    return true;
+    return acted;
 }
 bool explorer_chooser(void *self) {
     (void)self;
