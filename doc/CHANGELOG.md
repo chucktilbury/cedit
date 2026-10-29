@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `cwhip-lsp` only receives `.cw` buffers; `clangd` only C/C++ names; other
+  servers skip plain text such as `.txt` and `.md`.
 - Language-server diagnostics no longer show or hide a strip under the document,
   so the window does not resize when they arrive. Marks, tooltips, and the
   status line still report them.
