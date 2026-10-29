@@ -137,7 +137,7 @@ void Cedit.activate() {
         notebook.setVExpand(true)
         project = ProjectExplorer(_self().openFile)
         files = ProjectExplorer(_self().openFile)
-        files.setRoot(System.FileSystem().getCwd())
+        files.setProject(System.FileSystem().getCwd(), "Files", "", [])
         sidePanel = Gtk.Box(Gtk.Box.VERTICAL, 4)
         sidePanel.setVExpand(true)
         Gtk.Box sideHeader = Gtk.Box(Gtk.Box.HORIZONTAL, 4)
@@ -233,6 +233,7 @@ void Cedit.activate() {
         }
         window.present()
         presented = true
+        scheduleDiskPoll()
         if (!settings.errors.equals("")) {
             Gtk.AlertDialog().show(window, "Settings errors", diagnostic(
                 "CEDIT2001", format(
@@ -281,7 +282,9 @@ void<> Cedit.commandAction(String command) {
 
 void Cedit.configureShortcuts(EditorDocument document) {
         applyDocumentSettings(document)
+        document.view.setMarkStyle("diagnostic", "dialog-error-symbolic", "#ffcccc")
         document.view.onChanged(changedAction)
         document.view.onCursorMoved(cursorAction)
+        attachDocumentMenu(document)
     }
 

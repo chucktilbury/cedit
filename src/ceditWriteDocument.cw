@@ -226,18 +226,62 @@ void Cedit.openRecent() {
             status.setText("No recent files in this session")
             return
         }
-        openFile(recentFiles[recentFiles.length - 1] as String)
+        if (recentWindow == null || recentWindow.disposed()) {
+            recentWindow = Gtk.TransientWindow("Recent Files")
+            recentWindow.setTransientFor(window)
+            recentWindow.setDefaultSize(520, 360)
+            recentWindow.onCloseRequest(_self().hideRecent)
+        }
+        recentList = Gtk.Box(Gtk.Box.VERTICAL, 4)
+        int64 index = recentFiles.length - 1
+        while (index >= 0) {
+            RecentEntry entry = RecentEntry(_self(), recentFiles[index] as String)
+            recentList.append(entry.button)
+            index = index - 1
+        }
+        Gtk.ScrolledWindow scroll = Gtk.ScrolledWindow()
+        scroll.setHExpand(true)
+        scroll.setVExpand(true)
+        scroll.setChild(recentList)
+        Gtk.Box root = Gtk.Box(Gtk.Box.VERTICAL, 8)
+        root.append(Gtk.Label("Open a recent file"))
+        root.append(scroll)
+        Gtk.Button dismiss = Gtk.Button("Close")
+        dismiss.onClicked(_self().closeRecent)
+        root.append(dismiss)
+        recentWindow.setChild(root)
+        recentWindow.present()
     }
 
 void Cedit.rememberRecent(String path) {
+        list kept = []
         int64 index = 0
         while (index < recentFiles.length) {
-            if ((recentFiles[index] as String).equals(path)) {
-                return
-            }
+            String existing = recentFiles[index] as String
+            if (!existing.equals(path)) { kept.append(existing) }
             index = index + 1
         }
-        recentFiles.append(path)
+        kept.append(path)
+        recentFiles = kept
+        while (recentFiles.length > 20) {
+            list trimmed = []
+            index = 1
+            while (index < recentFiles.length) {
+                trimmed.append(recentFiles[index] as String)
+                index = index + 1
+            }
+            recentFiles = trimmed
+        }
+    }
+
+void Cedit.attachDocumentMenu(EditorDocument document) {
+        if (document == null || document.view == null) { return }
+        Gtk.ContextMenu menu = Gtk.ContextMenu(document.view.widget())
+        Gtk.Box actions = Gtk.Box(Gtk.Box.VERTICAL, 4)
+        Gtk.Button reload = Gtk.Button("Reload")
+        reload.onClicked(_self().reloadCurrent)
+        actions.append(reload)
+        menu.setChild(actions)
     }
 
 int64 Cedit.searchOptions() {

@@ -42,7 +42,7 @@ list Cedit.absolutePaths(CwhipProject target, list paths) {
 void Cedit.activateProject(CwhipProject target, bool restore) {
         activeProject = target
         project.setProject(target.root, target.name, target.excludeLines(), absolutePaths(target, target.expanded))
-        if (files != null) { files.setRoot(target.root) }
+        if (files != null) { files.setProject(target.root, "Files", "", []) }
         reapplyDocumentSettings()
         refreshProjectNote()
         if (restore) {

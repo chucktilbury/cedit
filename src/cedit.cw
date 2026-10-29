@@ -14,6 +14,7 @@ include "overrideRow.cw"
 include "editorDocument.cw"
 include "projectNode.cw"
 include "projectExplorer.cw"
+include "recentEntry.cw"
 
 class Cedit {
     Cedit _self()
@@ -69,6 +70,9 @@ class Cedit {
     Gtk.Entry lspEntry
     void<> languagePollAction
     void<> languageFlushAction
+    void<> diskPollAction
+    Gtk.TransientWindow recentWindow
+    Gtk.Box recentList
     int64 openFolderItem
     list documentItems
     int64 undoItem
@@ -240,6 +244,11 @@ class Cedit {
     void scheduleLanguagePoll()
     void languagePoll()
     void languageFlush()
+    void scheduleDiskPoll()
+    void diskPoll()
+    void openRecentPath(String path)
+    bool hideRecent()
+    void closeRecent()
     void syncViewMenu()
     void applyProjectManagerVisibility()
     void keyboardSettingsChanged()
@@ -401,8 +410,8 @@ class Cedit {
     void quit()
 
     void openRecent()
-
     void rememberRecent(String path)
+    void attachDocumentMenu(EditorDocument document)
 
     int64 searchOptions()
 
@@ -558,6 +567,7 @@ start {
     editor.preferencesAction = editor.showPreferences
     editor.languagePollAction = editor.languagePoll
     editor.languageFlushAction = editor.languageFlush
+    editor.diskPollAction = editor.diskPoll
     app.onActivate(editor.activate)
     app.run()
     app.shutdown()
