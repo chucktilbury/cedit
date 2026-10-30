@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Auto-indent (when enabled) adds a level inside `{` / `[` and splits paired
+  braces on Enter; still copies the previous line's indent otherwise.
 - Recovery Restore clears the snapshot before dismissing the prompt (it used to
   reappear with a `*` title); Cancel keeps the saved file on disk.
 - Editor scrollbars use automatic policy again; the GtkGizmo snapshot warning on
