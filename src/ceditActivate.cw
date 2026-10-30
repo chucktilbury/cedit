@@ -79,6 +79,8 @@ void Cedit.activate() {
         documentItems.append(menu.addItem(editMenu, "Select All", commandAction("select-all")))
         documentItems.append(menu.addItem(editMenu, "Find", commandAction("find")))
         documentItems.append(menu.addItem(editMenu, "Replace", commandAction("replace")))
+        documentItems.append(menu.addItem(editMenu, "Find in Project...",
+            commandAction("find-in-project")))
         documentItems.append(menu.addItem(editMenu, "Go to Line...", commandAction("goto-line")))
         documentItems.append(menu.addItem(editMenu, "Indent", commandAction("indent")))
         documentItems.append(menu.addItem(editMenu, "Outdent", commandAction("outdent")))
@@ -281,6 +283,7 @@ void<> Cedit.commandAction(String command) {
         if (command.equals("quit")) { return(quitAction) }
         if (command.equals("find")) { return(showFindAction) }
         if (command.equals("replace")) { return(showReplaceAction) }
+        if (command.equals("find-in-project")) { return(_self().showProjectFind) }
         if (command.equals("goto-line")) { return(_self().showGotoLine) }
         if (command.equals("indent")) { return(_self().indentCurrent) }
         if (command.equals("outdent")) { return(_self().outdentCurrent) }

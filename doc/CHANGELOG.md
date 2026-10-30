@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Edit > Find in Project… (`Ctrl+Shift+F`) searches the project tree (literal
+  match; open buffers preferred; no replace); activate a hit to open and center.
 - Multi-line selections accept typing / Backspace / Delete at the same column on
   each selected line (cwhip `setSelectedLinesEdit`; not true multi-carets).
 - Gutter marks unsaved lines (vs last saved `diskText`); cleared on save/reload.

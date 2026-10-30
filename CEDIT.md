@@ -205,7 +205,8 @@ modified documents, Save handles them one at a time until all are saved.
 
 Default shortcuts use GTK trigger notation: `<Control>s` saves,
 `<Control>o` opens the file chooser, `<Control>n` creates a tab,
-`<Control>f` focuses Find, `<Control>h` focuses Replace, `<Control>g` opens
+`<Control>f` focuses Find, `<Control>h` focuses Replace,
+`<Control><Shift>f` opens Find in Project, `<Control>g` opens
 **Go to Line…** (accepts `line` or `line:column`), `Tab` / `<Shift>Tab` indent
 or outdent selected lines (or insert one indent unit at the caret),
 `<Control>slash` toggles line comments (block comment is menu-only),
