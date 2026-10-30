@@ -446,8 +446,8 @@ deletion or execution.
 ### Reopening the last project
 
 Preferences > Startup has **Reopen last project on startup** (default off). When
-enabled, the user settings file remembers only the root path of the last active
-project:
+enabled, the **global** user settings file (`$XDG_CONFIG_HOME/cwhip/settings.toml`)
+remembers only the root path of the last active project:
 
 ```toml
 [project]
@@ -455,12 +455,16 @@ reopen_last = true
 last_root = "/home/me/src/demo"
 ```
 
-The workspace itself stays in that project's `.cwhip`. Only this metadata path
-is recognized. Older product-named project metadata is ignored and left
-untouched; the editor does not copy, rename, or migrate it. Turning the option off
-clears `last_root`. At startup the project is reopened only if the option is on
-and no file or folder was given on the command line. A missing or invalid
-remembered project is reported in an alert and the editor starts normally.
+Those two keys are not stored in per-folder `.cedit/settings.toml` copies, so a
+local editor preference cannot look enabled while the global `last_root` is
+missing. The workspace itself stays in that project's `.cwhip`. Only this
+metadata path is recognized. Older product-named project metadata is ignored and
+left untouched; the editor does not copy, rename, or migrate it. Turning the
+option off clears `last_root`. At startup the project is reopened only if the
+option is on and no file or folder was given on the command line. A missing or
+invalid remembered project is reported in an alert and the editor starts
+normally. If the shared global settings file is malformed, cedit repairs the
+`[project]` section (preserving `sdk_prefix` when present) before reading it.
 
 ## About
 

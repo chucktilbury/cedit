@@ -196,25 +196,66 @@ class PreferencesChecks {
                 editor.hidePreferences()
                 editor.activateDocument(file)
                 editor.newDocument()
-                require(!file.view.modified(), "leaving tab automatically saves named buffer")
+                // pageChanged defers tab-loss save; continue on the next idle turn.
+                stage = 1
+                Gtk.Application().post(nextAction)
+                return
+            }
+            if (stage == 1) {
+                EditorDocument file = null
+                int64 i = 0
+                while (i < editor.documents.length) {
+                    EditorDocument candidate = editor.documents[i] as EditorDocument
+                    if (candidate.path.endsWith("example.cw")) { file = candidate }
+                    i = i + 1
+                }
+                require(file != null && !file.view.modified(), "leaving tab automatically saves named buffer")
                 System.File saved = System.File(file.path, "r")
                 require(saved.readAll().equals("tab autosave\n"), "tab autosave contents")
                 saved.close()
                 EditorDocument untitled = editor.currentDocument()
                 untitled.view.setText("unsaved untitled\n")
                 editor.activateDocument(file)
-                require(untitled.view.modified() && editor.fileDialog == null,
+                stage = 2
+                Gtk.Application().post(nextAction)
+                return
+            }
+            if (stage == 2) {
+                EditorDocument file = null
+                EditorDocument untitled = null
+                int64 i = 0
+                while (i < editor.documents.length) {
+                    EditorDocument candidate = editor.documents[i] as EditorDocument
+                    if (candidate.path.endsWith("example.cw")) { file = candidate }
+                    if (candidate.path.equals("")) { untitled = candidate }
+                    i = i + 1
+                }
+                require(untitled != null && untitled.view.modified() && editor.fileDialog == null,
                     "focus saving never prompts for untitled paths")
                 file.view.setText("window autosave\n")
                 editor.windowFocusChanged(false)
                 require(!file.view.modified(), "window focus loss saves named buffers")
-                saved = System.File(file.path, "r")
+                System.File saved = System.File(file.path, "r")
                 require(saved.readAll().equals("window autosave\n"), "window autosave contents")
                 saved.close()
                 require(untitled.view.modified(), "window loss preserves untitled buffer")
                 file.path = "/dev/null/blocked.cw"
                 file.view.setText("failed autosave\n")
                 editor.newDocument()
+                stage = 3
+                Gtk.Application().post(nextAction)
+                return
+            }
+            if (stage == 3) {
+                EditorDocument file = null
+                EditorDocument untitled = null
+                int64 i = 0
+                while (i < editor.documents.length) {
+                    EditorDocument candidate = editor.documents[i] as EditorDocument
+                    if (candidate.path.equals("/dev/null/blocked.cw")) { file = candidate }
+                    if (candidate.path.equals("")) { untitled = candidate }
+                    i = i + 1
+                }
                 requireAutosaveFailure(file, "failed tab autosave visibly retains dirty buffer")
                 editor.windowFocusChanged(false)
                 requireAutosaveFailure(file, "repeated focus losses retain visible failure")
@@ -241,7 +282,7 @@ class PreferencesChecks {
                 editor.newDocument()
                 require(PreferenceFixture().closeTab(0) && editor.documents.length == 1 &&
                     editor.currentDocument().path.equals(""), "last close icon keeps fresh untitled")
-                stage = 1
+                stage = 4
                 Gtk.Application().post(nextAction)
                 return
             }
@@ -594,8 +635,23 @@ def main():
             focus = tomllib.loads(usability.read_text())
             assert focus["editor"]["save_on_tab_loss"] is True
             assert focus["editor"]["save_on_window_loss"] is True
-            assert focus["project"]["reopen_last"] is True
-            run("focus-reload", usability.read_text())
+            # Startup reopen keys stay in the global file only.
+            project = focus.get("project")
+            if isinstance(project, dict):
+                assert "reopen_last" not in project
+            usability_global = work / "usability" / "xdg" / "cwhip" / "settings.toml"
+            startup = tomllib.loads(usability_global.read_text())
+            assert startup["project"]["reopen_last"] is True
+            # Build a clean file: Config.remove can leave a bare ["project"] marker in
+            # the local copy, so do not append onto that text.
+            run("focus-reload",
+                "version = 1\n"
+                "[editor]\n"
+                "save_on_tab_loss = true\n"
+                "save_on_window_loss = true\n"
+                "[project]\n"
+                "reopen_last = true\n"
+                "last_root = \"\"\n")
         if selected("migration"):
             sdk_prefix = '/installed SDK with "quotes" and \\backslash'
             sdk_only = f"sdk_prefix = {json.dumps(sdk_prefix)}\n"
