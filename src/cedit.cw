@@ -498,6 +498,7 @@ class Cedit {
     void toggleComment()
     void uncommentLine(EditorDocument document, int64 line, String text, String prefix)
     void toggleBlockComment()
+    int64 findMatchingLine(list lines, int64 fromIndex, String target, int64 limit)
     void updateUnsavedMarks(EditorDocument document)
     void clearUnsavedMarks(EditorDocument document)
     void createProjectFind()

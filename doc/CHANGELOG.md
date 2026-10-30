@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Unsaved gutter marks use an insert/delete-aware line alignment so adding a
+  line marks that line only, not every following line.
 - Preferences: Auto-indent new lines (`auto_indent`, default on) and Mark
   unsaved changed lines in the gutter (`show_unsaved_marks`, default on). Unsaved
   marks are gutter icons only (no line highlight).
