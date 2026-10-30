@@ -269,6 +269,8 @@ void Cedit.attachDocumentMenu(EditorDocument document) {
         if (document == null || document.view == null) { return }
         // Append to the native edit menu; do not replace Cut/Copy/Paste.
         document.view.addContextAction("Reload", _self().reloadCurrent)
+        document.view.addContextAction("Insert date/time", _self().pluginInsertDate)
+        document.view.addContextAction("Toggle debug marker", _self().pluginToggleDebug)
     }
 
 int64 Cedit.searchOptions() {

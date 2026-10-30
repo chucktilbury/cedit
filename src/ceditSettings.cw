@@ -67,7 +67,9 @@ class CeditSettings {
             CommandBinding("view-line-ends", "Show line ends", ""),
             CommandBinding("view-indent-markers", "Show indent markers", ""),
             CommandBinding("view-project-manager", "Show project manager", ""),
-            CommandBinding("about", "About cedit", "")
+            CommandBinding("about", "About cedit", ""),
+            CommandBinding("plugin-insert-date", "Insert date/time", ""),
+            CommandBinding("plugin-toggle-debug", "Toggle debug marker", "")
         ]
         reopenLast = false
         lastRoot = ""

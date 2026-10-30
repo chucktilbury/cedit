@@ -2,6 +2,7 @@ import gtk
 import process
 import sourceview
 import system
+import time
 
 include "language.cw"
 
@@ -204,6 +205,8 @@ class Cedit {
     EditorDocument pendingRecoveryDocument
     String pendingRecoveryText
     void<> recoveryPollAction
+    list plugins
+    list pluginTitles
     int64 lineSpanStart
     int64 lineSpanEnd
     Gtk.TransientWindow configureWindow
@@ -519,6 +522,11 @@ class Cedit {
     void offerRecoveryForDocuments()
     void acceptRecovery()
     void discardRecovery()
+    void registerPlugin(String id, String title)
+    void loadBuiltinPlugins()
+    void pluginInsertDate()
+    void pluginToggleDebug()
+    void addPluginMenus()
 
     void showFind()
 
@@ -613,6 +621,7 @@ include "ceditEditLines.cw"
 include "ceditDirtyMarks.cw"
 include "ceditProjectFind.cw"
 include "ceditRecovery.cw"
+include "ceditPlugins.cw"
 include "ceditCloseNextInBatch.cw"
 include "ceditTest.cw"
 
