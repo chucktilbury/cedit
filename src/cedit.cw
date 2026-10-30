@@ -193,6 +193,14 @@ class Cedit {
     Gtk.TransientWindow gotoWindow
     Gtk.Entry gotoEntry
     Gtk.Label gotoStatus
+    Gtk.TransientWindow projectFindWindow
+    Gtk.Entry projectFindEntry
+    Gtk.CheckButton projectFindCase
+    Gtk.CheckButton projectFindWords
+    Gtk.Label projectFindStatus
+    GtkSource.View projectFindResults
+    list projectFindPaths
+    list projectFindLines
     int64 lineSpanStart
     int64 lineSpanEnd
     Gtk.TransientWindow configureWindow
@@ -485,6 +493,17 @@ class Cedit {
     void toggleBlockComment()
     void updateUnsavedMarks(EditorDocument document)
     void clearUnsavedMarks(EditorDocument document)
+    void createProjectFind()
+    void showProjectFind()
+    bool hideProjectFind()
+    bool projectFindMatch(String haystack, String needle, bool caseSensitive, bool wholeWords)
+    void appendProjectFindHit(String path, int64 line, String snippet)
+    void scanProjectFindText(String path, String contents, String query, bool caseSensitive,
+                             bool wholeWords)
+    void scanProjectFindDir(String dir, String query, bool caseSensitive, bool wholeWords,
+                            bool showHidden)
+    void runProjectFind()
+    void projectFindActivated(int64 line)
 
     void showFind()
 
@@ -577,6 +596,7 @@ include "ceditPrepareSearch.cw"
 include "ceditGotoLine.cw"
 include "ceditEditLines.cw"
 include "ceditDirtyMarks.cw"
+include "ceditProjectFind.cw"
 include "ceditCloseNextInBatch.cw"
 include "ceditTest.cw"
 

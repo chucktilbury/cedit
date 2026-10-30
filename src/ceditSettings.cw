@@ -41,6 +41,7 @@ class CeditSettings {
             CommandBinding("quit", "Quit", "<Control>q"),
             CommandBinding("find", "Find", "<Control>f"),
             CommandBinding("replace", "Find and replace", "<Control>h"),
+            CommandBinding("find-in-project", "Find in project", "<Control><Shift>f"),
             CommandBinding("goto-line", "Go to line", "<Control>g"),
             CommandBinding("indent", "Indent", "Tab"),
             CommandBinding("outdent", "Outdent", "<Shift>Tab"),
