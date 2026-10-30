@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Edit > Go to Line… (`Ctrl+G`) accepts `line` or `line:column` and centers
+  the cursor in the active document.
 - A failed startup reopen (missing or invalid `last_root`) clears that path so
   the next launch does not keep alerting; `reopen_last` stays enabled.
 - Startup reopen (`reopen_last` / `last_root`) is stored only in the global

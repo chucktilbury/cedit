@@ -17,6 +17,10 @@ void Cedit.test() {
         bool conflicted = document.shortcutConflict
         bool plainText = GtkSource.Content().languageFor("notes.txt").equals("") && document.view.language().equals("cwhip")
         bool highlighted = plainText && document.view.hasContextAt("keyword", 0) && document.view.hasContextAt("comment", 17) && document.view.hasContextAt("string", 39) && document.view.hasContextAt("number", 64)
+        createGotoLine()
+        gotoEntry.setText("3:10")
+        acceptGotoLine()
+        bool wentToLine = document.view.line() == 3 && document.view.column() == 10
         bool searched = document.view.find("Cwhip")
         bool replaced = document.view.replaceNext("Cwhip", "Cwhip language")
         bool dirtyBlocked = requestClose()
@@ -63,7 +67,7 @@ void Cedit.test() {
         bool windowDiscarded = windowClosePrompted && windowClosePromptedAgain && window.disposed()
         print(badOpen && directoryRejected && tabs && tabSwitchUpdatesStatus &&
               (remapped || defaults) && conflicted == remapped && highlighted &&
-              searched && replaced && undoRestored && undoRedo && dirtyBlocked &&
+              wentToLine && searched && replaced && undoRestored && undoRedo && dirtyBlocked &&
               dirtyCloseCancelled && tabCloseCancelled && saved && savedTabClosed &&
               closeProtected && tabDiscarded && windowCloseCancelled && windowDiscarded)
     }

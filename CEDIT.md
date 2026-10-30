@@ -205,7 +205,8 @@ modified documents, Save handles them one at a time until all are saved.
 
 Default shortcuts use GTK trigger notation: `<Control>s` saves,
 `<Control>o` opens the file chooser, `<Control>n` creates a tab,
-`<Control>f` focuses Find, `<Control>h` focuses Replace, `<Control>z` undoes,
+`<Control>f` focuses Find, `<Control>h` focuses Replace, `<Control>g` opens
+**Go to Line…** (accepts `line` or `line:column`), `<Control>z` undoes,
 and `<Control><Shift>z` redoes. `<Control><Shift>s` opens Save As,
 `<Control>w` closes the active tab, `<Control><Shift>w` closes every tab, and
 `<Control>q` requests Quit. **File > Reload** reads the active file from disk.

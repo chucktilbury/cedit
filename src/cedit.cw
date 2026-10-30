@@ -189,6 +189,9 @@ class Cedit {
     Gtk.Label settingsPathLabel
     Gtk.Label projectNote
     Gtk.TransientWindow aboutWindow
+    Gtk.TransientWindow gotoWindow
+    Gtk.Entry gotoEntry
+    Gtk.Label gotoStatus
     Gtk.TransientWindow configureWindow
     Gtk.Entry configureName
     Gtk.Entry configureExcludes
@@ -456,6 +459,13 @@ class Cedit {
     // to the search bar, and copies a single-line selection into Find.
     void prepareSearch()
 
+    bool digitsOnly(String text)
+    void createGotoLine()
+    void showGotoLine()
+    bool hideGotoLine()
+    void closeGotoLine()
+    void acceptGotoLine()
+
     void showFind()
 
     void showReplace()
@@ -544,6 +554,7 @@ include "ceditCloseAllDocuments.cw"
 include "ceditApplyConfigure.cw"
 include "ceditWriteDocument.cw"
 include "ceditPrepareSearch.cw"
+include "ceditGotoLine.cw"
 include "ceditCloseNextInBatch.cw"
 include "ceditTest.cw"
 
