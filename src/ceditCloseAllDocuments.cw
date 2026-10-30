@@ -89,6 +89,7 @@ void Cedit.activateProject(CwhipProject target, bool restore) {
         rememberProject(target.root)
         updateMenu()
         status.setText(format("Project: {} ({})", target.name, target.root))
+        offerRecoveryForDocuments()
         if (!target.errors.equals("")) {
             Gtk.AlertDialog().show(window, "Project configuration errors", format("{}\n{}\nInvalid values are ignored; saving project configuration is disabled until the file is repaired and the project reopened.", target.configPath, target.errors))
         }

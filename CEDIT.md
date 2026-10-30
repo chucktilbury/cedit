@@ -660,24 +660,15 @@ repaired. A conflicting later legacy line never overrides the earlier command.
 
 ## Deliberately deferred
 
-There is no language server in this iteration. The repository does not provide
-a real Cwhip LSP server, and the current process APIs do not yet constitute a
-complete JSON-RPC client with correct Content-Length framing, split-message
-handling, ordered writes, request correlation, cancellation, notifications,
-and shutdown. The editor does not mislabel compiler checking as LSP. A future
-LSP client should be a separate configurable component attached to the document
-and buffer APIs.
+Dirty buffers are snapshotted under `.cedit/recovery/` while a project is open
+(periodic and on Quit); Restore/Discard is offered when reopening. Projects
+deliberately do not include build commands, Git integration, or project trust.
+A configurable toolbar is not included yet. Dialog controls and menu/shortcut
+commands use the same editor actions, so a future toolbar can reuse those
+actions. In-process plugins are trusted code.
 
-Projects deliberately do not include unsaved-buffer recovery (dirty edits are
-only kept in memory), build commands, LSP configuration, plugins, Git
-integration or project trust. Persistent recent history, an extension/plugin
-runtime, and a configurable toolbar are not included yet. The
-dialog controls and menu/shortcut commands use the same editor actions, so a
-future toolbar can reuse those actions.
-Any future in-process plugins should be treated as trusted code.
-
-Appearance, Files/session, Build, and LSP preference categories and
-file-type overrides are future work; no placeholder pages are installed.
+Appearance, Files/session, Build, and richer LSP preference categories and
+file-type overrides remain future work; no placeholder pages are installed.
 
 Run the standalone editor's headless suite (build first), or use `test-all`
 to build and then run it:

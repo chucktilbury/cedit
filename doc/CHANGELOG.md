@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Crash recovery: dirty buffers snapshot to `.cedit/recovery/`; Restore/Discard
+  on project reopen; cleared after Save.
 - Edit > Find in Project… (`Ctrl+Shift+F`) searches the project tree (literal
   match; open buffers preferred; no replace); activate a hit to open and center.
 - Multi-line selections accept typing / Backspace / Delete at the same column on

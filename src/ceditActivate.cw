@@ -259,6 +259,7 @@ void Cedit.activate() {
         window.present()
         presented = true
         scheduleDiskPoll()
+        scheduleRecoveryPoll()
         if (!settings.errors.equals("")) {
             Gtk.AlertDialog().show(window, "Settings errors", diagnostic(
                 "CEDIT2001", format(
