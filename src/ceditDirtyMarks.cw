@@ -1,6 +1,7 @@
 void Cedit.updateUnsavedMarks(EditorDocument document) {
         if (document == null) { return }
         document.view.clearLineMarks("unsaved")
+        if (!settings.showUnsavedMarks) { return }
         if (!document.view.modified()) { return }
         list diskLines = document.diskText.split("\n")
         list liveLines = document.view.text().split("\n")
