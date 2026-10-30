@@ -50,6 +50,7 @@ void Cedit.changed() {
         EditorDocument document = currentDocument()
         if (document != null) {
             refreshTab(document)
+            updateUnsavedMarks(document)
             if (client != null) { client.noteEdit() }
         }
         updateEditActions()
