@@ -402,7 +402,8 @@ insert_spaces = false
 Editor keys and ranges are the same as user settings (`font_family`,
 `font_size`, `tab_width`, `insert_spaces`, `line_numbers`, `wrap`,
 `right_margin` (0 hides the guide; default 80),
-`highlight_current_line`). Unknown keys are retained when saving.
+`highlight_current_line`, `auto_indent`, `show_unsaved_marks`). Unknown keys are
+retained when saving.
 
 `.cwhip/workspace.toml` (at most 1 MiB) is local session state:
 
@@ -572,6 +573,8 @@ save_on_tab_loss = false
 save_on_window_loss = false
 strip_trailing_spaces = false
 auto_complete_brackets = true
+auto_indent = true
+show_unsaved_marks = true
 
 [keyboard]
 save = "<Control>s"

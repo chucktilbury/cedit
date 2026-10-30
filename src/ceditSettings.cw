@@ -16,6 +16,8 @@ class CeditSettings {
     bool saveOnWindowLoss
     bool stripTrailingSpaces
     bool autoCompleteBrackets
+    bool autoIndent
+    bool showUnsavedMarks
     bool reopenLast
     String lastRoot
     list commands
@@ -112,6 +114,8 @@ class CeditSettings {
         saveOnWindowLoss = false
         stripTrailingSpaces = false
         autoCompleteBrackets = true
+        autoIndent = true
+        showUnsavedMarks = true
     }
 
     void error(String message) {
@@ -342,6 +346,8 @@ class CeditSettings {
         saveOnWindowLoss = boolean("save_on_window_loss", saveOnWindowLoss)
         stripTrailingSpaces = boolean("strip_trailing_spaces", stripTrailingSpaces)
         autoCompleteBrackets = boolean("auto_complete_brackets", autoCompleteBrackets)
+        autoIndent = boolean("auto_indent", autoIndent)
+        showUnsavedMarks = boolean("show_unsaved_marks", showUnsavedMarks)
         // Stage the complete map before checking conflicts, allowing swaps.
         int64 i = 0
         while (i < commands.length) {
@@ -382,11 +388,12 @@ class CeditSettings {
     }
 
     String serialize() {
-        String text = format("version = 1\n[editor]\nfont_family = {}\nfont_size = {}\ntab_width = {}\ninsert_spaces = {}\nline_numbers = {}\nshow_whitespace = {}\nshow_line_ends = {}\nshow_indent_markers = {}\nshow_project_manager = {}\nlsp_command = {}\nwrap = {}\nright_margin = {}\nhighlight_current_line = {}\nsave_on_tab_loss = {}\nsave_on_window_loss = {}\nstrip_trailing_spaces = {}\nauto_complete_brackets = {}\n[keyboard]\n",
+        String text = format("version = 1\n[editor]\nfont_family = {}\nfont_size = {}\ntab_width = {}\ninsert_spaces = {}\nline_numbers = {}\nshow_whitespace = {}\nshow_line_ends = {}\nshow_indent_markers = {}\nshow_project_manager = {}\nlsp_command = {}\nwrap = {}\nright_margin = {}\nhighlight_current_line = {}\nsave_on_tab_loss = {}\nsave_on_window_loss = {}\nstrip_trailing_spaces = {}\nauto_complete_brackets = {}\nauto_indent = {}\nshow_unsaved_marks = {}\n[keyboard]\n",
             Gtk.Config().quote(fontFamily), fontSize, tabWidth, insertSpaces, lineNumbers,
             showWhitespace, showLineEnds, showIndentMarkers, showProjectManager,
             Gtk.Config().quote(lspCommand), wrap, rightMargin, highlightLine, saveOnTabLoss,
-            saveOnWindowLoss, stripTrailingSpaces, autoCompleteBrackets)
+            saveOnWindowLoss, stripTrailingSpaces, autoCompleteBrackets, autoIndent,
+            showUnsavedMarks)
         int64 i = 0
         while (i < commands.length) {
             CommandBinding binding = commands[i] as CommandBinding

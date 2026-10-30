@@ -21,11 +21,17 @@ void Cedit.applyDocumentSettings(EditorDocument document) {
         document.view.setShowLineEnds(settings.showLineEnds)
         document.view.setShowIndentMarkers(settings.showIndentMarkers)
         document.view.setAutoCompleteBrackets(settings.autoCompleteBrackets)
+        document.view.setAutoIndent(settings.autoIndent)
         document.view.setSelectedLinesEdit(true)
         if (settings.rightMargin > 0) {
             document.view.setRightMargin(true, settings.rightMargin)
         } else {
             document.view.setRightMargin(false, 80)
+        }
+        if (settings.showUnsavedMarks) {
+            updateUnsavedMarks(document)
+        } else {
+            clearUnsavedMarks(document)
         }
         if (document.shortcutRevision == settings.shortcutRevision) { return }
         document.shortcutRevision = settings.shortcutRevision
@@ -93,6 +99,9 @@ void Cedit.createPreferences() {
         saveWindowCheck = preferenceCheck("Save on loss of window focus", settings.saveOnWindowLoss)
         stripCheck = preferenceCheck("Strip trailing spaces on save", settings.stripTrailingSpaces)
         bracketsCheck = preferenceCheck("Auto-close brackets and quotes", settings.autoCompleteBrackets)
+        autoIndentCheck = preferenceCheck("Auto-indent new lines", settings.autoIndent)
+        unsavedMarksCheck = preferenceCheck("Mark unsaved changed lines in the gutter",
+            settings.showUnsavedMarks)
         lspEntry = preferenceEntry(editorPreferences, "Language server (empty, cwhip-lsp, clangd, or a command)", settings.lspCommand)
         fontEntry.onChanged(_self().editorSettingChanged)
         sizeEntry.onChanged(_self().editorSettingChanged)
@@ -540,6 +549,8 @@ void Cedit.editorSettingChanged(String text) {
         settings.saveOnWindowLoss = saveWindowCheck.active()
         settings.stripTrailingSpaces = stripCheck.active()
         settings.autoCompleteBrackets = bracketsCheck.active()
+        settings.autoIndent = autoIndentCheck.active()
+        settings.showUnsavedMarks = unsavedMarksCheck.active()
         if (lspEntry != null && !lspEntry.text().equals(settings.lspCommand)) {
             settings.lspCommand = lspEntry.text()
             if (client != null) { client.launch(settings.lspCommand) }

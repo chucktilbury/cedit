@@ -37,6 +37,8 @@ class Cedit {
     Gtk.CheckButton saveWindowCheck
     Gtk.CheckButton stripCheck
     Gtk.CheckButton bracketsCheck
+    Gtk.CheckButton autoIndentCheck
+    Gtk.CheckButton unsavedMarksCheck
     Gtk.Entry commandSearch
     list keyboardRows
     Gtk.Grid keyboardRowsBox

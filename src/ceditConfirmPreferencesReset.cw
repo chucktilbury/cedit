@@ -14,6 +14,10 @@ void Cedit.confirmPreferencesReset() {
             saveWindowCheck.setActive(settings.saveOnWindowLoss)
             stripCheck.setActive(settings.stripTrailingSpaces)
             bracketsCheck.setActive(settings.autoCompleteBrackets)
+            if (autoIndentCheck != null) { autoIndentCheck.setActive(settings.autoIndent) }
+            if (unsavedMarksCheck != null) {
+                unsavedMarksCheck.setActive(settings.showUnsavedMarks)
+            }
             refreshingPreferences = false
         }
         if (resetSection.equals("Keyboard")) {

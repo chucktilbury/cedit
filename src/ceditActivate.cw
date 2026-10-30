@@ -320,7 +320,8 @@ void<> Cedit.commandAction(String command) {
 void Cedit.configureShortcuts(EditorDocument document) {
         applyDocumentSettings(document)
         document.view.setMarkStyle("diagnostic", "dialog-error-symbolic", "#ffcccc")
-        document.view.setMarkStyle("unsaved", "media-record-symbolic", "#fff3cd")
+        // Gutter icon only; lineHighlight false avoids underlining/tinting the line.
+        document.view.setMarkStyle("unsaved", "media-record-symbolic", "#fff3cd", false)
         document.view.onChanged(changedAction)
         document.view.onCursorMoved(cursorAction)
         attachDocumentMenu(document)

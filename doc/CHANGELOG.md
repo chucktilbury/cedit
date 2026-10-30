@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Preferences: Auto-indent new lines (`auto_indent`, default on) and Mark
+  unsaved changed lines in the gutter (`show_unsaved_marks`, default on). Unsaved
+  marks are gutter icons only (no line highlight).
 - Preferences: **Save to global settings** is a one-shot button (not a checkbox);
   Reset Editor/Keyboard buttons use natural width instead of stretching full-width.
   Right-margin guide visibility needs the matching cwhip SourceView draw fix.
