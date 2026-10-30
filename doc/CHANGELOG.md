@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- A failed startup reopen (missing or invalid `last_root`) clears that path so
+  the next launch does not keep alerting; `reopen_last` stays enabled.
 - Startup reopen (`reopen_last` / `last_root`) is stored only in the global
   settings file, repaired when that file is malformed, and no longer shadowed
   by a per-folder `.cedit` copy of those keys.

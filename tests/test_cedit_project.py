@@ -345,6 +345,8 @@ class ProjectChecks {
     void missing() {
         require(ProjectFixture().alert("Could not reopen last project|not an accessible folder"), "missing project reported")
         require(editor.activeProject == null && editor.documents.length == 1, "editor still usable")
+        require(editor.settings.reopenLast && editor.settings.lastRoot.equals(""),
+            "stale last_root cleared after failed reopen")
         finish()
     }
     void badConfig() {
@@ -664,6 +666,7 @@ def main():
             run("reopen-off")
             remember(True, case / "gone")
             run("missing")
+            assert toml(settings)["project"] == {"reopen_last": True, "last_root": ""}
             remember(False, "")
 
             run("external", "proj")

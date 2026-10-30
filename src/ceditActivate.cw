@@ -238,6 +238,12 @@ void Cedit.activate() {
         if (!explicitRequest && reopen && !lastRoot.equals("")) {
             CwhipProject last = loadProject(lastRoot, "Could not reopen last project")
             if (last != null) { activateProject(last, true) }
+            else {
+                // Drop the stale path so the next launch does not keep failing; leave
+                // reopen_last on so a later successful Open Project can remember again.
+                settings.lastRoot = ""
+                writeStartupToGlobal()
+            }
         }
         if (notebook.pageCount() == 0) {
             newDocument()
