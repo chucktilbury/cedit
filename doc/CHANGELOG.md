@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Preferences: **Save to global settings** is a one-shot button (not a checkbox);
+  Reset Editor/Keyboard buttons use natural width instead of stretching full-width.
+  Right-margin guide visibility needs the matching cwhip SourceView draw fix.
 - Trusted in-process plugin hooks (`registerPlugin`) with Plugins menu demos:
   Insert date/time and Toggle `# debug:` marker (also on the edit context menu).
 - Crash recovery: dirty buffers snapshot to `.cedit/recovery/`; Restore/Discard

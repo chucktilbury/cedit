@@ -79,10 +79,12 @@ void Cedit.createPreferences() {
         tabsEntry = preferenceEntry(editorPreferences, "Tab width (1-16 columns)", format("{}", settings.tabWidth))
         marginEntry = preferenceEntry(editorPreferences, "Right margin column (0 = off)",
             format("{}", settings.rightMargin))
-        saveGlobalCheck = Gtk.CheckButton("Save to global settings")
-        saveGlobalCheck.setActive(mirrorGlobal)
-        saveGlobalCheck.onToggled(_self().saveGlobalChanged)
-        editorPreferences.append(saveGlobalCheck)
+        Gtk.Box globalRow = Gtk.Box(Gtk.Box.HORIZONTAL, 6)
+        saveGlobalButton = Gtk.Button("Save to global settings")
+        saveGlobalButton.setHExpand(false)
+        saveGlobalButton.onClicked(_self().saveGlobalClicked)
+        globalRow.append(saveGlobalButton)
+        editorPreferences.append(globalRow)
         spacesCheck = preferenceCheck("Insert spaces instead of tabs", settings.insertSpaces)
         numbersCheck = preferenceCheck("Show line numbers", settings.lineNumbers)
         wrapCheck = preferenceCheck("Wrap long lines", settings.wrap)
@@ -96,9 +98,12 @@ void Cedit.createPreferences() {
         sizeEntry.onChanged(_self().editorSettingChanged)
         tabsEntry.onChanged(_self().editorSettingChanged)
         marginEntry.onChanged(_self().editorSettingChanged)
+        Gtk.Box editorResetRow = Gtk.Box(Gtk.Box.HORIZONTAL, 6)
         Gtk.Button editorReset = Gtk.Button("Reset Editor to Defaults")
+        editorReset.setHExpand(false)
         editorReset.onClicked(_self().resetEditorPreferences)
-        editorPreferences.append(editorReset)
+        editorResetRow.append(editorReset)
+        editorPreferences.append(editorResetRow)
         pages.append(editorPreferences)
         keyboardPreferences = Gtk.Box(Gtk.Box.VERTICAL, 6)
         commandSearch = Gtk.Entry("")
@@ -111,9 +116,12 @@ void Cedit.createPreferences() {
         scroll.setChild(keyboardRowsBox)
         keyboardRows = []
         keyboardPreferences.append(scroll)
+        Gtk.Box keyboardResetRow = Gtk.Box(Gtk.Box.HORIZONTAL, 6)
         Gtk.Button keyboardReset = Gtk.Button("Reset Keyboard to Defaults")
+        keyboardReset.setHExpand(false)
         keyboardReset.onClicked(_self().resetKeyboardPreferences)
-        keyboardPreferences.append(keyboardReset)
+        keyboardResetRow.append(keyboardReset)
+        keyboardPreferences.append(keyboardResetRow)
         pages.append(keyboardPreferences)
         keyboardPreferences.setVisible(false)
         startupPreferences = Gtk.Box(Gtk.Box.VERTICAL, 6)
@@ -539,17 +547,17 @@ void Cedit.editorSettingChanged(String text) {
         settingsChanged()
     }
 
-void Cedit.saveGlobalChanged(bool active) {
-        if (refreshingPreferences) { return }
-        mirrorGlobal = active
-        if (active) {
-            if (!writeMirroredGlobal(settings.serialize())) {
-                if (preferencesMessage != null) {
-                    preferencesMessage.setText(diagnostic("CEDIT2001", format(
-                        "Could not update global settings at {}", settings.globalPath)))
-                }
-                return
+void Cedit.saveGlobalClicked() {
+        if (refreshingPreferences || commandsBlocked()) { return }
+        if (!writeMirroredGlobal(settings.serialize())) {
+            if (preferencesMessage != null) {
+                preferencesMessage.setText(diagnostic("CEDIT2001", format(
+                    "Could not update global settings at {}", settings.globalPath)))
             }
+            return
+        }
+        if (preferencesMessage != null) {
+            preferencesMessage.setText(format("Copied preferences to {}", settings.globalPath))
         }
         refreshSettingsPathLabel()
     }

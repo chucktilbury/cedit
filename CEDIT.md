@@ -495,8 +495,9 @@ contents, modified state, language detection, or search options. **Project**
 opens Configure Project when a project is open (same size as the other
 category buttons). Preferences always use the full settings schema under
 `.cedit/settings.toml` for the active project or folder; local settings take
-precedence. **Save to global settings** also copies the current preferences
-into the global template used to seed new directories.
+precedence. The **Save to global settings** button copies the current
+preferences into the global template used to seed new directories (one shot;
+local auto-save is unchanged).
 
 The **Editor** page controls an installed monospace font family (or the generic
 `monospace`), font size, tab width, insertion of spaces vs tabs, line numbers,
@@ -542,9 +543,10 @@ or folder. That local file uses the same schema as the global template at
 `$XDG_CONFIG_HOME/cwhip/settings.toml` (or `$HOME/.config/cwhip/settings.toml`
 when XDG_CONFIG_HOME is unset/empty). Starting in a directory without a local
 file replicates the global template there. Opening a root that already has a
-local file loads it instead. **Save to global settings** keeps writing the
-local file and also updates the global template. Startup reopen of the last
-project is remembered in the global template. Settings in older product-named
+local file loads it instead. **Save to global settings** copies the current
+preferences into the global template without changing the local auto-save
+behavior. Startup reopen of the last project is remembered in the global
+template. Settings in older product-named
 directories are ignored and left untouched; the editor does not copy or
 migrate them.
 The config root must be absolute. The settings file is user-editable UTF-8 TOML,

@@ -219,9 +219,6 @@ bool Cedit.saveSettings() {
         savePending = true
         if (preferencesMessage != null) { preferencesMessage.setText("Saving settings...") }
         Gtk.Config().save(settings.path, text, persistedText, _self().settingsSaved)
-        if (mirrorGlobal && !settings.path.equals(settings.globalPath)) {
-            writeMirroredGlobal(text)
-        }
         return(true)
     }
 
