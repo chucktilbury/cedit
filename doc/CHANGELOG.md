@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Multi-line selections accept typing / Backspace / Delete at the same column on
+  each selected line (cwhip `setSelectedLinesEdit`; not true multi-carets).
 - Gutter marks unsaved lines (vs last saved `diskText`); cleared on save/reload.
 - Editor preference `right_margin` (default 80, 0 = off) draws the SourceView
   long-line guide.

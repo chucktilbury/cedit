@@ -21,6 +21,7 @@ void Cedit.applyDocumentSettings(EditorDocument document) {
         document.view.setShowLineEnds(settings.showLineEnds)
         document.view.setShowIndentMarkers(settings.showIndentMarkers)
         document.view.setAutoCompleteBrackets(settings.autoCompleteBrackets)
+        document.view.setSelectedLinesEdit(true)
         if (settings.rightMargin > 0) {
             document.view.setRightMargin(true, settings.rightMargin)
         } else {
