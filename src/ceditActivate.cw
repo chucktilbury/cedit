@@ -80,6 +80,8 @@ void Cedit.activate() {
         documentItems.append(menu.addItem(editMenu, "Find", commandAction("find")))
         documentItems.append(menu.addItem(editMenu, "Replace", commandAction("replace")))
         documentItems.append(menu.addItem(editMenu, "Go to Line...", commandAction("goto-line")))
+        documentItems.append(menu.addItem(editMenu, "Indent", commandAction("indent")))
+        documentItems.append(menu.addItem(editMenu, "Outdent", commandAction("outdent")))
         documentItems.append(menu.addItem(editMenu, "Strip Trailing Spaces", commandAction("strip-trailing-spaces")))
         documentItems.append(reloadItem)
         preferencesItem = menu.addItem(editMenu, "Preferences...", commandAction("preferences"))
@@ -277,6 +279,8 @@ void<> Cedit.commandAction(String command) {
         if (command.equals("find")) { return(showFindAction) }
         if (command.equals("replace")) { return(showReplaceAction) }
         if (command.equals("goto-line")) { return(_self().showGotoLine) }
+        if (command.equals("indent")) { return(_self().indentCurrent) }
+        if (command.equals("outdent")) { return(_self().outdentCurrent) }
         if (command.equals("undo")) { return(undoAction) }
         if (command.equals("redo")) { return(redoAction) }
         if (command.equals("cut")) { return(cutAction) }
