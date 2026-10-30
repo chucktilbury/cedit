@@ -5,6 +5,7 @@ void Cedit.confirmPreferencesReset() {
             fontEntry.setText(settings.fontFamily)
             sizeEntry.setText(format("{}", settings.fontSize))
             tabsEntry.setText(format("{}", settings.tabWidth))
+            if (marginEntry != null) { marginEntry.setText(format("{}", settings.rightMargin)) }
             spacesCheck.setActive(settings.insertSpaces)
             numbersCheck.setActive(settings.lineNumbers)
             wrapCheck.setActive(settings.wrap)

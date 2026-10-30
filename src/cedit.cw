@@ -27,6 +27,7 @@ class Cedit {
     Gtk.Entry fontEntry
     Gtk.Entry sizeEntry
     Gtk.Entry tabsEntry
+    Gtk.Entry marginEntry
     Gtk.CheckButton spacesCheck
     Gtk.CheckButton numbersCheck
     Gtk.CheckButton wrapCheck
