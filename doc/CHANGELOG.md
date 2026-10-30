@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Editor tabs keep a permanent vertical scrollbar so GTK4 does not warn about
+  snapshotting an unallocated scrollbar GtkGizmo when the buffer first scrolls.
 - Unsaved gutter marks use an insert/delete-aware line alignment so adding a
   line marks that line only, not every following line.
 - Preferences: Auto-indent new lines (`auto_indent`, default on) and Mark
