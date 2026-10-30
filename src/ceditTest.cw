@@ -21,6 +21,13 @@ void Cedit.test() {
         gotoEntry.setText("3:10")
         acceptGotoLine()
         bool wentToLine = document.view.line() == 3 && document.view.column() == 10
+        document.view.selectRange(2, 1, 2, 10)
+        String beforeComment = document.view.text()
+        toggleComment()
+        bool commented = !document.view.text().equals(beforeComment)
+        if (commented) { commented = document.view.text().contains("//") }
+        toggleComment()
+        bool uncommented = document.view.text().equals(beforeComment)
         bool searched = document.view.find("Cwhip")
         bool replaced = document.view.replaceNext("Cwhip", "Cwhip language")
         bool dirtyBlocked = requestClose()
@@ -67,7 +74,8 @@ void Cedit.test() {
         bool windowDiscarded = windowClosePrompted && windowClosePromptedAgain && window.disposed()
         print(badOpen && directoryRejected && tabs && tabSwitchUpdatesStatus &&
               (remapped || defaults) && conflicted == remapped && highlighted &&
-              wentToLine && searched && replaced && undoRestored && undoRedo && dirtyBlocked &&
+              wentToLine && commented && uncommented && searched && replaced && undoRestored &&
+              undoRedo && dirtyBlocked &&
               dirtyCloseCancelled && tabCloseCancelled && saved && savedTabClosed &&
               closeProtected && tabDiscarded && windowCloseCancelled && windowDiscarded)
     }

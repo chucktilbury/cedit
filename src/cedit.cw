@@ -475,6 +475,13 @@ class Cedit {
     void indentCurrent()
     void outdentCurrent()
     void outdentLine(EditorDocument document, int64 line, int64 width)
+    String lineCommentPrefix()
+    bool supportsBlockComment()
+    String lineText(EditorDocument document, int64 line)
+    bool lineHasCommentPrefix(String text, String prefix)
+    void toggleComment()
+    void uncommentLine(EditorDocument document, int64 line, String text, String prefix)
+    void toggleBlockComment()
 
     void showFind()
 

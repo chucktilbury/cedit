@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Edit > Toggle Line Comment (`Ctrl+/`) and Toggle Block Comment; language-aware
+  `//` / `#` and `/* */` for C-family selections.
 - Edit > Indent / Outdent (`Tab` / `Shift+Tab`) indent selected lines using the
   configured tab width and spaces-vs-tabs setting; a caret with no multi-line
   selection inserts one indent unit.

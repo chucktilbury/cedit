@@ -43,6 +43,8 @@ class CeditSettings {
             CommandBinding("goto-line", "Go to line", "<Control>g"),
             CommandBinding("indent", "Indent", "Tab"),
             CommandBinding("outdent", "Outdent", "<Shift>Tab"),
+            CommandBinding("toggle-comment", "Toggle line comment", "<Control>slash"),
+            CommandBinding("toggle-block-comment", "Toggle block comment", ""),
             CommandBinding("undo", "Undo", "<Control>z"),
             CommandBinding("redo", "Redo", "<Control><Shift>z"),
             CommandBinding("cut", "Cut", "<Control>x"),

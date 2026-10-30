@@ -208,6 +208,7 @@ Default shortcuts use GTK trigger notation: `<Control>s` saves,
 `<Control>f` focuses Find, `<Control>h` focuses Replace, `<Control>g` opens
 **Go to Line…** (accepts `line` or `line:column`), `Tab` / `<Shift>Tab` indent
 or outdent selected lines (or insert one indent unit at the caret),
+`<Control>slash` toggles line comments (block comment is menu-only),
 `<Control>z` undoes,
 and `<Control><Shift>z` redoes. `<Control><Shift>s` opens Save As,
 `<Control>w` closes the active tab, `<Control><Shift>w` closes every tab, and
