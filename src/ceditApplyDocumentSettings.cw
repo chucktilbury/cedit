@@ -187,8 +187,99 @@ String Cedit.settingsRoot() {
         return(System.FileSystem().getCwd())
     }
 
+String Cedit.startupPatch() {
+        return(format("version = 1\n[project]\nreopen_last = {}\nlast_root = {}\n",
+            settings.reopenLast, Gtk.Config().quote(settings.lastRoot)))
+    }
+
+String Cedit.globalSettingsBase(String disk) {
+        if (disk.equals("")) { return("") }
+        if (Gtk.Config().validate(disk).equals("")) { return(disk) }
+        // Preserve sdk_prefix from a corrupt shared settings file when repairing.
+        // Config.value cannot parse invalid TOML, so scan the raw text.
+        list lines = disk.split("\n")
+        int64 index = 0
+        while (index < lines.length) {
+            String trimmed = (lines[index] as String).trim()
+            if (trimmed.startsWith("sdk_prefix") || trimmed.startsWith("\"sdk_prefix\"")) {
+                list fields = trimmed.split("=")
+                if (fields.length >= 2) {
+                    String raw = (fields[1] as String).trim()
+                    if (raw.startsWith("\"") && raw.endsWith("\"") && raw.length >= 2) {
+                        return(format("version = 1\nsdk_prefix = {}\n", raw))
+                    }
+                }
+            }
+            index = index + 1
+        }
+        return("version = 1\n")
+    }
+
+void Cedit.recoverStartupFrom(String disk) {
+        if (disk.equals("") || Gtk.Config().validate(disk).equals("")) { return }
+        list lines = disk.split("\n")
+        int64 index = 0
+        while (index < lines.length) {
+            String trimmed = (lines[index] as String).trim()
+            if (trimmed.startsWith("reopen_last") || trimmed.startsWith("\"reopen_last\"")) {
+                list fields = trimmed.split("=")
+                if (fields.length >= 2) {
+                    String raw = (fields[1] as String).trim()
+                    if (raw.equals("true")) { settings.reopenLast = true }
+                    if (raw.equals("false")) { settings.reopenLast = false }
+                }
+            }
+            if (trimmed.startsWith("last_root") || trimmed.startsWith("\"last_root\"")) {
+                list fields = trimmed.split("=")
+                if (fields.length >= 2) {
+                    String raw = (fields[1] as String).trim()
+                    if (raw.startsWith("\"") && raw.endsWith("\"") && raw.length >= 3) {
+                        String path = raw[1..(raw.length - 2)]
+                        if (path.startsWith("/")) { settings.lastRoot = path }
+                    }
+                }
+            }
+            index = index + 1
+        }
+    }
+
 void Cedit.ensureGlobalSettingsFile() {
-        if (System.FileSystem().isFile(settings.globalPath)) { return }
+        String disk = readSettingsDisk(settings.globalPath)
+        if (System.FileSystem().isFile(settings.globalPath)) {
+            // Config.validate fatals on embedded NUL; leave binary/corrupt files alone
+            // unless startup keys are present to recover.
+            if (!GtkSource.Content().isText(disk)) { return }
+            if (Gtk.Config().validate(disk).equals("")) { return }
+            // Only rewrite a malformed global file when startup keys are present in
+            // the raw text. Other invalid files must keep failing load so Preferences
+            // can show the error and refuse to clobber them.
+            if (!disk.contains("reopen_last") && !disk.contains("last_root")) { return }
+            bool reopen = settings.reopenLast
+            String lastRoot = settings.lastRoot
+            settings.reopenLast = false
+            settings.lastRoot = ""
+            recoverStartupFrom(disk)
+            if (!settings.reopenLast && settings.lastRoot.equals("")) {
+                settings.reopenLast = reopen
+                settings.lastRoot = lastRoot
+                return
+            }
+            String text = Gtk.Config().merge(globalSettingsBase(disk), startupPatch())
+            if (!writeSettingsFile(settings.globalPath, text)) {
+                settings.reopenLast = reopen
+                settings.lastRoot = lastRoot
+                return
+            }
+            if (settings.path.equals(settings.globalPath)) {
+                settings.errors = ""
+                settings.writable = true
+                settings.resetEditor()
+                settings.resetKeyboard()
+                settings.load()
+                persistedText = settings.original
+            }
+            return
+        }
         if (!settings.path.equals(settings.globalPath)) { return }
         if (!settings.errors.equals("")) { return }
         String text = settings.serialize()
@@ -217,23 +308,57 @@ bool Cedit.writeSettingsFile(String path, String text) {
         return(true)
     }
 
-void Cedit.writeStartupToGlobal() {
+bool Cedit.writeStartupToGlobal() {
         String disk = readSettingsDisk(settings.globalPath)
-        String patch = format("version = 1\n[project]\nreopen_last = {}\nlast_root = {}\n",
-            settings.reopenLast, Gtk.Config().quote(settings.lastRoot))
-        writeSettingsFile(settings.globalPath, Gtk.Config().merge(disk, patch))
+        String base = globalSettingsBase(disk)
+        if (base.equals("")) {
+            return(writeSettingsFile(settings.globalPath, startupPatch()))
+        }
+        return(writeSettingsFile(settings.globalPath,
+            Gtk.Config().merge(base, startupPatch())))
+    }
+
+String Cedit.seedLocalSettings(String globalText) {
+        // Editor/keyboard only: startup reopen keys stay in the global file.
+        if (globalText.equals("") || !GtkSource.Content().isText(globalText) ||
+            !Gtk.Config().validate(globalText).equals("")) {
+            return("")
+        }
+        // Config.remove rewrites/normalizes the document; skip when nothing to strip
+        // so SDK-only and minimal templates stay byte-identical.
+        if (!globalText.contains("reopen_last") && !globalText.contains("last_root")) {
+            return(globalText)
+        }
+        String seed = Gtk.Config().remove(globalText, "project", "reopen_last")
+        seed = Gtk.Config().remove(seed, "project", "last_root")
+        return(seed)
+    }
+
+bool Cedit.writeMirroredGlobal(String editorText) {
+        // Keep reopen_last/last_root when mirroring editor/keyboard into the global file.
+        String disk = readSettingsDisk(settings.globalPath)
+        String base = globalSettingsBase(disk)
+        String merged = editorText
+        if (!base.equals("")) { merged = Gtk.Config().merge(base, editorText) }
+        return(writeSettingsFile(settings.globalPath,
+            Gtk.Config().merge(merged, startupPatch())))
     }
 
 void Cedit.adoptSettingsRoot(String root) {
         if (root.equals("")) { return }
         String local = settings.localPath(root)
+        bool reopen = settings.reopenLast
+        String lastRoot = settings.lastRoot
         if (!System.FileSystem().isFile(local)) {
             ensureGlobalSettingsFile()
-            String seed = readSettingsDisk(settings.globalPath)
+            String seed = seedLocalSettings(readSettingsDisk(settings.globalPath))
             // Only invent a template when the global file is truly missing, not unreadable.
             if (seed.equals("") && settings.path.equals(settings.globalPath) &&
                 settings.errors.equals("") && !System.FileSystem().isFile(settings.globalPath)) {
-                seed = settings.serialize()
+                String previous = settings.path
+                settings.path = settings.globalPath
+                seed = seedLocalSettings(settings.serialize())
+                settings.path = previous
             }
             if (!seed.equals("")) { writeSettingsFile(local, seed) }
         }
@@ -245,6 +370,8 @@ void Cedit.adoptSettingsRoot(String root) {
         settings.resetEditor()
         settings.resetKeyboard()
         settings.load()
+        settings.reopenLast = reopen
+        settings.lastRoot = lastRoot
         persistedText = settings.original
         reapplyDocumentSettings()
         syncViewMenu()
@@ -256,8 +383,13 @@ void Cedit.reopenChanged(bool active) {
         settings.reopenLast = active
         settings.lastRoot = ""
         if (active && activeProject != null) { settings.lastRoot = activeProject.root }
-        settingsChanged()
-        writeStartupToGlobal()
+        // Startup keys are global-only; local serialize ignores them, so skip
+        // settingsChanged and write the global file directly.
+        if (!writeStartupToGlobal()) {
+            settingsSaveFailure(format("could not update {}", settings.globalPath))
+            return
+        }
+        if (preferencesMessage != null) { preferencesMessage.setText("Settings saved") }
     }
 
 void Cedit.persistSettings() {
@@ -268,7 +400,6 @@ void Cedit.persistSettings() {
 void Cedit.rememberProject(String root) {
         if (settings.reopenLast && !settings.lastRoot.equals(root)) {
             settings.lastRoot = root
-            persistSettings()
             writeStartupToGlobal()
         }
     }
@@ -276,7 +407,6 @@ void Cedit.rememberProject(String root) {
 void Cedit.forgetProject(String root) {
         if (settings.lastRoot.equals(root)) {
             settings.lastRoot = ""
-            persistSettings()
             writeStartupToGlobal()
         }
     }
@@ -399,8 +529,7 @@ void Cedit.saveGlobalChanged(bool active) {
         if (refreshingPreferences) { return }
         mirrorGlobal = active
         if (active) {
-            String text = settings.serialize()
-            if (!writeSettingsFile(settings.globalPath, text)) {
+            if (!writeMirroredGlobal(settings.serialize())) {
                 if (preferencesMessage != null) {
                     preferencesMessage.setText(diagnostic("CEDIT2001", format(
                         "Could not update global settings at {}", settings.globalPath)))

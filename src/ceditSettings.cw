@@ -282,14 +282,26 @@ class CeditSettings {
             error("project must be a table")
         }
         if (value("", "keyboard").equals("")) { loadLegacy() }
-        String reopen = value("project", "reopen_last")
-        if (reopen.equals("btrue")) { reopenLast = true }
-        else { if (!reopen.equals("") && !reopen.equals("bfalse")) { error("project.reopen_last must be a boolean") } }
-        String last = value("project", "last_root")
-        if (!last.equals("") && !last.equals("s")) {
-            if (!last.startsWith("s/") || last.contains("\n") || last.length > 4097) {
-                error("project.last_root must be an absolute folder path")
-            } else { lastRoot = byteSpan(last, 1, last.length) }
+        // Startup reopen metadata lives only in the global settings file. Local
+        // .cedit copies may still contain a leftover [project] table from older
+        // seeds; ignore it so a folder preference cannot hide a missing global
+        // last_root (or the other way around).
+        if (path.equals(globalPath)) {
+            String reopen = value("project", "reopen_last")
+            if (reopen.equals("btrue")) { reopenLast = true }
+            else {
+                if (reopen.equals("bfalse")) { reopenLast = false }
+                else {
+                    if (!reopen.equals("")) { error("project.reopen_last must be a boolean") }
+                }
+            }
+            String last = value("project", "last_root")
+            if (last.equals("") || last.equals("s")) { lastRoot = "" }
+            else {
+                if (!last.startsWith("s/") || last.contains("\n") || last.length > 4097) {
+                    error("project.last_root must be an absolute folder path")
+                } else { lastRoot = byteSpan(last, 1, last.length) }
+            }
         }
         String font = value("editor", "font_family")
         if (!font.equals("")) {
@@ -370,8 +382,21 @@ class CeditSettings {
             text.append(format("{} = {}\n", binding.id, Gtk.Config().quote(binding.trigger)))
             i = i + 1
         }
-        text.append(format("[project]\nreopen_last = {}\nlast_root = {}\n", reopenLast, Gtk.Config().quote(lastRoot)))
-        return(Gtk.Config().merge(original, text))
+        // Keep reopen_last/last_root out of per-folder settings; startup reads them
+        // from the global file via writeStartupToGlobal.
+        if (path.equals(globalPath)) {
+            text.append(format("[project]\nreopen_last = {}\nlast_root = {}\n",
+                reopenLast, Gtk.Config().quote(lastRoot)))
+        }
+        String merged = Gtk.Config().merge(original, text)
+        if (!path.equals(globalPath) &&
+            (merged.contains("reopen_last") || merged.contains("last_root"))) {
+            // Config.remove rewrites the document; only strip when leftover startup
+            // keys are present so ordinary preference saves stay stable.
+            merged = Gtk.Config().remove(merged, "project", "reopen_last")
+            merged = Gtk.Config().remove(merged, "project", "last_root")
+        }
+        return(merged)
     }
 
     int64 byteSpanBound(int64 value, int64 length) {

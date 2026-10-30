@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Startup reopen (`reopen_last` / `last_root`) is stored only in the global
+  settings file, repaired when that file is malformed, and no longer shadowed
+  by a per-folder `.cedit` copy of those keys.
 - Preferences navigation is Editor, Keyboard, Project, Startup. Project opens
   Configure Project. Each folder uses a full `.cedit/settings.toml` seeded
   from the global template, with local precedence; an optional checkbox also
