@@ -10,6 +10,7 @@ class CeditSettings {
     bool showProjectManager
     String lspCommand
     bool wrap
+    int64 rightMargin
     bool highlightLine
     bool saveOnTabLoss
     bool saveOnWindowLoss
@@ -102,6 +103,7 @@ class CeditSettings {
         showProjectManager = true
         lspCommand = ""
         wrap = false
+        rightMargin = 80
         highlightLine = false
         saveOnTabLoss = false
         saveOnWindowLoss = false
@@ -331,6 +333,7 @@ class CeditSettings {
             else { lspCommand = byteSpan(languageServer, 1, languageServer.length) }
         }
         wrap = boolean("wrap", wrap)
+        rightMargin = integer("right_margin", rightMargin, 0, 512)
         highlightLine = boolean("highlight_current_line", highlightLine)
         saveOnTabLoss = boolean("save_on_tab_loss", saveOnTabLoss)
         saveOnWindowLoss = boolean("save_on_window_loss", saveOnWindowLoss)
@@ -376,11 +379,11 @@ class CeditSettings {
     }
 
     String serialize() {
-        String text = format("version = 1\n[editor]\nfont_family = {}\nfont_size = {}\ntab_width = {}\ninsert_spaces = {}\nline_numbers = {}\nshow_whitespace = {}\nshow_line_ends = {}\nshow_indent_markers = {}\nshow_project_manager = {}\nlsp_command = {}\nwrap = {}\nhighlight_current_line = {}\nsave_on_tab_loss = {}\nsave_on_window_loss = {}\nstrip_trailing_spaces = {}\nauto_complete_brackets = {}\n[keyboard]\n",
+        String text = format("version = 1\n[editor]\nfont_family = {}\nfont_size = {}\ntab_width = {}\ninsert_spaces = {}\nline_numbers = {}\nshow_whitespace = {}\nshow_line_ends = {}\nshow_indent_markers = {}\nshow_project_manager = {}\nlsp_command = {}\nwrap = {}\nright_margin = {}\nhighlight_current_line = {}\nsave_on_tab_loss = {}\nsave_on_window_loss = {}\nstrip_trailing_spaces = {}\nauto_complete_brackets = {}\n[keyboard]\n",
             Gtk.Config().quote(fontFamily), fontSize, tabWidth, insertSpaces, lineNumbers,
             showWhitespace, showLineEnds, showIndentMarkers, showProjectManager,
-            Gtk.Config().quote(lspCommand), wrap, highlightLine, saveOnTabLoss, saveOnWindowLoss,
-            stripTrailingSpaces, autoCompleteBrackets)
+            Gtk.Config().quote(lspCommand), wrap, rightMargin, highlightLine, saveOnTabLoss,
+            saveOnWindowLoss, stripTrailingSpaces, autoCompleteBrackets)
         int64 i = 0
         while (i < commands.length) {
             CommandBinding binding = commands[i] as CommandBinding

@@ -21,6 +21,11 @@ void Cedit.applyDocumentSettings(EditorDocument document) {
         document.view.setShowLineEnds(settings.showLineEnds)
         document.view.setShowIndentMarkers(settings.showIndentMarkers)
         document.view.setAutoCompleteBrackets(settings.autoCompleteBrackets)
+        if (settings.rightMargin > 0) {
+            document.view.setRightMargin(true, settings.rightMargin)
+        } else {
+            document.view.setRightMargin(false, 80)
+        }
         if (document.shortcutRevision == settings.shortcutRevision) { return }
         document.shortcutRevision = settings.shortcutRevision
         document.view.clearShortcuts()
@@ -71,6 +76,8 @@ void Cedit.createPreferences() {
         fontEntry = preferenceEntry(editorPreferences, "Monospace font family", settings.fontFamily)
         sizeEntry = preferenceEntry(editorPreferences, "Font size (6-72 pt)", format("{}", settings.fontSize))
         tabsEntry = preferenceEntry(editorPreferences, "Tab width (1-16 columns)", format("{}", settings.tabWidth))
+        marginEntry = preferenceEntry(editorPreferences, "Right margin column (0 = off)",
+            format("{}", settings.rightMargin))
         saveGlobalCheck = Gtk.CheckButton("Save to global settings")
         saveGlobalCheck.setActive(mirrorGlobal)
         saveGlobalCheck.onToggled(_self().saveGlobalChanged)
@@ -87,6 +94,7 @@ void Cedit.createPreferences() {
         fontEntry.onChanged(_self().editorSettingChanged)
         sizeEntry.onChanged(_self().editorSettingChanged)
         tabsEntry.onChanged(_self().editorSettingChanged)
+        marginEntry.onChanged(_self().editorSettingChanged)
         Gtk.Button editorReset = Gtk.Button("Reset Editor to Defaults")
         editorReset.onClicked(_self().resetEditorPreferences)
         editorPreferences.append(editorReset)
@@ -491,12 +499,16 @@ void Cedit.editorCheckChanged(bool active) { editorSettingChanged("") }
 
 void Cedit.editorSettingChanged(String text) {
         if (refreshingPreferences) { return }
-        if (fontEntry == null || sizeEntry == null || tabsEntry == null) { return }
+        if (fontEntry == null || sizeEntry == null || tabsEntry == null || marginEntry == null) {
+            return
+        }
         String problem = settings.fontError(fontEntry.text())
         int64 size = preferenceNumber(sizeEntry.text(), 6, 72)
         int64 tabs = preferenceNumber(tabsEntry.text(), 1, 16)
+        int64 margin = preferenceNumber(marginEntry.text(), 0, 512)
         if (size < 0) { problem = "Font size must be an integer from 6 to 72" }
         if (tabs < 0) { problem = "Tab width must be an integer from 1 to 16" }
+        if (margin < 0) { problem = "Right margin must be an integer from 0 to 512" }
         if (!problem.equals("")) {
             preferencesMessage.setText(problem)
             return
@@ -504,6 +516,7 @@ void Cedit.editorSettingChanged(String text) {
         settings.fontFamily = fontEntry.text()
         settings.fontSize = size
         settings.tabWidth = tabs
+        settings.rightMargin = margin
         settings.insertSpaces = spacesCheck.active()
         settings.lineNumbers = numbersCheck.active()
         if (activeProject != null && activeProject.hasNumbers) {

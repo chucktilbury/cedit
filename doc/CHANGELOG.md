@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Editor preference `right_margin` (default 80, 0 = off) draws the SourceView
+  long-line guide.
 - Edit > Toggle Line Comment (`Ctrl+/`) and Toggle Block Comment; language-aware
   `//` / `#` and `/* */` for C-family selections.
 - Edit > Indent / Outdent (`Tab` / `Shift+Tab`) indent selected lines using the
