@@ -201,6 +201,9 @@ class Cedit {
     GtkSource.View projectFindResults
     list projectFindPaths
     list projectFindLines
+    EditorDocument pendingRecoveryDocument
+    String pendingRecoveryText
+    void<> recoveryPollAction
     int64 lineSpanStart
     int64 lineSpanEnd
     Gtk.TransientWindow configureWindow
@@ -504,6 +507,18 @@ class Cedit {
                             bool showHidden)
     void runProjectFind()
     void projectFindActivated(int64 line)
+    String recoveryDir()
+    String recoveryPathFor(String documentPath)
+    void ensureRecoveryDir()
+    void writeRecovery(EditorDocument document)
+    void clearRecovery(EditorDocument document)
+    void writeAllRecoveries()
+    void scheduleRecoveryPoll()
+    void recoveryPoll()
+    String readRecoveryBody(String recoveryFile, String expectedPath)
+    void offerRecoveryForDocuments()
+    void acceptRecovery()
+    void discardRecovery()
 
     void showFind()
 
@@ -597,6 +612,7 @@ include "ceditGotoLine.cw"
 include "ceditEditLines.cw"
 include "ceditDirtyMarks.cw"
 include "ceditProjectFind.cw"
+include "ceditRecovery.cw"
 include "ceditCloseNextInBatch.cw"
 include "ceditTest.cw"
 
@@ -639,6 +655,7 @@ start {
     editor.languagePollAction = editor.languagePoll
     editor.languageFlushAction = editor.languageFlush
     editor.diskPollAction = editor.diskPoll
+    editor.recoveryPollAction = editor.recoveryPoll
     app.onActivate(editor.activate)
     app.run()
     app.shutdown()

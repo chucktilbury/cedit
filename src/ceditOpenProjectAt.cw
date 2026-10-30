@@ -312,6 +312,7 @@ void Cedit.acceptConfirm() {
         if (op.equals("delete")) { deleteProjectMetadata() }
         if (op.equals("replace-new")) { startNewProject("new") }
         if (op.equals("replace-save-as")) { startNewProject("save-as") }
+        if (op.equals("recover-buffer")) { acceptRecovery() }
         if (op.startsWith("continue-")) { performProjectOp(byteSpan(op, 9, op.length)) }
     }
 
@@ -321,6 +322,7 @@ void Cedit.cancelConfirm() {
         confirmChoices.setVisible(false)
         nextProject = null
         nextFolder = ""
+        if (op.equals("recover-buffer")) { discardRecovery() }
         if (op.equals("continue-quit")) {
             allowWindowClose = false
             quitReady = false

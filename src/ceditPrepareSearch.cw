@@ -265,6 +265,7 @@ bool Cedit.workspaceNeedsSave() {
     }
 
 bool Cedit.requestClose() {
+        writeAllRecoveries()
         if (savePending || projectSaves > 0) {
             closeAfterSave = true
             status.setText("Waiting for settings to save")

@@ -79,6 +79,7 @@ bool Cedit.writeDocument(EditorDocument document, String destination) {
         document.view.markSaved()
         document.diskText = contents
         clearUnsavedMarks(document)
+        clearRecovery(document)
         refreshTab(document)
         if (client != null && client.ready) { client.sendChange(document) }
         document.automaticSaveError = ""
