@@ -192,6 +192,8 @@ class Cedit {
     Gtk.TransientWindow gotoWindow
     Gtk.Entry gotoEntry
     Gtk.Label gotoStatus
+    int64 lineSpanStart
+    int64 lineSpanEnd
     Gtk.TransientWindow configureWindow
     Gtk.Entry configureName
     Gtk.Entry configureExcludes
@@ -466,6 +468,14 @@ class Cedit {
     void closeGotoLine()
     void acceptGotoLine()
 
+    int64 effectiveTabWidth()
+    bool effectiveInsertSpaces()
+    String indentUnit()
+    void loadSelectedLineSpan()
+    void indentCurrent()
+    void outdentCurrent()
+    void outdentLine(EditorDocument document, int64 line, int64 width)
+
     void showFind()
 
     void showReplace()
@@ -555,6 +565,7 @@ include "ceditApplyConfigure.cw"
 include "ceditWriteDocument.cw"
 include "ceditPrepareSearch.cw"
 include "ceditGotoLine.cw"
+include "ceditEditLines.cw"
 include "ceditCloseNextInBatch.cw"
 include "ceditTest.cw"
 

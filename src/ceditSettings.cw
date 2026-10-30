@@ -41,6 +41,8 @@ class CeditSettings {
             CommandBinding("find", "Find", "<Control>f"),
             CommandBinding("replace", "Find and replace", "<Control>h"),
             CommandBinding("goto-line", "Go to line", "<Control>g"),
+            CommandBinding("indent", "Indent", "Tab"),
+            CommandBinding("outdent", "Outdent", "<Shift>Tab"),
             CommandBinding("undo", "Undo", "<Control>z"),
             CommandBinding("redo", "Redo", "<Control><Shift>z"),
             CommandBinding("cut", "Cut", "<Control>x"),

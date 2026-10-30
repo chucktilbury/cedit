@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Edit > Indent / Outdent (`Tab` / `Shift+Tab`) indent selected lines using the
+  configured tab width and spaces-vs-tabs setting; a caret with no multi-line
+  selection inserts one indent unit.
 - Edit > Go to Line… (`Ctrl+G`) accepts `line` or `line:column` and centers
   the cursor in the active document.
 - A failed startup reopen (missing or invalid `last_root`) clears that path so
