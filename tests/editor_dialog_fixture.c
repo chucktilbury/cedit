@@ -491,7 +491,7 @@ bool fixture_preferences_grid_readonly(void *self) {
         }
     }
     g_clear_object(&window);
-    return valid && entries == 32;
+    return valid && entries == 40;
 }
 
 bool fixture_editor_tabs(void *self) {
