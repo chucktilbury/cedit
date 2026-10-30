@@ -112,6 +112,8 @@ void Cedit.activate() {
         projectItems.append(saveProjectAsItem)
         projectItems.append(deleteProjectItem)
         projectItems.append(configureProjectItem)
+        loadBuiltinPlugins()
+        addPluginMenus()
         int64 helpMenu = menu.addMenu("Help")
         aboutItem = menu.addItem(helpMenu, "About cedit...", commandAction("about"))
         searchWindow = Gtk.TransientWindow("Find")
@@ -311,6 +313,8 @@ void<> Cedit.commandAction(String command) {
 
         if (command.equals("view-project-manager")) { return(_self().toggleProjectManager) }
         if (command.equals("about")) { return(_self().showAbout) }
+        if (command.equals("plugin-insert-date")) { return(_self().pluginInsertDate) }
+        if (command.equals("plugin-toggle-debug")) { return(_self().pluginToggleDebug) }
         return(null)
     }
 

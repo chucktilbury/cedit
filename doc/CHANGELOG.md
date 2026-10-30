@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Trusted in-process plugin hooks (`registerPlugin`) with Plugins menu demos:
+  Insert date/time and Toggle `# debug:` marker (also on the edit context menu).
 - Crash recovery: dirty buffers snapshot to `.cedit/recovery/`; Restore/Discard
   on project reopen; cleared after Save.
 - Edit > Find in Project… (`Ctrl+Shift+F`) searches the project tree (literal

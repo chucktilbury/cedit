@@ -661,11 +661,13 @@ repaired. A conflicting later legacy line never overrides the earlier command.
 ## Deliberately deferred
 
 Dirty buffers are snapshotted under `.cedit/recovery/` while a project is open
-(periodic and on Quit); Restore/Discard is offered when reopening. Projects
-deliberately do not include build commands, Git integration, or project trust.
-A configurable toolbar is not included yet. Dialog controls and menu/shortcut
-commands use the same editor actions, so a future toolbar can reuse those
-actions. In-process plugins are trusted code.
+(periodic and on Quit); Restore/Discard is offered when reopening. Trusted
+in-process plugins register via `registerPlugin` (compile-in demos: Insert
+date/time, Toggle debug marker under **Plugins** and the edit context menu).
+Dynamic `.cw` plugin loading is not shipped yet. Projects deliberately do not
+include build commands, Git integration, or project trust. A configurable
+toolbar is not included yet. Dialog controls and menu/shortcut commands use the
+same editor actions, so a future toolbar can reuse those actions.
 
 Appearance, Files/session, Build, and richer LSP preference categories and
 file-type overrides remain future work; no placeholder pages are installed.
