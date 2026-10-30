@@ -206,6 +206,8 @@ class Cedit {
     EditorDocument pendingRecoveryDocument
     String pendingRecoveryText
     void<> recoveryPollAction
+    bool unsavedMarksPending
+    void<> unsavedMarksAction
     list plugins
     list pluginTitles
     int64 lineSpanStart
@@ -501,6 +503,8 @@ class Cedit {
     int64 findMatchingLine(list lines, int64 fromIndex, String target, int64 limit)
     void updateUnsavedMarks(EditorDocument document)
     void clearUnsavedMarks(EditorDocument document)
+    void scheduleUnsavedMarks()
+    void flushUnsavedMarks()
     void createProjectFind()
     void showProjectFind()
     bool hideProjectFind()
@@ -667,6 +671,7 @@ start {
     editor.languageFlushAction = editor.languageFlush
     editor.diskPollAction = editor.diskPoll
     editor.recoveryPollAction = editor.recoveryPoll
+    editor.unsavedMarksAction = editor.flushUnsavedMarks
     app.onActivate(editor.activate)
     app.run()
     app.shutdown()

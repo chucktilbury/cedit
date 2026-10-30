@@ -50,7 +50,8 @@ void Cedit.changed() {
         EditorDocument document = currentDocument()
         if (document != null) {
             refreshTab(document)
-            updateUnsavedMarks(document)
+            // Defer mark rebuild so undo/redo snapshot is not racing gutter updates.
+            scheduleUnsavedMarks()
             if (client != null) { client.noteEdit() }
         }
         updateEditActions()

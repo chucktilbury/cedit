@@ -322,12 +322,15 @@ void Cedit.cancelConfirm() {
         confirmChoices.setVisible(false)
         nextProject = null
         nextFolder = ""
-        if (op.equals("recover-buffer")) { discardRecovery() }
+        if (op.equals("recover-buffer")) {
+            discardRecovery()
+        } else {
+            status.setText("Cancelled")
+        }
         if (op.equals("continue-quit")) {
             allowWindowClose = false
             quitReady = false
         }
-        status.setText("Cancelled")
         if (documents.length == 0) { newDocument() }
         updateMenu()
     }

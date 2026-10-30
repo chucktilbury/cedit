@@ -2,8 +2,11 @@
 
 ## Unreleased
 
-- Editor tabs keep a permanent vertical scrollbar so GTK4 does not warn about
-  snapshotting an unallocated scrollbar GtkGizmo when the buffer first scrolls.
+- Recovery Restore clears the snapshot before dismissing the prompt (it used to
+  reappear with a `*` title); Cancel keeps the saved file on disk.
+- Editor tabs use a classic always-on vertical scrollbar and defer unsaved-mark
+  gutter updates so GTK4 does not warn about snapshotting a GtkGizmo on scroll
+  or undo.
 - Unsaved gutter marks use an insert/delete-aware line alignment so adding a
   line marks that line only, not every following line.
 - Preferences: Auto-indent new lines (`auto_indent`, default on) and Mark
