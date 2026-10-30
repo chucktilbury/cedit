@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Gutter marks unsaved lines (vs last saved `diskText`); cleared on save/reload.
 - Editor preference `right_margin` (default 80, 0 = off) draws the SourceView
   long-line guide.
 - Edit > Toggle Line Comment (`Ctrl+/`) and Toggle Block Comment; language-aware

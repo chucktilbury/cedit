@@ -89,6 +89,7 @@ void Cedit.reloadFromDisk() {
         document.view.setText(disk)
         document.view.markSaved()
         document.diskText = disk
+        clearUnsavedMarks(document)
         clearDiskPrompt()
         refreshTab(document)
         if (client != null && client.ready) { client.sendChange(document) }

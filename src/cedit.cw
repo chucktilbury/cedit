@@ -483,6 +483,8 @@ class Cedit {
     void toggleComment()
     void uncommentLine(EditorDocument document, int64 line, String text, String prefix)
     void toggleBlockComment()
+    void updateUnsavedMarks(EditorDocument document)
+    void clearUnsavedMarks(EditorDocument document)
 
     void showFind()
 
@@ -574,6 +576,7 @@ include "ceditWriteDocument.cw"
 include "ceditPrepareSearch.cw"
 include "ceditGotoLine.cw"
 include "ceditEditLines.cw"
+include "ceditDirtyMarks.cw"
 include "ceditCloseNextInBatch.cw"
 include "ceditTest.cw"
 
