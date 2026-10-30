@@ -32,11 +32,8 @@ class EditorDocument {
         view.setText(contents)
         view.markSaved()
         scroller = Gtk.ScrolledWindow()
-        // Classic (non-overlay) always-on vertical scrollbar keeps a stable
-        // allocation so GTK4 does not warn about snapshotting a GtkGizmo when
-        // content height changes (first scroll, undo/redo, etc.).
-        scroller.setOverlayScrolling(false)
-        scroller.setPolicy(Gtk.ScrolledWindow.POLICY_AUTOMATIC, Gtk.ScrolledWindow.POLICY_ALWAYS)
+        // Automatic policy: GTK #6057 (adjustment updates during TextView
+        // snapshot) is worse with POLICY_ALWAYS; cwhip filters that warning.
         scroller.setHExpand(true)
         scroller.setVExpand(true)
         view.widget().setHExpand(true)
