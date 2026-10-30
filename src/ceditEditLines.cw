@@ -94,3 +94,137 @@ void Cedit.outdentLine(EditorDocument document, int64 line, int64 width) {
         }
         if (removed > 0) { document.view.replaceRange(line, 1, line, removed + 1, "") }
     }
+
+String Cedit.lineCommentPrefix() {
+        EditorDocument document = currentDocument()
+        String language = ""
+        if (document != null) { language = document.view.language() }
+        if (language.equals("python3") || language.equals("python") || language.equals("sh") ||
+            language.equals("desktop") || language.equals("yaml") || language.equals("ruby")) {
+            return("#")
+        }
+        if (language.equals("cwhip") || language.equals("c") || language.equals("cpp") ||
+            language.equals("chdr") || language.equals("cpphdr") || language.equals("java") ||
+            language.equals("javascript") || language.equals("js") || language.equals("typescript") ||
+            language.equals("rust") || language.equals("go") || language.equals("objc") ||
+            language.equals("vala")) {
+            return("//")
+        }
+        return("#")
+    }
+
+bool Cedit.supportsBlockComment() {
+        String prefix = lineCommentPrefix()
+        return(prefix.equals("//"))
+    }
+
+String Cedit.lineText(EditorDocument document, int64 line) {
+        document.view.selectRange(line, 1, line + 1, 1)
+        String text = document.view.selectedText()
+        if (text.endsWith("\n")) { text = byteSpan(text, 0, text.length - 1) }
+        return(text)
+    }
+
+bool Cedit.lineHasCommentPrefix(String text, String prefix) {
+        int64 i = 0
+        while (i < text.length) {
+            int64 b = text[i]
+            if (b != 32 && b != 9) { break }
+            i = i + 1
+        }
+        String rest = byteSpan(text, i, text.length)
+        return(rest.startsWith(prefix))
+    }
+
+void Cedit.toggleComment() {
+        if (commandsBlocked()) { return }
+        EditorDocument document = currentDocument()
+        if (document == null) { return }
+        String prefix = lineCommentPrefix()
+        String marked = format("{} ", prefix)
+        loadSelectedLineSpan()
+        if (!document.view.hasSelection()) {
+            lineSpanStart = document.view.line()
+            lineSpanEnd = lineSpanStart
+        }
+        bool allCommented = true
+        int64 line = lineSpanStart
+        while (line <= lineSpanEnd) {
+            if (!lineHasCommentPrefix(lineText(document, line), prefix)) { allCommented = false }
+            line = line + 1
+        }
+        document.view.beginUserAction()
+        line = lineSpanStart
+        while (line <= lineSpanEnd) {
+            String text = lineText(document, line)
+            if (allCommented) {
+                uncommentLine(document, line, text, prefix)
+            } else {
+                if (!lineHasCommentPrefix(text, prefix)) {
+                    document.view.insertText(line, 1, marked)
+                }
+            }
+            line = line + 1
+        }
+        document.view.endUserAction()
+        document.view.focus()
+    }
+
+void Cedit.uncommentLine(EditorDocument document, int64 line, String text, String prefix) {
+        int64 i = 0
+        while (i < text.length) {
+            int64 b = text[i]
+            if (b != 32 && b != 9) { break }
+            i = i + 1
+        }
+        int64 prefixLen = prefix.length
+        if (i + prefixLen > text.length) { return }
+        String rest = byteSpan(text, i, text.length)
+        if (!rest.startsWith(prefix)) { return }
+        int64 end = i + prefixLen + 1
+        if (i + prefixLen < text.length && text[i + prefixLen] == 32) {
+            // drop the conventional space after the marker
+        } else {
+            end = i + prefixLen + 1
+            // end is exclusive column = i+prefixLen+1 when no space... column is 1-based
+            end = i + prefixLen + 1
+        }
+        int64 startCol = i + 1
+        int64 endCol = i + prefixLen + 1
+        if (i + prefixLen < text.length && text[i + prefixLen] == 32) {
+            endCol = endCol + 1
+        }
+        document.view.replaceRange(line, startCol, line, endCol, "")
+    }
+
+void Cedit.toggleBlockComment() {
+        if (commandsBlocked()) { return }
+        EditorDocument document = currentDocument()
+        if (document == null) { return }
+        if (!supportsBlockComment()) {
+            toggleComment()
+            return
+        }
+        if (!document.view.hasSelection()) {
+            toggleComment()
+            return
+        }
+        int64 startLine = document.view.selectionStartLine()
+        int64 startCol = document.view.selectionStartColumn()
+        int64 endLine = document.view.selectionEndLine()
+        int64 endCol = document.view.selectionEndColumn()
+        String selected = document.view.selectedText()
+        document.view.beginUserAction()
+        if (selected.startsWith("/*") && selected.endsWith("*/")) {
+            String inner = byteSpan(selected, 2, selected.length - 2)
+            if (inner.startsWith(" ") && inner.endsWith(" ") && inner.length >= 2) {
+                inner = byteSpan(inner, 1, inner.length - 1)
+            }
+            document.view.replaceRange(startLine, startCol, endLine, endCol, inner)
+        } else {
+            document.view.replaceRange(startLine, startCol, endLine, endCol,
+                format("/* {} */", selected))
+        }
+        document.view.endUserAction()
+        document.view.focus()
+    }
