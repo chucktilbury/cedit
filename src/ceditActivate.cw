@@ -35,7 +35,6 @@ void Cedit.activate() {
         confirmOp = ""
         overrideRows = []
         hasAutomaticSaveErrors = false
-        mirrorGlobal = false
         settings = CeditSettings()
         int64 commandIndex = 0
         while (commandIndex < settings.commands.length) {
