@@ -4,9 +4,9 @@
 
 - Recovery Restore clears the snapshot before dismissing the prompt (it used to
   reappear with a `*` title); Cancel keeps the saved file on disk.
-- Editor tabs use a classic always-on vertical scrollbar and defer unsaved-mark
-  gutter updates so GTK4 does not warn about snapshotting a GtkGizmo on scroll
-  or undo.
+- Editor scrollbars use automatic policy again; the GtkGizmo snapshot warning on
+  undo/scroll is a GTK TextView bug (#6057) filtered in cwhip. Unsaved-mark
+  gutter updates stay deferred.
 - Unsaved gutter marks use an insert/delete-aware line alignment so adding a
   line marks that line only, not every following line.
 - Preferences: Auto-indent new lines (`auto_indent`, default on) and Mark
