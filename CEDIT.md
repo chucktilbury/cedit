@@ -666,7 +666,9 @@ repaired. A conflicting later legacy line never overrides the earlier command.
 ## Deliberately deferred
 
 Dirty buffers are snapshotted under `.cedit/recovery/` while a project is open
-(periodic and on Quit); Restore/Discard is offered when reopening. Trusted
+(periodic and on Quit); Restore applies the snapshot into the buffer (still
+unsaved) and removes the recovery file, while Cancel discards the snapshot and
+keeps the on-disk file. Trusted
 in-process plugins register via `registerPlugin` (compile-in demos: Insert
 date/time, Toggle debug marker under **Plugins** and the edit context menu).
 Dynamic `.cw` plugin loading is not shipped yet. Projects deliberately do not

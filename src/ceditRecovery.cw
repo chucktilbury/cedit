@@ -84,6 +84,7 @@ String Cedit.readRecoveryBody(String recoveryFile, String expectedPath) {
 
 void Cedit.offerRecoveryForDocuments() {
         if (activeProject == null) { return }
+        if (!confirmOp.equals("")) { return }
         int64 i = 0
         while (i < documents.length) {
             EditorDocument document = documents[i] as EditorDocument
@@ -94,8 +95,9 @@ void Cedit.offerRecoveryForDocuments() {
                     if (!body.equals("") && !body.equals(document.diskText)) {
                         pendingRecoveryDocument = document
                         pendingRecoveryText = body
+                        // Use the path basename; tabTitle may already include "*".
                         askConfirm("recover-buffer",
-                            format("Recover unsaved edits for {}?", document.tabTitle()),
+                            format("Recover unsaved edits for {}?", document.baseName),
                             "Restore")
                         return
                     }
@@ -109,10 +111,13 @@ void Cedit.offerRecoveryForDocuments() {
 void Cedit.acceptRecovery() {
         if (pendingRecoveryDocument == null) { return }
         EditorDocument document = pendingRecoveryDocument
-        document.view.setText(pendingRecoveryText)
-        // Leave modified so Save is required; do not overwrite disk.
+        String body = pendingRecoveryText
+        // Remove the snapshot before re-scanning; otherwise the same prompt returns.
+        clearRecovery(document)
         pendingRecoveryDocument = null
         pendingRecoveryText = ""
+        document.view.setText(body)
+        // Leave modified so Save is required; do not overwrite disk.
         activateDocument(document)
         updateUnsavedMarks(document)
         refreshTab(document)
@@ -125,6 +130,7 @@ void Cedit.discardRecovery() {
             clearRecovery(pendingRecoveryDocument)
             pendingRecoveryDocument = null
             pendingRecoveryText = ""
+            status.setText("Discarded recovery; kept saved file")
         }
         offerRecoveryForDocuments()
     }

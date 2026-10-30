@@ -32,8 +32,10 @@ class EditorDocument {
         view.setText(contents)
         view.markSaved()
         scroller = Gtk.ScrolledWindow()
-        // Keep the vertical scrollbar allocated so GTK4 does not warn about
-        // snapshotting a scrollbar GtkGizmo when content first becomes scrollable.
+        // Classic (non-overlay) always-on vertical scrollbar keeps a stable
+        // allocation so GTK4 does not warn about snapshotting a GtkGizmo when
+        // content height changes (first scroll, undo/redo, etc.).
+        scroller.setOverlayScrolling(false)
         scroller.setPolicy(Gtk.ScrolledWindow.POLICY_AUTOMATIC, Gtk.ScrolledWindow.POLICY_ALWAYS)
         scroller.setHExpand(true)
         scroller.setVExpand(true)

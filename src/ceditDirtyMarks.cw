@@ -74,3 +74,15 @@ void Cedit.clearUnsavedMarks(EditorDocument document) {
         if (document == null) { return }
         document.view.clearLineMarks("unsaved")
     }
+
+void Cedit.scheduleUnsavedMarks() {
+        if (unsavedMarksPending) { return }
+        unsavedMarksPending = true
+        Gtk.Application().schedule(50, unsavedMarksAction)
+    }
+
+void Cedit.flushUnsavedMarks() {
+        unsavedMarksPending = false
+        if (window == null || window.disposed()) { return }
+        updateUnsavedMarks(currentDocument())
+    }
