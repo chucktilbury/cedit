@@ -498,10 +498,21 @@ class ProjectChecks {
             return
         }
         if (stage == 1) {
+            // Prior cases may leave recovery snapshots; dismiss before continuing.
+            if (editor.confirmOp.equals("recover-buffer")) {
+                editor.cancelConfirm()
+                again()
+                return
+            }
             require(editor.activeProject.root.equals(path("proj2")), "switched while scanning")
             ProjectFixture().choose(path("other"), 1, 0)
             menu(editor.openFolderItem)
             advance()
+            return
+        }
+        if (editor.confirmOp.equals("recover-buffer")) {
+            editor.cancelConfirm()
+            again()
             return
         }
         if (!loaded("other")) {
