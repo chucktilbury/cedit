@@ -502,7 +502,8 @@ void Cedit.filterCommands(String query) {
     }
 
 int64 Cedit.preferenceNumber(String text, int64 minimum, int64 maximum) {
-        if (text.length == 0 || text.length > 2) { return(-1) }
+        // Allow up to 3 digits so right_margin (0-512) can be entered.
+        if (text.length == 0 || text.length > 3) { return(-1) }
         int64 i = 0
         while (i < text.length) {
             if (!"0123456789".contains(byteSpan(text, i, i + 1))) { return(-1) }
