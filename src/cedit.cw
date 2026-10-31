@@ -3,6 +3,7 @@ import process
 import sourceview
 import system
 import time
+import cli as Cli
 
 include "language.cw"
 

@@ -227,18 +227,35 @@ void Cedit.activate() {
         window.onCloseRequest(closeAction)
         window.onFocusChanged(_self().windowFocusChanged)
 
-        System.Process process = System.Process()
         ensureGlobalSettingsFile()
         // Startup reopen comes from the global template before a local folder is adopted.
         bool reopen = settings.reopenLast
         String lastRoot = settings.lastRoot
         adoptSettingsRoot(System.FileSystem().getCwd())
+        Cli.CommandLine commandLine = Cli.CommandLine("cedit", "Cwhip editor", "0.1.0")
+        Cli.Option testOption = Cli.Option()
+        testOption.longName = "test"
+        testOption.name = "test"
+        testOption.description = "run the in-process smoke test after present"
+        commandLine.addOption(testOption)
+        Cli.Positional paths = Cli.Positional()
+        paths.name = "path"
+        paths.description = "file or folder to open"
+        paths.isList = true
+        commandLine.addPositional(paths)
+        try {
+            commandLine.parseArgv()
+        } except() as error {
+            System.StandardIO().writeErrorLine(format("cedit: error[CEDIT0001]: {}", error))
+            System.Process().exit(2)
+        }
         bool explicitRequest = false
-        int64 index = 1
-        while (index < process.argc()) {
-            String argument = process.arg(index)
-            if (!argument.equals("--test")) { explicitRequest = true }
-            if (!argument.equals("--test") && !argument.contains("://") && System.FileSystem().isDir(argument)) {
+        list arguments = commandLine.allPositionalValues()
+        int64 index = 0
+        while (index < arguments.length) {
+            String argument = arguments[index] as String
+            explicitRequest = true
+            if (!argument.contains("://") && System.FileSystem().isDir(argument)) {
                 openRootArgument(argument)
             } else { openFile(argument) }
             index = index + 1
@@ -267,7 +284,7 @@ void Cedit.activate() {
                     "{}\n{}\nAutomatic saving is disabled; repair the file and restart.",
                     settings.path, settings.errors)))
         }
-        if (process.argc() > 1 && process.arg(1).equals("--test")) {
+        if (commandLine.switchValue("test")) {
             Gtk.Application().post(testAction)
         }
     }
