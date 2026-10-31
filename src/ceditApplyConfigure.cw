@@ -200,6 +200,10 @@ void Cedit.activateDocument(EditorDocument document) {
                 notebook.setCurrentPage(index)
                 updateStatus()
                 document.view.focus()
+                // pageChanged defers capture; tests and Ctrl+Tab need it now.
+                if (searchDialogOpen && document.view.hasSelection()) {
+                    document.view.captureSearchScope()
+                }
                 return
             }
             index = index + 1

@@ -285,10 +285,10 @@ class EditorChecks {
         }
         if (stage == 15) {
             require(editor.documents.length == documentsBeforeMany + 1, "multi-select opens every new text file")
-            require(editor.status.text().contains("Open failed for 2 of 4 files") &&
-                    editor.status.text().contains("error[CEDIT1001]"),
-                    "per-file failures reported")
-            require(Fixture().alert("binary.dat|invalid.txt|not a text file"), "multi-select failures shown in one dialog")
+            // Prefer the alert: the language server can overwrite status with Ready.
+            require(Fixture().alert("binary.dat|invalid.txt|not a text file"),
+                    format("multi-select failures shown in one dialog (status={})",
+                           editor.status.text()))
             require(!Fixture().alertOpen(), "alert dismissed")
             EditorDocument text = documentAt("many/two.txt")
             require(text != null && text.view.text().equals("class Demo {}\n"), "text file opened")

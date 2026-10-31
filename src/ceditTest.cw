@@ -21,11 +21,12 @@ void Cedit.test() {
         gotoEntry.setText("3:10")
         acceptGotoLine()
         bool wentToLine = document.view.line() == 3 && document.view.column() == 10
-        document.view.selectRange(2, 1, 2, 10)
+        // Comment a non-comment code line; line 2 is already `// note`.
+        document.view.selectRange(3, 1, 3, 14)
         String beforeComment = document.view.text()
         toggleComment()
         bool commented = !document.view.text().equals(beforeComment)
-        if (commented) { commented = document.view.text().contains("//") }
+        if (commented) { commented = document.view.text().length > beforeComment.length }
         toggleComment()
         bool uncommented = document.view.text().equals(beforeComment)
         bool searched = document.view.find("Cwhip")
