@@ -98,7 +98,8 @@ class PreferencesChecks {
         if (editor.savePending) {
             waits = waits + 1
             require(waits < 500, "save completion")
-            PreferenceFixture().tick()
+            // Drain in-flight Config.save so GIO completions are not starved.
+            Gtk.Config().flush()
             Gtk.Application().post(nextAction)
             return
         }
