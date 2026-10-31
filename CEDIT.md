@@ -112,6 +112,13 @@ process. GUI diagnostics continue to use the launching terminal's stdout/stderr.
 
 ## Diagnostics
 
+Startup paths and `--test` are parsed through the shared stdlib `cli` package.
+`--help` prints stdlib `helpText()` on stdout and exits 0 (trailing argv after
+`--help` is ignored). Unknown options and other parse failures exit 2 with
+`cedit: error[CEDIT0001]:` plus the stdlib message (`unknown option: …`,
+`unexpected positional argument: …`). Positional arguments are files or folders
+to open; `--test` runs the in-process smoke test after present.
+
 cedit-owned CLI and GUI failures use the shared
 [diagnostic format](https://github.com/chucktilbury/cwhip/blob/master/doc/DIAGNOSTICS.md):
 `cedit: error[CEDITxxxx]: explanation`. The shared template setup script keeps
