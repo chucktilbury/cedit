@@ -233,6 +233,12 @@ void Cedit.activate() {
         String lastRoot = settings.lastRoot
         adoptSettingsRoot(System.FileSystem().getCwd())
         Cli.CommandLine commandLine = Cli.CommandLine("cedit", "Cwhip editor", "0.1.0")
+        Cli.Option helpOption = Cli.Option()
+        helpOption.longName = "help"
+        helpOption.name = "help"
+        helpOption.description = "show this help"
+        helpOption.action = Cli.Action().HELP
+        commandLine.addOption(helpOption)
         Cli.Option testOption = Cli.Option()
         testOption.longName = "test"
         testOption.name = "test"
@@ -248,6 +254,10 @@ void Cedit.activate() {
         } except() as error {
             System.StandardIO().writeErrorLine(format("cedit: error[CEDIT0001]: {}", error))
             System.Process().exit(2)
+        }
+        if (commandLine.currentAction() == Cli.Action().HELP) {
+            System.StandardIO().write(commandLine.helpText())
+            System.Process().exit(0)
         }
         bool explicitRequest = false
         list arguments = commandLine.allPositionalValues()
