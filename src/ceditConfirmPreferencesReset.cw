@@ -1,3 +1,25 @@
+/*
+ * src/ceditConfirmPreferencesReset.cw - Preferences reset, view toggles, settings save.
+ *
+ * Created: 2026-10-29
+ * Author: Auto
+ *
+ * Changelog:
+ *   2026-10-29  Initial file.
+ *   2026-11-13  CODING headers and method comments.
+ */
+
+/*
+ * Cedit.confirmPreferencesReset
+ *
+ * Purpose: confirmPreferencesReset.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.confirmPreferencesReset() {
         if (resetSection.equals("Editor")) {
             settings.resetEditor()
@@ -33,6 +55,17 @@ void Cedit.confirmPreferencesReset() {
         settingsChanged()
     }
 
+/*
+ * Cedit.settingsChanged
+ *
+ * Purpose: settingsChanged.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.settingsChanged() {
         int64 i = 0
         while (i < documents.length) {
@@ -56,10 +89,32 @@ void Cedit.settingsChanged() {
         saveSettings()
     }
 
+/*
+ * Cedit.effectiveLineNumbers
+ *
+ * Purpose: effectiveLineNumbers.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: bool.
+ */
+
 bool Cedit.effectiveLineNumbers() {
         if (activeProject != null && activeProject.hasNumbers) { return(activeProject.lineNumbers) }
         return(settings.lineNumbers)
     }
+
+/*
+ * Cedit.publishLineNumbers
+ *
+ * Purpose: publishLineNumbers.
+ *
+ * Parameters:
+ *   active.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.publishLineNumbers(bool active) {
         settings.lineNumbers = active
@@ -76,13 +131,46 @@ void Cedit.publishLineNumbers(bool active) {
         }
     }
 
+/*
+ * Cedit.lineNumbersChecked
+ *
+ * Purpose: lineNumbersChecked.
+ *
+ * Parameters:
+ *   active.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.lineNumbersChecked(bool active) {
         if (syncingView) { return }
         publishLineNumbers(active)
         settingsChanged()
     }
 
+/*
+ * Cedit.toggleLineNumbers
+ *
+ * Purpose: toggleLineNumbers.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.toggleLineNumbers() { lineNumbersChecked(!effectiveLineNumbers()) }
+
+/*
+ * Cedit.whitespaceChecked
+ *
+ * Purpose: whitespaceChecked.
+ *
+ * Parameters:
+ *   active.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.whitespaceChecked(bool active) {
         if (syncingView) { return }
@@ -90,7 +178,29 @@ void Cedit.whitespaceChecked(bool active) {
         settingsChanged()
     }
 
+/*
+ * Cedit.toggleWhitespace
+ *
+ * Purpose: toggleWhitespace.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.toggleWhitespace() { whitespaceChecked(!settings.showWhitespace) }
+
+/*
+ * Cedit.lineEndsChecked
+ *
+ * Purpose: lineEndsChecked.
+ *
+ * Parameters:
+ *   active.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.lineEndsChecked(bool active) {
         if (syncingView) { return }
@@ -98,7 +208,29 @@ void Cedit.lineEndsChecked(bool active) {
         settingsChanged()
     }
 
+/*
+ * Cedit.toggleLineEnds
+ *
+ * Purpose: toggleLineEnds.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.toggleLineEnds() { lineEndsChecked(!settings.showLineEnds) }
+
+/*
+ * Cedit.indentMarkersChecked
+ *
+ * Purpose: indentMarkersChecked.
+ *
+ * Parameters:
+ *   active.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.indentMarkersChecked(bool active) {
         if (syncingView) { return }
@@ -106,7 +238,29 @@ void Cedit.indentMarkersChecked(bool active) {
         settingsChanged()
     }
 
+/*
+ * Cedit.toggleIndentMarkers
+ *
+ * Purpose: toggleIndentMarkers.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.toggleIndentMarkers() { indentMarkersChecked(!settings.showIndentMarkers) }
+
+/*
+ * Cedit.projectManagerChecked
+ *
+ * Purpose: projectManagerChecked.
+ *
+ * Parameters:
+ *   active.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.projectManagerChecked(bool active) {
         if (syncingView) { return }
@@ -114,18 +268,73 @@ void Cedit.projectManagerChecked(bool active) {
         settingsChanged()
     }
 
+/*
+ * Cedit.toggleProjectManager
+ *
+ * Purpose: toggleProjectManager.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.toggleProjectManager() { projectManagerChecked(!settings.showProjectManager) }
 
+/*
+ * Cedit.closeSidePanel
+ *
+ * Purpose: closeSidePanel.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.closeSidePanel() { projectManagerChecked(false) }
+
+/*
+ * Cedit.scheduleLanguagePoll
+ *
+ * Purpose: scheduleLanguagePoll.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.scheduleLanguagePoll() {
         if (client == null || !client.running) { return }
         Gtk.Application().schedule(100, languagePollAction)
     }
 
+/*
+ * Cedit.languagePoll
+ *
+ * Purpose: languagePoll.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.languagePoll() {
         if (client != null) { client.poll() }
     }
+
+/*
+ * Cedit.languageFlush
+ *
+ * Purpose: languageFlush.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.languageFlush() {
         if (client == null || !client.running) { return }
@@ -133,10 +342,32 @@ void Cedit.languageFlush() {
         client.sendChange(currentDocument())
     }
 
+/*
+ * Cedit.scheduleDiskPoll
+ *
+ * Purpose: scheduleDiskPoll.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.scheduleDiskPoll() {
         if (!presented || window == null || window.disposed()) { return }
         Gtk.Application().schedule(2000, diskPollAction)
     }
+
+/*
+ * Cedit.diskPoll
+ *
+ * Purpose: diskPoll.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.diskPoll() {
         if (!presented || window == null || window.disposed()) { return }
@@ -144,10 +375,32 @@ void Cedit.diskPoll() {
         scheduleDiskPoll()
     }
 
+/*
+ * Cedit.openRecentPath
+ *
+ * Purpose: openRecentPath.
+ *
+ * Parameters:
+ *   path.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.openRecentPath(String path) {
         if (commandsBlocked()) { return }
         openFile(path)
     }
+
+/*
+ * Cedit.syncViewMenu
+ *
+ * Purpose: syncViewMenu.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.syncViewMenu() {
         if (menu == null) { return }
@@ -159,6 +412,17 @@ void Cedit.syncViewMenu() {
         menu.setItemChecked(projectManagerItem, settings.showProjectManager)
         syncingView = false
     }
+
+/*
+ * Cedit.applyProjectManagerVisibility
+ *
+ * Purpose: applyProjectManagerVisibility.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.applyProjectManagerVisibility() {
         if (workspace == null || project == null) { return }
@@ -173,10 +437,32 @@ void Cedit.applyProjectManagerVisibility() {
         }
     }
 
+/*
+ * Cedit.keyboardSettingsChanged
+ *
+ * Purpose: keyboardSettingsChanged.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.keyboardSettingsChanged() {
         settings.shortcutRevision = settings.shortcutRevision + 1
         settingsChanged()
     }
+
+/*
+ * Cedit.saveSettings
+ *
+ * Purpose: saveSettings.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: bool.
+ */
 
 bool Cedit.saveSettings() {
         String text = settings.serialize()
@@ -226,6 +512,17 @@ bool Cedit.saveSettings() {
         return(true)
     }
 
+/*
+ * Cedit.makeSettingsDirectory
+ *
+ * Purpose: makeSettingsDirectory.
+ *
+ * Parameters:
+ *   directory.
+ *
+ * Returns: bool.
+ */
+
 bool Cedit.makeSettingsDirectory(String directory) {
         if (System.FileSystem().isDir(directory)) { return(true) }
         String parent = System.FileSystem().dirname(directory)
@@ -234,13 +531,48 @@ bool Cedit.makeSettingsDirectory(String directory) {
         return(System.FileSystem().mkdir(directory))
     }
 
+/*
+ * Cedit.diagnostic
+ *
+ * Purpose: diagnostic.
+ *
+ * Parameters:
+ *   code.
+ *   explanation.
+ *
+ * Returns: String.
+ */
+
 String Cedit.diagnostic(String code, String explanation) {
         return(format("cedit: error[{}]: {}", code, explanation))
     }
 
+/*
+ * Cedit.reportDiagnostic
+ *
+ * Purpose: reportDiagnostic.
+ *
+ * Parameters:
+ *   code.
+ *   explanation.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.reportDiagnostic(String code, String explanation) {
         status.setText(diagnostic(code, explanation))
     }
+
+/*
+ * Cedit.settingsSaveFailure
+ *
+ * Purpose: settingsSaveFailure.
+ *
+ * Parameters:
+ *   detail.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.settingsSaveFailure(String detail) {
         String message = diagnostic("CEDIT2001", format(
@@ -249,6 +581,17 @@ void Cedit.settingsSaveFailure(String detail) {
         if (preferencesMessage != null) { preferencesMessage.setText(message) }
         else { status.setText(message) }
     }
+
+/*
+ * Cedit.settingsSaved
+ *
+ * Purpose: settingsSaved.
+ *
+ * Parameters:
+ *   error.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.settingsSaved(String error) {
         savePending = false
@@ -276,10 +619,33 @@ void Cedit.settingsSaved(String error) {
         }
     }
 
+/*
+ * Cedit.version
+ *
+ * Purpose: version.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: String.
+ */
+
 String Cedit.version() {
         // Keep in sync with project(cedit VERSION ...) in CMakeLists.txt.
         return("0.0.1")
     }
+
+/*
+ * Cedit.projectFailure
+ *
+ * Purpose: projectFailure.
+ *
+ * Parameters:
+ *   title.
+ *   detail.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.projectFailure(String title, String detail) {
         String recovery = "Review the path and details, correct the issue, then retry."
@@ -287,6 +653,18 @@ void Cedit.projectFailure(String title, String detail) {
         reportDiagnostic("CEDIT2002", format("{}: {}; {}", title, detail, recovery))
         Gtk.AlertDialog().show(window, title, format("{}\n\n{}", message, recovery))
     }
+
+/*
+ * Cedit.canonicalFolder
+ *
+ * Purpose: canonicalFolder.
+ *
+ * Parameters:
+ *   path.
+ *   title.
+ *
+ * Returns: String.
+ */
 
 String Cedit.canonicalFolder(String path, String title) {
         if (path.contains("://")) {
@@ -305,6 +683,18 @@ String Cedit.canonicalFolder(String path, String title) {
         return(canonical)
     }
 
+/*
+ * Cedit.loadProject
+ *
+ * Purpose: loadProject.
+ *
+ * Parameters:
+ *   path.
+ *   title.
+ *
+ * Returns: CwhipProject.
+ */
+
 CwhipProject Cedit.loadProject(String path, String title) {
         String root = canonicalFolder(path, title)
         if (root.equals("")) { return(null) }
@@ -321,6 +711,17 @@ CwhipProject Cedit.loadProject(String path, String title) {
         }
         return(candidate)
     }
+
+/*
+ * Cedit.openRootArgument
+ *
+ * Purpose: openRootArgument.
+ *
+ * Parameters:
+ *   path.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.openRootArgument(String path) {
         if (activeProject != null || !project.rootPath.equals("")) {
@@ -339,6 +740,17 @@ void Cedit.openRootArgument(String path) {
         noteOpenFiles()
     }
 
+/*
+ * Cedit.chooseProjectFolder
+ *
+ * Purpose: chooseProjectFolder.
+ *
+ * Parameters:
+ *   purpose.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.chooseProjectFolder(String purpose) {
         if (commandsBlocked()) { return }
         chooserPurpose = purpose
@@ -350,9 +762,42 @@ void Cedit.chooseProjectFolder(String purpose) {
         updateMenu()
     }
 
+/*
+ * Cedit.newProject
+ *
+ * Purpose: newProject.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.newProject() { chooseProjectFolder("project-new") }
 
+/*
+ * Cedit.openProject
+ *
+ * Purpose: openProject.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.openProject() { chooseProjectFolder("project-open") }
+
+/*
+ * Cedit.saveProjectAs
+ *
+ * Purpose: saveProjectAs.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.saveProjectAs() {
         if (activeProject == null) {
@@ -361,6 +806,17 @@ void Cedit.saveProjectAs() {
         }
         chooseProjectFolder("project-save-as")
     }
+
+/*
+ * Cedit.projectFolderChosen
+ *
+ * Purpose: projectFolderChosen.
+ *
+ * Parameters:
+ *   path.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.projectFolderChosen(String path) {
         fileDialog = null

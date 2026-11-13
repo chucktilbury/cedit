@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- CODING cleanup: file headers, Changelog stamps, class/method comments
+  (Purpose/Parameters/Returns), and a local `doc/CODING.md` pointing at the
+  shared cplanets locks. No intentional behavior changes.
 - Parse startup paths and `--test` through the SDK `cli` 0.1.0 package.
 - Auto-indent (when enabled) adds a level inside `{` / `[` and splits paired
   braces on Enter; still copies the previous line's indent otherwise.

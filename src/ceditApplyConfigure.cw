@@ -1,3 +1,25 @@
+/*
+ * src/ceditApplyConfigure.cw - Configure Apply, About, and open/save helpers.
+ *
+ * Created: 2026-10-29
+ * Author: Auto
+ *
+ * Changelog:
+ *   2026-10-29  Initial file.
+ *   2026-11-13  CODING headers and method comments.
+ */
+
+/*
+ * Cedit.applyConfigure
+ *
+ * Purpose: applyConfigure.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.applyConfigure() {
         CwhipProject current = activeProject
         if (current == null || commandsBlocked()) { return }
@@ -64,12 +86,45 @@ void Cedit.applyConfigure() {
         writeProject(current, true, false, "configure")
     }
 
+/*
+ * Cedit.hideConfigure
+ *
+ * Purpose: hideConfigure.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: bool.
+ */
+
 bool Cedit.hideConfigure() {
         if (configureWindow != null && !configureWindow.disposed()) { configureWindow.setVisible(false) }
         return(true)
     }
 
+/*
+ * Cedit.closeConfigure
+ *
+ * Purpose: closeConfigure.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.closeConfigure() { hideConfigure() }
+
+/*
+ * Cedit.showAbout
+ *
+ * Purpose: showAbout.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.showAbout() {
         if (fileDialog != null) { return }
@@ -93,12 +148,45 @@ void Cedit.showAbout() {
         aboutWindow.present()
     }
 
+/*
+ * Cedit.hideAbout
+ *
+ * Purpose: hideAbout.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: bool.
+ */
+
 bool Cedit.hideAbout() {
         if (aboutWindow != null && !aboutWindow.disposed()) { aboutWindow.setVisible(false) }
         return(true)
     }
 
+/*
+ * Cedit.closeAbout
+ *
+ * Purpose: closeAbout.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.closeAbout() { hideAbout() }
+
+/*
+ * Cedit.newDocument
+ *
+ * Purpose: newDocument.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.newDocument() {
         if (commandsBlocked()) { return }
@@ -109,6 +197,17 @@ void Cedit.newDocument() {
         configureShortcuts(document)
         activateDocument(document)
     }
+
+/*
+ * Cedit.openDocument
+ *
+ * Purpose: openDocument.
+ *
+ * Parameters:
+ *   requestedPath.
+ *
+ * Returns: EditorDocument.
+ */
 
 EditorDocument Cedit.openDocument(String requestedPath) {
         if (requestedPath.equals("") || requestedPath.equals("--test")) {
@@ -177,6 +276,18 @@ EditorDocument Cedit.openDocument(String requestedPath) {
         return(document)
     }
 
+/*
+ * Cedit.reportOpenFailure
+ *
+ * Purpose: reportOpenFailure.
+ *
+ * Parameters:
+ *   message.
+ *   dialog.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.reportOpenFailure(String message, bool dialog) {
         String recovery = "Choose a local, readable text file and retry."
         String reported = diagnostic("CEDIT1001", format("{}; {}", message, recovery))
@@ -189,6 +300,17 @@ void Cedit.reportOpenFailure(String message, bool dialog) {
             }
         }
     }
+
+/*
+ * Cedit.activateDocument
+ *
+ * Purpose: activateDocument.
+ *
+ * Parameters:
+ *   document.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.activateDocument(EditorDocument document) {
         if (document == null) {
@@ -211,12 +333,34 @@ void Cedit.activateDocument(EditorDocument document) {
         status.setText("Document is not open")
     }
 
+/*
+ * Cedit.openFile
+ *
+ * Purpose: openFile.
+ *
+ * Parameters:
+ *   requestedPath.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.openFile(String requestedPath) {
         EditorDocument document = openDocument(requestedPath)
         if (document != null) {
             activateDocument(document)
         }
     }
+
+/*
+ * Cedit.currentDocument
+ *
+ * Purpose: currentDocument.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: EditorDocument.
+ */
 
 EditorDocument Cedit.currentDocument() {
         int64 page = notebook.currentPage()
@@ -225,6 +369,17 @@ EditorDocument Cedit.currentDocument() {
         }
         return(documents[page] as EditorDocument)
     }
+
+/*
+ * Cedit.saveCurrent
+ *
+ * Purpose: saveCurrent.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.saveCurrent() {
         if (commandsBlocked()) { return }
@@ -240,6 +395,17 @@ void Cedit.saveCurrent() {
         }
         writeDocument(document, destination)
     }
+
+/*
+ * Cedit.saveAll
+ *
+ * Purpose: saveAll.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.saveAll() {
         if (commandsBlocked()) { return }
@@ -262,6 +428,17 @@ void Cedit.saveAll() {
         else { status.setText(format("Saved {} file(s){}", saved, automaticSaveErrors())) }
     }
 
+/*
+ * Cedit.stripTrailingSpacesCurrent
+ *
+ * Purpose: stripTrailingSpacesCurrent.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.stripTrailingSpacesCurrent() {
         if (commandsBlocked()) { return }
         EditorDocument document = currentDocument()
@@ -269,6 +446,17 @@ void Cedit.stripTrailingSpacesCurrent() {
         if (document.stripTrailingSpaces()) { status.setText("Stripped trailing spaces") }
         else { status.setText("No trailing spaces") }
     }
+
+/*
+ * Cedit.saveAsCurrent
+ *
+ * Purpose: saveAsCurrent.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.saveAsCurrent() {
         if (commandsBlocked()) { return }

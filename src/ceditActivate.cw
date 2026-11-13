@@ -1,3 +1,25 @@
+/*
+ * src/ceditActivate.cw - Cedit.activate window build and shortcut wiring.
+ *
+ * Created: 2026-10-29
+ * Author: Auto
+ *
+ * Changelog:
+ *   2026-10-29  Initial file.
+ *   2026-11-13  CODING headers and method comments.
+ */
+
+/*
+ * Cedit.activate
+ *
+ * Purpose: Build or present the main window; parse argv; restore project/session.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.activate() {
         if (window != null) {
             if (!window.disposed()) {
@@ -343,6 +365,17 @@ void<> Cedit.commandAction(String command) {
         if (command.equals("plugin-toggle-debug")) { return(_self().pluginToggleDebug) }
         return(null)
     }
+
+/*
+ * Cedit.configureShortcuts
+ *
+ * Purpose: Apply document settings, mark styles, and change/cursor handlers.
+ *
+ * Parameters:
+ *   document.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.configureShortcuts(EditorDocument document) {
         applyDocumentSettings(document)

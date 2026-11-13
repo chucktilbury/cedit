@@ -1,7 +1,40 @@
+/*
+ * src/ceditRecovery.cw - Dirty-buffer snapshots under .cedit/recovery.
+ *
+ * Created: 2026-10-30
+ * Author: Auto
+ *
+ * Changelog:
+ *   2026-10-30  Initial file.
+ *   2026-11-13  CODING headers and method comments.
+ */
+
+/*
+ * Cedit.recoveryDir
+ *
+ * Purpose: recoveryDir.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: String.
+ */
+
 String Cedit.recoveryDir() {
         if (activeProject == null) { return("") }
         return(System.FileSystem().join(activeProject.root, ".cedit/recovery"))
     }
+
+/*
+ * Cedit.recoveryPathFor
+ *
+ * Purpose: recoveryPathFor.
+ *
+ * Parameters:
+ *   documentPath.
+ *
+ * Returns: String.
+ */
 
 String Cedit.recoveryPathFor(String documentPath) {
         String dir = recoveryDir()
@@ -12,6 +45,17 @@ String Cedit.recoveryPathFor(String documentPath) {
         return(System.FileSystem().join(dir, format("{}.txt", name)))
     }
 
+/*
+ * Cedit.ensureRecoveryDir
+ *
+ * Purpose: ensureRecoveryDir.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.ensureRecoveryDir() {
         String dir = recoveryDir()
         if (dir.equals("")) { return }
@@ -19,6 +63,17 @@ void Cedit.ensureRecoveryDir() {
         if (!System.FileSystem().isDir(parent)) { System.FileSystem().mkdir(parent) }
         if (!System.FileSystem().isDir(dir)) { System.FileSystem().mkdir(dir) }
     }
+
+/*
+ * Cedit.writeRecovery
+ *
+ * Purpose: writeRecovery.
+ *
+ * Parameters:
+ *   document.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.writeRecovery(EditorDocument document) {
         if (document == null || document.path.equals("") || !document.view.modified()) { return }
@@ -34,6 +89,17 @@ void Cedit.writeRecovery(EditorDocument document) {
         }
     }
 
+/*
+ * Cedit.clearRecovery
+ *
+ * Purpose: clearRecovery.
+ *
+ * Parameters:
+ *   document.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.clearRecovery(EditorDocument document) {
         if (document == null || document.path.equals("")) { return }
         String path = recoveryPathFor(document.path)
@@ -46,6 +112,17 @@ void Cedit.clearRecovery(EditorDocument document) {
         }
     }
 
+/*
+ * Cedit.writeAllRecoveries
+ *
+ * Purpose: writeAllRecoveries.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.writeAllRecoveries() {
         int64 i = 0
         while (i < documents.length) {
@@ -54,16 +131,50 @@ void Cedit.writeAllRecoveries() {
         }
     }
 
+/*
+ * Cedit.scheduleRecoveryPoll
+ *
+ * Purpose: scheduleRecoveryPoll.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.scheduleRecoveryPoll() {
         if (!presented || window == null || window.disposed()) { return }
         Gtk.Application().schedule(15000, recoveryPollAction)
     }
+
+/*
+ * Cedit.recoveryPoll
+ *
+ * Purpose: recoveryPoll.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.recoveryPoll() {
         if (!presented || window == null || window.disposed()) { return }
         writeAllRecoveries()
         scheduleRecoveryPoll()
     }
+
+/*
+ * Cedit.readRecoveryBody
+ *
+ * Purpose: readRecoveryBody.
+ *
+ * Parameters:
+ *   recoveryFile.
+ *   expectedPath.
+ *
+ * Returns: String.
+ */
 
 String Cedit.readRecoveryBody(String recoveryFile, String expectedPath) {
         try {
@@ -81,6 +192,17 @@ String Cedit.readRecoveryBody(String recoveryFile, String expectedPath) {
             return("")
         }
     }
+
+/*
+ * Cedit.offerRecoveryForDocuments
+ *
+ * Purpose: offerRecoveryForDocuments.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.offerRecoveryForDocuments() {
         if (activeProject == null) { return }
@@ -108,6 +230,17 @@ void Cedit.offerRecoveryForDocuments() {
         }
     }
 
+/*
+ * Cedit.acceptRecovery
+ *
+ * Purpose: acceptRecovery.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.acceptRecovery() {
         if (pendingRecoveryDocument == null) { return }
         EditorDocument document = pendingRecoveryDocument
@@ -124,6 +257,17 @@ void Cedit.acceptRecovery() {
         status.setText("Restored unsaved buffer; save to keep changes")
         offerRecoveryForDocuments()
     }
+
+/*
+ * Cedit.discardRecovery
+ *
+ * Purpose: discardRecovery.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.discardRecovery() {
         if (pendingRecoveryDocument != null) {

@@ -1,3 +1,25 @@
+/*
+ * src/ceditCloseAllDocuments.cw - Close-all, project activate, configure dialog helpers.
+ *
+ * Created: 2026-10-29
+ * Author: Auto
+ *
+ * Changelog:
+ *   2026-10-29  Initial file.
+ *   2026-11-13  CODING headers and method comments.
+ */
+
+/*
+ * Cedit.closeAllDocuments
+ *
+ * Purpose: closeAllDocuments.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.closeAllDocuments() {
         changingDocuments = true
         int64 index = 0
@@ -13,6 +35,17 @@ void Cedit.closeAllDocuments() {
         changingDocuments = false
     }
 
+/*
+ * Cedit.detachProject
+ *
+ * Purpose: detachProject.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.detachProject() {
         activeProject = null
         reapplyDocumentSettings()
@@ -21,6 +54,17 @@ void Cedit.detachProject() {
         updateMenu()
     }
 
+/*
+ * Cedit.reapplyDocumentSettings
+ *
+ * Purpose: reapplyDocumentSettings.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.reapplyDocumentSettings() {
         int64 index = 0
         while (index < documents.length) {
@@ -28,6 +72,18 @@ void Cedit.reapplyDocumentSettings() {
             index = index + 1
         }
     }
+
+/*
+ * Cedit.absolutePaths
+ *
+ * Purpose: absolutePaths.
+ *
+ * Parameters:
+ *   target.
+ *   paths.
+ *
+ * Returns: list.
+ */
 
 list Cedit.absolutePaths(CwhipProject target, list paths) {
         list result = []
@@ -38,6 +94,18 @@ list Cedit.absolutePaths(CwhipProject target, list paths) {
         }
         return(result)
     }
+
+/*
+ * Cedit.activateProject
+ *
+ * Purpose: activateProject.
+ *
+ * Parameters:
+ *   target.
+ *   restore.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.activateProject(CwhipProject target, bool restore) {
         activeProject = target
@@ -97,6 +165,18 @@ void Cedit.activateProject(CwhipProject target, bool restore) {
             Gtk.AlertDialog().show(window, "Workspace state ignored", format("{}\nThe workspace was not restored and will not be overwritten; repair or remove {} and reopen the project.", target.workspaceErrors, target.workspacePath))
         }
     }
+
+/*
+ * Cedit.captureWorkspace
+ *
+ * Purpose: captureWorkspace.
+ *
+ * Parameters:
+ *   source.
+ *   target.
+ *
+ * Returns: String.
+ */
 
 String Cedit.captureWorkspace(String source, String target) {
         CwhipProject origin = CwhipProject(source)
@@ -173,6 +253,20 @@ String Cedit.captureWorkspace(String source, String target) {
         return(text)
     }
 
+/*
+ * Cedit.storedDocumentPath
+ *
+ * Purpose: storedDocumentPath.
+ *
+ * Parameters:
+ *   origin.
+ *   path.
+ *   target.
+ *   filter.
+ *
+ * Returns: String.
+ */
+
 String Cedit.storedDocumentPath(CwhipProject origin, String path, String target, bool filter) {
         if (path.equals("")) { return("") }
         String stored = origin.relative(path)
@@ -184,6 +278,17 @@ String Cedit.storedDocumentPath(CwhipProject origin, String path, String target,
         return(stored)
     }
 
+/*
+ * Cedit.noteOpenFiles
+ *
+ * Purpose: noteOpenFiles.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.noteOpenFiles() {
         int64 index = 0
         while (index < documents.length) {
@@ -191,6 +296,17 @@ void Cedit.noteOpenFiles() {
             index = index + 1
         }
     }
+
+/*
+ * Cedit.createConfigure
+ *
+ * Purpose: createConfigure.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.createConfigure() {
         configureWindow = Gtk.TransientWindow("Configure Project")
@@ -226,10 +342,33 @@ void Cedit.createConfigure() {
         configureWindow.setVisible(false)
     }
 
+/*
+ * Cedit.addOverride
+ *
+ * Purpose: addOverride.
+ *
+ * Parameters:
+ *   root.
+ *   row.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.addOverride(Gtk.Box root, OverrideRow row) {
         overrideRows.append(row)
         root.append(row.row)
     }
+
+/*
+ * Cedit.overrideRow
+ *
+ * Purpose: overrideRow.
+ *
+ * Parameters:
+ *   key.
+ *
+ * Returns: OverrideRow.
+ */
 
 OverrideRow Cedit.overrideRow(String key) {
         int64 index = 0
@@ -241,12 +380,34 @@ OverrideRow Cedit.overrideRow(String key) {
         return(null)
     }
 
+/*
+ * Cedit.showConfigure
+ *
+ * Purpose: showConfigure.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.showConfigure() {
         if (commandsBlocked() || activeProject == null) { return }
         if (configureWindow == null || configureWindow.disposed()) { createConfigure() }
         refreshConfigure()
         configureWindow.present()
     }
+
+/*
+ * Cedit.refreshConfigure
+ *
+ * Purpose: refreshConfigure.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.refreshConfigure() {
         CwhipProject current = activeProject
@@ -285,6 +446,17 @@ void Cedit.refreshConfigure() {
                 format("{}: {}", current.configPath, current.errors)))
         } else { configureMessage.setText("") }
     }
+
+/*
+ * Cedit.inheritAll
+ *
+ * Purpose: inheritAll.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.inheritAll() {
         int64 index = 0

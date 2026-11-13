@@ -1,3 +1,18 @@
+/*
+ * src/ceditSettings.cw - CeditSettings load/save and command bindings.
+ *
+ * Created: 2026-10-29
+ * Author: Auto
+ *
+ * Changelog:
+ *   2026-10-29  Initial file.
+ *   2026-11-13  CODING headers and method comments.
+ */
+
+/*
+ * CeditSettings holds global/local editor preferences, keyboard
+ * command bindings, and helpers to load/save settings text.
+ */
 class CeditSettings {
     String fontFamily
     int64 fontSize
@@ -28,6 +43,17 @@ class CeditSettings {
     bool writable
     bool legacyConflict
     int64 shortcutRevision
+
+    /*
+     * Construct CeditSettings.
+     *
+     * Purpose: Construct CeditSettings with defaults and empty command list.
+     *
+     * Parameters:
+     *   none.
+     *
+     * Returns: CeditSettings ready for use.
+     */
 
     CeditSettings() {
         resetEditor()
@@ -92,9 +118,31 @@ class CeditSettings {
         load()
     }
 
+    /*
+     * localPath
+     *
+     * Purpose: localPath.
+     *
+     * Parameters:
+     *   root.
+     *
+     * Returns: String.
+     */
+
     String localPath(String root) {
         return(System.FileSystem().join(root, ".cedit/settings.toml"))
     }
+
+    /*
+     * resetEditor
+     *
+     * Purpose: resetEditor.
+     *
+     * Parameters:
+     *   none.
+     *
+     * Returns: nothing.
+     */
 
     void resetEditor() {
         fontFamily = "monospace"
@@ -118,6 +166,17 @@ class CeditSettings {
         showUnsavedMarks = true
     }
 
+    /*
+     * error
+     *
+     * Purpose: error.
+     *
+     * Parameters:
+     *   message.
+     *
+     * Returns: nothing.
+     */
+
     void error(String message) {
         if (!errors.equals("")) { errors.append("\n") }
         errors.append(message)
@@ -133,6 +192,18 @@ class CeditSettings {
         }
         return(null)
     }
+
+    /*
+     * bindingError
+     *
+     * Purpose: bindingError.
+     *
+     * Parameters:
+     *   binding.
+     *   trigger.
+     *
+     * Returns: String.
+     */
 
     String bindingError(CommandBinding binding, String trigger) {
         if (trigger.equals("")) { return("") }
@@ -150,6 +221,17 @@ class CeditSettings {
         }
         return("")
     }
+
+    /*
+     * loadLegacy
+     *
+     * Purpose: loadLegacy.
+     *
+     * Parameters:
+     *   none.
+     *
+     * Returns: nothing.
+     */
 
     void loadLegacy() {
         String legacy = "cwhip-shortcuts.conf"
@@ -213,9 +295,35 @@ class CeditSettings {
         }
     }
 
+    /*
+     * value
+     *
+     * Purpose: value.
+     *
+     * Parameters:
+     *   section.
+     *   key.
+     *
+     * Returns: String.
+     */
+
     String value(String section, String key) {
         return(Gtk.Config().value(original, section, key))
     }
+
+    /*
+     * integer
+     *
+     * Purpose: integer.
+     *
+     * Parameters:
+     *   key.
+     *   fallback.
+     *   minimum.
+     *   maximum.
+     *
+     * Returns: int64.
+     */
 
     int64 integer(String key, int64 fallback, int64 minimum, int64 maximum) {
         String raw = value("editor", key)
@@ -228,6 +336,18 @@ class CeditSettings {
         return(fallback)
     }
 
+    /*
+     * boolean
+     *
+     * Purpose: boolean.
+     *
+     * Parameters:
+     *   key.
+     *   fallback.
+     *
+     * Returns: bool.
+     */
+
     bool boolean(String key, bool fallback) {
         String raw = value("editor", key)
         if (raw.equals("")) { return(fallback) }
@@ -237,6 +357,17 @@ class CeditSettings {
         return(fallback)
     }
 
+    /*
+     * fontError
+     *
+     * Purpose: fontError.
+     *
+     * Parameters:
+     *   font.
+     *
+     * Returns: String.
+     */
+
     String fontError(String font) {
         if (font.trim().equals("") || font.length > 128 || font.contains("\n") ||
             font.contains("\r") || font.contains("\t")) {
@@ -245,6 +376,17 @@ class CeditSettings {
         if (!Gtk.Font().isMonospace(font)) { return("Choose an installed monospace font family (or monospace)") }
         return("")
     }
+
+    /*
+     * load
+     *
+     * Purpose: load.
+     *
+     * Parameters:
+     *   none.
+     *
+     * Returns: nothing.
+     */
 
     void load() {
         String presence = Gtk.Config().fileStatus(path)
@@ -378,6 +520,17 @@ class CeditSettings {
         }
     }
 
+    /*
+     * resetKeyboard
+     *
+     * Purpose: resetKeyboard.
+     *
+     * Parameters:
+     *   none.
+     *
+     * Returns: nothing.
+     */
+
     void resetKeyboard() {
         int64 i = 0
         while (i < commands.length) {
@@ -386,6 +539,17 @@ class CeditSettings {
             i = i + 1
         }
     }
+
+    /*
+     * serialize
+     *
+     * Purpose: serialize.
+     *
+     * Parameters:
+     *   none.
+     *
+     * Returns: String.
+     */
 
     String serialize() {
         String text = format("version = 1\n[editor]\nfont_family = {}\nfont_size = {}\ntab_width = {}\ninsert_spaces = {}\nline_numbers = {}\nshow_whitespace = {}\nshow_line_ends = {}\nshow_indent_markers = {}\nshow_project_manager = {}\nlsp_command = {}\nwrap = {}\nright_margin = {}\nhighlight_current_line = {}\nsave_on_tab_loss = {}\nsave_on_window_loss = {}\nstrip_trailing_spaces = {}\nauto_complete_brackets = {}\nauto_indent = {}\nshow_unsaved_marks = {}\n[keyboard]\n",
@@ -417,6 +581,18 @@ class CeditSettings {
         return(merged)
     }
 
+    /*
+     * byteSpanBound
+     *
+     * Purpose: Clamp a span index into [0, length].
+     *
+     * Parameters:
+     *   value.
+     *   length.
+     *
+     * Returns: int64.
+     */
+
     int64 byteSpanBound(int64 value, int64 length) {
         int64 index = value
         if (index < 0) { index = index + length }
@@ -424,6 +600,19 @@ class CeditSettings {
         if (index > length) { return(length) }
         return(index)
     }
+    /*
+     * byteSpan
+     *
+     * Purpose: Inclusive-start exclusive-end byte span helper.
+     *
+     * Parameters:
+     *   text.
+     *   first.
+     *   last.
+     *
+     * Returns: String.
+     */
+
     String byteSpan(String text, int64 first, int64 last) {
         int64 lower = byteSpanBound(first, text.length)
         int64 end = byteSpanBound(last, text.length)

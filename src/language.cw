@@ -1,3 +1,18 @@
+/*
+ * src/language.cw — LSP client for the editor (LanguageClient).
+ *
+ * Created: 2026-10-29
+ * Author: Auto
+ *
+ * Changelog:
+ *   2026-10-29  Initial file.
+ *   2026-11-13  CODING headers and method comments.
+ */
+
+/*
+ * LanguageClient talks JSON-RPC over a stdio language server process:
+ * launch/stop, didOpen/didChange/didClose, and publishDiagnostics.
+ */
 class LanguageClient {
     Cedit editor
     Process.AsyncProcess process
@@ -10,6 +25,16 @@ class LanguageClient {
     int64 sentGeneration
     String diagnostics
 
+    /*
+     * Create a language client owned by the editor.
+     *
+     * Purpose: store owner and reset runtime fields to idle defaults.
+     *
+     * Parameters:
+     *   owner — Cedit that schedules polls and owns documents.
+     *
+     * Returns: LanguageClient ready for launch().
+     */
     LanguageClient(Cedit owner) {
         editor = owner
         decoder = Process.OutputDecoder()
@@ -22,6 +47,16 @@ class LanguageClient {
         diagnostics = ""
     }
 
+    /*
+     * Escape a string for embedding in a JSON string value.
+     *
+     * Purpose: backslash-escape quotes/backslashes and map LF/CR/TAB to escaped forms.
+     *
+     * Parameters:
+     *   text — raw document or message text.
+     *
+     * Returns: escaped string safe inside JSON quotes.
+     */
     String escape(String text) {
         String out = ""
         int64 index = 0
@@ -45,6 +80,16 @@ class LanguageClient {
         return(out)
     }
 
+    /*
+     * Build a file:// URI from a filesystem path.
+     *
+     * Purpose: percent-encode spaces as %20; pass other bytes through.
+     *
+     * Parameters:
+     *   path — absolute file path.
+     *
+     * Returns: file:// URI string.
+     */
     String fileUri(String path) {
         String uri = "file://"
         int64 index = 0
@@ -56,6 +101,16 @@ class LanguageClient {
         return(uri)
     }
 
+    /*
+     * Basename of the configured server executable, lowercased.
+     *
+     * Purpose: identify server kind from the command line string.
+     *
+     * Parameters:
+     *   none.
+     *
+     * Returns: executable basename, or empty if command is empty.
+     */
     String executableName() {
         String executable = command.trim()
         if (executable.equals("")) { return("") }
@@ -69,16 +124,46 @@ class LanguageClient {
         return("")
     }
 
+    /*
+     * Whether the configured server is cwhip-lsp.
+     *
+     * Purpose: gate document handling to .cw / cwhip language id.
+     *
+     * Parameters:
+     *   none.
+     *
+     * Returns: true if executable is cwhip-lsp or ends with -cwhip-lsp.
+     */
     bool isCwhipServer() {
         String name = executableName()
         return(name.equals("cwhip-lsp") || name.endsWith("-cwhip-lsp"))
     }
 
+    /*
+     * Whether the configured server is clangd.
+     *
+     * Purpose: gate document handling to C/C++ language ids.
+     *
+     * Parameters:
+     *   none.
+     *
+     * Returns: true if executable is clangd or starts with clangd-.
+     */
     bool isClangServer() {
         String name = executableName()
         return(name.equals("clangd") || name.startsWith("clangd-"))
     }
 
+    /*
+     * Map a path to an LSP languageId string.
+     *
+     * Purpose: prefer extension rules for .cw/.c/.h/C++; else GtkSource languageFor; else empty.
+     *
+     * Parameters:
+     *   path — document path.
+     *
+     * Returns: language id such as cwhip, c, cpp, or empty.
+     */
     String languageId(String path) {
         String lower = path.toLower()
         if (lower.endsWith(".cw")) { return("cwhip") }
@@ -94,6 +179,16 @@ class LanguageClient {
 
     // cwhip-lsp only sees .cw; clangd only C/C++ headers and sources; other
     // servers skip plain text (empty GtkSource language), including .txt/.md.
+    /*
+     * Whether this server should receive events for a path.
+     *
+     * Purpose: cwhip-lsp only .cw; clangd only C/C++; other servers skip empty language.
+     *
+     * Parameters:
+     *   path — document path.
+     *
+     * Returns: true if the path is in scope for the running server.
+     */
     bool handles(String path) {
         if (path.equals("")) { return(false) }
         String language = languageId(path)
@@ -102,6 +197,16 @@ class LanguageClient {
         return(!language.equals(""))
     }
 
+    /*
+     * Send one Content-Length framed JSON-RPC body on stdin.
+     *
+     * Purpose: no-op when not running; on write failure mark stopped and set status.
+     *
+     * Parameters:
+     *   body — JSON payload without the Content-Length header.
+     *
+     * Returns: nothing.
+     */
     void writeFrame(String body) {
         if (!running) { return }
         String frame = format("Content-Length: {}\r\n\r\n{}", body.length, body)
@@ -111,6 +216,16 @@ class LanguageClient {
         }
     }
 
+    /*
+     * Start or restart the language server process.
+     *
+     * Purpose: stop any prior server; parse command; spawn AsyncProcess; send initialize; schedule poll.
+     *
+     * Parameters:
+     *   requested — whitespace-separated executable and arguments.
+     *
+     * Returns: nothing.
+     */
     void launch(String requested) {
         stop()
         command = requested.trim()
@@ -142,6 +257,16 @@ class LanguageClient {
         editor.scheduleLanguagePoll()
     }
 
+    /*
+     * Shut down the language server process.
+     *
+     * Purpose: send shutdown/exit when running; clear running/ready/pending and drop the process handle.
+     *
+     * Parameters:
+     *   none.
+     *
+     * Returns: nothing.
+     */
     void stop() {
         if (running) {
             writeFrame("{\"jsonrpc\":\"2.0\",\"method\":\"shutdown\",\"params\":null}")
@@ -154,6 +279,16 @@ class LanguageClient {
         process = null
     }
 
+    /*
+     * Notify the server that a document was opened.
+     *
+     * Purpose: send textDocument/didOpen when running and handles path.
+     *
+     * Parameters:
+     *   document — open EditorDocument (may be null).
+     *
+     * Returns: nothing.
+     */
     void sendOpen(EditorDocument document) {
         if (!running || document == null || !handles(document.path)) { return }
         String body = format("{{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{{\"textDocument\":{{\"uri\":\"{}\",\"languageId\":\"{}\",\"version\":{},\"text\":\"{}\"}}}}}}",
@@ -162,6 +297,16 @@ class LanguageClient {
         writeFrame(body)
     }
 
+    /*
+     * Notify the server of a full-document change.
+     *
+     * Purpose: bump lspVersion; send didChange; record sentGeneration.
+     *
+     * Parameters:
+     *   document — open EditorDocument (may be null).
+     *
+     * Returns: nothing. Requires ready and handles(path).
+     */
     void sendChange(EditorDocument document) {
         if (!running || !ready || document == null || !handles(document.path)) { return }
         document.lspVersion = document.lspVersion + 1
@@ -171,12 +316,32 @@ class LanguageClient {
         sentGeneration = generation
     }
 
+    /*
+     * Notify the server that a document was closed.
+     *
+     * Purpose: send textDocument/didClose for a path still in scope.
+     *
+     * Parameters:
+     *   path — closed document path.
+     *
+     * Returns: nothing.
+     */
     void sendClose(String path) {
         if (!running || !handles(path)) { return }
         writeFrame(format("{{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didClose\",\"params\":{{\"textDocument\":{{\"uri\":\"{}\"}}}}}}",
             fileUri(path)))
     }
 
+    /*
+     * Schedule a deferred didChange after an edit.
+     *
+     * Purpose: bump generation and schedule languageFlushAction in 200ms when current doc is handled.
+     *
+     * Parameters:
+     *   none.
+     *
+     * Returns: nothing.
+     */
     void noteEdit() {
         if (!running) { return }
         EditorDocument document = editor.currentDocument()
@@ -185,6 +350,17 @@ class LanguageClient {
         Gtk.Application().schedule(200, editor.languageFlushAction)
     }
 
+    /*
+     * Parse a JSON string value starting at origin.
+     *
+     * Purpose: decode common escapes and stop at the closing quote.
+     *
+     * Parameters:
+     *   body — JSON text.
+     *   origin — index of the first character inside the quotes.
+     *
+     * Returns: decoded string contents (may be incomplete at EOF).
+     */
     String readString(String body, int64 origin) {
         String value = ""
         int64 index = origin
@@ -210,6 +386,16 @@ class LanguageClient {
         return(value)
     }
 
+    /*
+     * Find an open document matching a file:// URI.
+     *
+     * Purpose: scan editor.documents for path whose fileUri equals uri.
+     *
+     * Parameters:
+     *   uri — LSP document URI.
+     *
+     * Returns: matching EditorDocument, or null.
+     */
     EditorDocument documentForUri(String uri) {
         int64 index = 0
         while (index < editor.documents.length) {
@@ -222,6 +408,16 @@ class LanguageClient {
         return(null)
     }
 
+    /*
+     * Handle one complete JSON-RPC body from the server.
+     *
+     * Purpose: on initialize result set ready and didOpen all docs; on publishDiagnostics mark lines and set short status.
+     *
+     * Parameters:
+     *   body — JSON-RPC message body.
+     *
+     * Returns: nothing.
+     */
     void accept(String body) {
         if (body.contains("\"id\":1") && body.contains("\"result\"")) {
             ready = true
@@ -279,6 +475,16 @@ class LanguageClient {
         }
     }
 
+    /*
+     * Parse a leading decimal integer from text.
+     *
+     * Purpose: collect ASCII digits from the start; fail if none.
+     *
+     * Parameters:
+     *   text — string that may start with digits.
+     *
+     * Returns: parsed int64, or -1 if no digits.
+     */
     int64 leadingInteger(String text) {
         String digits = ""
         int64 index = 0
@@ -291,6 +497,18 @@ class LanguageClient {
         if (digits.equals("")) { return(-1) }
         return(digits.toInt64())
     }
+    /*
+     * Slice text by exclusive end index (byte-oriented).
+     *
+     * Purpose: clamp first/last to [0, length] and return the span.
+     *
+     * Parameters:
+     *   text — source string.
+     *   first — inclusive start index.
+     *   last — exclusive end index.
+     *
+     * Returns: substring, or empty if empty after clamp.
+     */
     String byteSpan(String text, int64 first, int64 last) {
         if (first < 0) { first = 0 }
         if (last > text.length) { last = text.length }
@@ -298,6 +516,16 @@ class LanguageClient {
         return(text[first..(last - 1)])
     }
 
+    /*
+     * Drain stdout and process complete LSP frames.
+     *
+     * Purpose: append decoded stdout; parse Content-Length frames into accept(); stop on exit; else reschedule poll.
+     *
+     * Parameters:
+     *   none.
+     *
+     * Returns: nothing.
+     */
     void poll() {
         if (!running || process == null) { return }
         int64 guard = 0

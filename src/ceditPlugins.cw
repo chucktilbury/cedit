@@ -1,6 +1,29 @@
+/*
+ * src/ceditPlugins.cw - Trusted in-process plugin hooks and demos.
+ *
+ * Created: 2026-10-30
+ * Author: Auto
+ *
+ * Changelog:
+ *   2026-10-30  Initial file.
+ *   2026-11-13  CODING headers and method comments.
+ */
+
 // Trusted in-process plugin hooks. Demos are compile-in until dynamic .cw
 // loading exists; registerPlugin records menu entries whose ids are handled
 // in commandAction like built-in commands.
+
+/*
+ * Cedit.registerPlugin
+ *
+ * Purpose: registerPlugin.
+ *
+ * Parameters:
+ *   id.
+ *   title.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.registerPlugin(String id, String title) {
         if (id.equals("")) { return }
@@ -8,12 +31,34 @@ void Cedit.registerPlugin(String id, String title) {
         pluginTitles.append(title)
     }
 
+/*
+ * Cedit.loadBuiltinPlugins
+ *
+ * Purpose: loadBuiltinPlugins.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.loadBuiltinPlugins() {
         plugins = []
         pluginTitles = []
         registerPlugin("plugin-insert-date", "Insert date/time")
         registerPlugin("plugin-toggle-debug", "Toggle debug marker")
     }
+
+/*
+ * Cedit.pluginInsertDate
+ *
+ * Purpose: pluginInsertDate.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.pluginInsertDate() {
         if (commandsBlocked()) { return }
@@ -24,6 +69,17 @@ void Cedit.pluginInsertDate() {
         document.view.focus()
         status.setText("Plugin: inserted epoch seconds")
     }
+
+/*
+ * Cedit.pluginToggleDebug
+ *
+ * Purpose: pluginToggleDebug.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.pluginToggleDebug() {
         if (commandsBlocked()) { return }
@@ -50,6 +106,17 @@ void Cedit.pluginToggleDebug() {
         document.view.focus()
         status.setText("Plugin: toggled debug marker")
     }
+
+/*
+ * Cedit.addPluginMenus
+ *
+ * Purpose: addPluginMenus.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.addPluginMenus() {
         if (menu == null) { return }

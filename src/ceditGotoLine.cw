@@ -1,3 +1,25 @@
+/*
+ * src/ceditGotoLine.cw - Go to Line dialog (line or line:column).
+ *
+ * Created: 2026-10-30
+ * Author: Auto
+ *
+ * Changelog:
+ *   2026-10-30  Initial file.
+ *   2026-11-13  CODING headers and method comments.
+ */
+
+/*
+ * Cedit.digitsOnly
+ *
+ * Purpose: digitsOnly.
+ *
+ * Parameters:
+ *   text.
+ *
+ * Returns: bool.
+ */
+
 bool Cedit.digitsOnly(String text) {
         if (text.equals("")) { return(false) }
         int64 i = 0
@@ -8,6 +30,17 @@ bool Cedit.digitsOnly(String text) {
         }
         return(true)
     }
+
+/*
+ * Cedit.createGotoLine
+ *
+ * Purpose: createGotoLine.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.createGotoLine() {
         gotoWindow = Gtk.TransientWindow("Go to Line")
@@ -32,6 +65,17 @@ void Cedit.createGotoLine() {
         buttons.append(cancel)
     }
 
+/*
+ * Cedit.showGotoLine
+ *
+ * Purpose: showGotoLine.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.showGotoLine() {
         if (commandsBlocked()) { return }
         EditorDocument document = currentDocument()
@@ -46,12 +90,45 @@ void Cedit.showGotoLine() {
         gotoEntry.focus()
     }
 
+/*
+ * Cedit.hideGotoLine
+ *
+ * Purpose: hideGotoLine.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: bool.
+ */
+
 bool Cedit.hideGotoLine() {
         if (gotoWindow != null && !gotoWindow.disposed()) { gotoWindow.setVisible(false) }
         return(true)
     }
 
+/*
+ * Cedit.closeGotoLine
+ *
+ * Purpose: closeGotoLine.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.closeGotoLine() { hideGotoLine() }
+
+/*
+ * Cedit.acceptGotoLine
+ *
+ * Purpose: acceptGotoLine.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.acceptGotoLine() {
         if (commandsBlocked()) { return }

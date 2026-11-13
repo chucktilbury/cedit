@@ -1,3 +1,25 @@
+/*
+ * src/ceditTest.cw - Compile-in --test smoke path and byte-span helpers.
+ *
+ * Created: 2026-10-29
+ * Author: Auto
+ *
+ * Changelog:
+ *   2026-10-29  Initial file.
+ *   2026-11-13  CODING headers and method comments.
+ */
+
+/*
+ * Cedit.test
+ *
+ * Purpose: Run the in-process --test smoke suite and print one aggregate bool.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.test() {
         EditorDocument document = currentDocument()
         openFile("/path/that/does/not/exist/test.cw")
@@ -81,6 +103,18 @@ void Cedit.test() {
               closeProtected && tabDiscarded && windowCloseCancelled && windowDiscarded)
     }
 
+/*
+ * Cedit.byteSpanBound
+ *
+ * Purpose: Clamp a span index into [0, length], treating negatives as from-end.
+ *
+ * Parameters:
+ *   value.
+ *   length.
+ *
+ * Returns: int64.
+ */
+
 int64 Cedit.byteSpanBound(int64 value, int64 length) {
         int64 index = value
         if (index < 0) { index = index + length }
@@ -88,6 +122,19 @@ int64 Cedit.byteSpanBound(int64 value, int64 length) {
         if (index > length) { return(length) }
         return(index)
     }
+
+/*
+ * Cedit.byteSpan
+ *
+ * Purpose: Inclusive-start exclusive-end byte span of a string.
+ *
+ * Parameters:
+ *   text.
+ *   first.
+ *   last.
+ *
+ * Returns: String.
+ */
 
 String Cedit.byteSpan(String text, int64 first, int64 last) {
         int64 lower = byteSpanBound(first, text.length)

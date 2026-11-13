@@ -1,3 +1,24 @@
+/*
+ * src/ceditProjectFind.cw — find-in-project UI and scan on Cedit.
+ *
+ * Created: 2026-10-30
+ * Author: Auto
+ *
+ * Changelog:
+ *   2026-10-30  Initial file.
+ *   2026-11-13  CODING headers and method comments.
+ */
+
+/*
+ * Build the Find in Project transient window and widgets.
+ *
+ * Purpose: create entry, options, results view, and empty path/line lists; keep hidden.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 void Cedit.createProjectFind() {
         projectFindWindow = Gtk.TransientWindow("Find in Project")
         projectFindWindow.setDefaultSize(640, 420)
@@ -33,6 +54,16 @@ void Cedit.createProjectFind() {
         projectFindLines = []
     }
 
+/*
+ * Present the Find in Project window.
+ *
+ * Purpose: require an open project root; recreate the window if needed; focus entry.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 void Cedit.showProjectFind() {
         if (commandsBlocked()) { return }
         if (project == null || project.rootPath.equals("")) {
@@ -44,6 +75,16 @@ void Cedit.showProjectFind() {
         projectFindEntry.focus()
     }
 
+/*
+ * Hide the Find in Project window without destroying it.
+ *
+ * Purpose: setVisible(false) when the window still exists.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: true (consume the close request).
+ */
 bool Cedit.hideProjectFind() {
         if (projectFindWindow != null && !projectFindWindow.disposed()) {
             projectFindWindow.setVisible(false)
@@ -51,6 +92,19 @@ bool Cedit.hideProjectFind() {
         return(true)
     }
 
+/*
+ * Test whether haystack matches needle under find options.
+ *
+ * Purpose: optional case fold; substring or whole-word (alnum and underscore).
+ *
+ * Parameters:
+ *   haystack — line text to search.
+ *   needle — query string.
+ *   caseSensitive — true to keep case.
+ *   wholeWords — true to require word boundaries.
+ *
+ * Returns: true if a match is found.
+ */
 bool Cedit.projectFindMatch(String haystack, String needle, bool caseSensitive, bool wholeWords) {
         String text = haystack
         String query = needle
@@ -88,6 +142,18 @@ bool Cedit.projectFindMatch(String haystack, String needle, bool caseSensitive, 
         return(false)
     }
 
+/*
+ * Append one hit to the results lists and view (cap 500).
+ *
+ * Purpose: store path/line; append a path:line:snippet row.
+ *
+ * Parameters:
+ *   path — file path for the hit.
+ *   line — 1-based line number.
+ *   snippet — line text (may already be truncated).
+ *
+ * Returns: nothing.
+ */
 void Cedit.appendProjectFindHit(String path, int64 line, String snippet) {
         if (projectFindPaths.length >= 500) { return }
         projectFindPaths.append(path)
@@ -96,6 +162,20 @@ void Cedit.appendProjectFindHit(String path, int64 line, String snippet) {
         projectFindResults.setText(format("{}{}", projectFindResults.text(), row))
     }
 
+/*
+ * Scan one file text for matches and append hits.
+ *
+ * Purpose: split on newlines; match each line; truncate snippets at 120 chars.
+ *
+ * Parameters:
+ *   path — file path shown in results.
+ *   contents — full file text.
+ *   query — search string.
+ *   caseSensitive — match option.
+ *   wholeWords — match option.
+ *
+ * Returns: nothing.
+ */
 void Cedit.scanProjectFindText(String path, String contents, String query, bool caseSensitive,
                                bool wholeWords) {
         list lines = contents.split("\n")
@@ -112,6 +192,20 @@ void Cedit.scanProjectFindText(String path, String contents, String query, bool 
         }
     }
 
+/*
+ * Recursively scan a directory tree for matches.
+ *
+ * Purpose: skip dot/.cedit/.git; honor showHidden; prefer open buffers; text files only.
+ *
+ * Parameters:
+ *   dir — directory to list.
+ *   query — search string.
+ *   caseSensitive — match option.
+ *   wholeWords — match option.
+ *   showHidden — include dot-named entries when true.
+ *
+ * Returns: nothing.
+ */
 void Cedit.scanProjectFindDir(String dir, String query, bool caseSensitive, bool wholeWords,
                               bool showHidden) {
         if (projectFindPaths.length >= 500) { return }
@@ -166,6 +260,16 @@ void Cedit.scanProjectFindDir(String dir, String query, bool caseSensitive, bool
         }
     }
 
+/*
+ * Run a project-wide find using the dialog options.
+ *
+ * Purpose: clear prior results; scan open documents then project tree; report count.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 void Cedit.runProjectFind() {
         if (commandsBlocked()) { return }
         String query = projectFindEntry.text()
@@ -201,6 +305,16 @@ void Cedit.runProjectFind() {
         }
     }
 
+/*
+ * Open the file for an activated results row and center the caret.
+ *
+ * Purpose: map 1-based view line to projectFindPaths/Lines; open and centerCursor.
+ *
+ * Parameters:
+ *   line — 1-based line in the results view.
+ *
+ * Returns: nothing.
+ */
 void Cedit.projectFindActivated(int64 line) {
         int64 row = line - 1
         if (row < 0 || row >= projectFindPaths.length) { return }

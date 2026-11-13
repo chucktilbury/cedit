@@ -1,3 +1,25 @@
+/*
+ * src/ceditCloseNextInBatch.cw - Close batch, disk-change, and pending-close paths.
+ *
+ * Created: 2026-10-29
+ * Author: Auto
+ *
+ * Changelog:
+ *   2026-10-29  Initial file.
+ *   2026-11-13  CODING headers and method comments.
+ */
+
+/*
+ * Cedit.closeNextInBatch
+ *
+ * Purpose: closeNextInBatch.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.closeNextInBatch() {
         if (!closingAll) { return }
         EditorDocument dirty = firstModifiedDocument()
@@ -18,6 +40,17 @@ void Cedit.closeNextInBatch() {
         updateMenu()
     }
 
+/*
+ * Cedit.closeProject
+ *
+ * Purpose: closeProject.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.closeProject() {
         if (commandsBlocked()) { return }
         if (activeProject == null) {
@@ -28,11 +61,33 @@ void Cedit.closeProject() {
         writeProject(activeProject, false, true, "close")
     }
 
+/*
+ * Cedit.closeCurrentDocument
+ *
+ * Purpose: closeCurrentDocument.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.closeCurrentDocument() {
         if (commandsBlocked()) { return }
         EditorDocument document = currentDocument()
         closeDocument(document)
     }
+
+/*
+ * Cedit.readDiskFile
+ *
+ * Purpose: readDiskFile.
+ *
+ * Parameters:
+ *   path.
+ *
+ * Returns: String.
+ */
 
 String Cedit.readDiskFile(String path) {
         diskMissing = !System.FileSystem().isFile(path)
@@ -58,11 +113,33 @@ String Cedit.readDiskFile(String path) {
         return(text)
     }
 
+/*
+ * Cedit.clearDiskPrompt
+ *
+ * Purpose: clearDiskPrompt.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.clearDiskPrompt() {
         diskDocument = null
         if (diskChoices != null) { diskChoices.setVisible(false) }
         updateMenu()
     }
+
+/*
+ * Cedit.checkDiskChange
+ *
+ * Purpose: checkDiskChange.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.checkDiskChange() {
         if (diskDocument != null || changingDocuments || !presented) { return }
@@ -76,6 +153,17 @@ void Cedit.checkDiskChange() {
             updateMenu()
         }
     }
+
+/*
+ * Cedit.reloadFromDisk
+ *
+ * Purpose: reloadFromDisk.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.reloadFromDisk() {
         EditorDocument document = diskDocument
@@ -96,17 +184,50 @@ void Cedit.reloadFromDisk() {
         status.setText("Reloaded")
     }
 
+/*
+ * Cedit.saveOverDisk
+ *
+ * Purpose: saveOverDisk.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.saveOverDisk() {
         EditorDocument document = diskDocument
         if (document == null) { return }
         if (writeDocument(document, document.path)) { clearDiskPrompt() }
     }
 
+/*
+ * Cedit.closeDiskDocument
+ *
+ * Purpose: closeDiskDocument.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.closeDiskDocument() {
         EditorDocument document = diskDocument
         clearDiskPrompt()
         if (document != null) { removeDocument(document) }
     }
+
+/*
+ * Cedit.reloadCurrent
+ *
+ * Purpose: reloadCurrent.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.reloadCurrent() {
         if (diskDocument != null) { return }
@@ -127,6 +248,17 @@ void Cedit.reloadCurrent() {
         status.setText("Already current")
     }
 
+/*
+ * Cedit.closeDocument
+ *
+ * Purpose: closeDocument.
+ *
+ * Parameters:
+ *   document.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.closeDocument(EditorDocument document) {
         if (commandsBlocked()) { return }
         if (document == null) {
@@ -143,6 +275,17 @@ void Cedit.closeDocument(EditorDocument document) {
         }
         removeDocument(document)
     }
+
+/*
+ * Cedit.removeDocument
+ *
+ * Purpose: removeDocument.
+ *
+ * Parameters:
+ *   document.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.removeDocument(EditorDocument document) {
         int64 index = 0
@@ -190,11 +333,33 @@ void Cedit.removeDocument(EditorDocument document) {
         }
     }
 
+/*
+ * Cedit.focusAfterClose
+ *
+ * Purpose: focusAfterClose.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.focusAfterClose() {
         if (window.disposed() || commandsBlocked() || searchDialogOpen) { return }
         EditorDocument document = currentDocument()
         if (document != null) { document.view.focus() }
     }
+
+/*
+ * Cedit.firstModifiedDocument
+ *
+ * Purpose: firstModifiedDocument.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: EditorDocument.
+ */
 
 EditorDocument Cedit.firstModifiedDocument() {
         int64 index = 0
@@ -207,6 +372,17 @@ EditorDocument Cedit.firstModifiedDocument() {
         }
         return(null)
     }
+
+/*
+ * Cedit.savePendingClose
+ *
+ * Purpose: savePendingClose.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.savePendingClose() {
         if (fileDialog != null) { return }
@@ -230,6 +406,17 @@ void Cedit.savePendingClose() {
         continueSavedClose()
     }
 
+/*
+ * Cedit.continueSavedClose
+ *
+ * Purpose: continueSavedClose.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.continueSavedClose() {
         if (closingAll) {
             pendingCloseDocument = null
@@ -246,6 +433,17 @@ void Cedit.continueSavedClose() {
             status.setText("Saved. Save or discard the remaining modified tabs")
         }
     }
+
+/*
+ * Cedit.discardPendingClose
+ *
+ * Purpose: discardPendingClose.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.discardPendingClose() {
         if (closingAll) {
@@ -280,6 +478,17 @@ void Cedit.discardPendingClose() {
         closeChoices.setVisible(false)
     }
 
+/*
+ * Cedit.cancelPendingClose
+ *
+ * Purpose: cancelPendingClose.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.cancelPendingClose() {
         if (!switchOp.equals("")) {
             switchOp = ""
@@ -292,6 +501,17 @@ void Cedit.cancelPendingClose() {
         closeChoices.setVisible(false)
         updateStatus()
     }
+
+/*
+ * Cedit.finishPendingClose
+ *
+ * Purpose: finishPendingClose.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.finishPendingClose() {
         if (pendingCloseAll && !switchOp.equals("")) {

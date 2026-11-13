@@ -1,3 +1,25 @@
+/*
+ * src/ceditPrepareSearch.cw - Find/replace dialog, status, and window close.
+ *
+ * Created: 2026-10-29
+ * Author: Auto
+ *
+ * Changelog:
+ *   2026-10-29  Initial file.
+ *   2026-11-13  CODING headers and method comments.
+ */
+
+/*
+ * Cedit.prepareSearch
+ *
+ * Purpose: prepareSearch.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.prepareSearch() {
         EditorDocument document = currentDocument()
         if (document == null) {
@@ -10,6 +32,17 @@ void Cedit.prepareSearch() {
         }
     }
 
+/*
+ * Cedit.showFind
+ *
+ * Purpose: showFind.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.showFind() {
         if (!commandsBlocked()) {
             searchWindow.setTitle("Find")
@@ -20,6 +53,17 @@ void Cedit.showFind() {
             findEntry.focus()
         }
     }
+
+/*
+ * Cedit.showReplace
+ *
+ * Purpose: showReplace.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.showReplace() {
         if (!commandsBlocked()) {
@@ -32,11 +76,33 @@ void Cedit.showReplace() {
         }
     }
 
+/*
+ * Cedit.hideSearchDialog
+ *
+ * Purpose: hideSearchDialog.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: bool.
+ */
+
 bool Cedit.hideSearchDialog() {
         searchDialogOpen = false
         searchWindow.setVisible(false)
         return(true)
     }
+
+/*
+ * Cedit.closeSearchDialog
+ *
+ * Purpose: closeSearchDialog.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.closeSearchDialog() {
         searchDialogOpen = false
@@ -44,6 +110,17 @@ void Cedit.closeSearchDialog() {
             searchWindow.dispose()
         }
     }
+
+/*
+ * Cedit.changed
+ *
+ * Purpose: changed.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.changed() {
         if (window == null || window.disposed() || changingDocuments) { return }
@@ -57,11 +134,33 @@ void Cedit.changed() {
         updateEditActions()
     }
 
+/*
+ * Cedit.cursorMoved
+ *
+ * Purpose: cursorMoved.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.cursorMoved() {
         if (window == null || window.disposed() || changingDocuments) { return }
         updateStatusText()
         updateSelectionActions()
     }
+
+/*
+ * Cedit.pageChanged
+ *
+ * Purpose: pageChanged.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.pageChanged() {
         pageChanges = pageChanges + 1
@@ -71,6 +170,17 @@ void Cedit.pageChanged() {
         // scroll arrows until another tab is clicked).
         Gtk.Application().post(_self().pageChangedDeferred)
     }
+
+/*
+ * Cedit.pageChangedDeferred
+ *
+ * Purpose: pageChangedDeferred.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.pageChangedDeferred() {
         if (changingDocuments || window.disposed()) { return }
@@ -89,6 +199,17 @@ void Cedit.pageChangedDeferred() {
         checkDiskChange()
     }
 
+/*
+ * Cedit.automaticSave
+ *
+ * Purpose: automaticSave.
+ *
+ * Parameters:
+ *   document.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.automaticSave(EditorDocument document) {
         if (!presented || automaticSaving || changingDocuments || commandsBlocked() ||
             document == null || document.path.equals("") || !document.view.modified()) { return }
@@ -99,6 +220,17 @@ void Cedit.automaticSave(EditorDocument document) {
         }
         automaticSaving = false
     }
+
+/*
+ * Cedit.automaticSaveErrors
+ *
+ * Purpose: automaticSaveErrors.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: String.
+ */
 
 String Cedit.automaticSaveErrors() {
         if (!hasAutomaticSaveErrors) { return("") }
@@ -114,6 +246,17 @@ String Cedit.automaticSaveErrors() {
         return(errors)
     }
 
+/*
+ * Cedit.recomputeAutomaticSaveErrors
+ *
+ * Purpose: recomputeAutomaticSaveErrors.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: bool.
+ */
+
 bool Cedit.recomputeAutomaticSaveErrors() {
         int64 index = 0
         while (index < documents.length) {
@@ -126,6 +269,17 @@ bool Cedit.recomputeAutomaticSaveErrors() {
         return(false)
     }
 
+/*
+ * Cedit.windowFocusChanged
+ *
+ * Purpose: windowFocusChanged.
+ *
+ * Parameters:
+ *   active.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.windowFocusChanged(bool active) {
         if (active) { checkDiskChange() }
         if (active || !presented || window.disposed() || !settings.saveOnWindowLoss) { return }
@@ -136,6 +290,17 @@ void Cedit.windowFocusChanged(bool active) {
         }
         updateStatus()
     }
+
+/*
+ * Cedit.refreshTab
+ *
+ * Purpose: refreshTab.
+ *
+ * Parameters:
+ *   document.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.refreshTab(EditorDocument document) {
         String title = document.tabTitle()
@@ -152,6 +317,17 @@ void Cedit.refreshTab(EditorDocument document) {
         }
     }
 
+/*
+ * Cedit.updateStatusText
+ *
+ * Purpose: updateStatusText.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.updateStatusText() {
         if (status == null || window.disposed() || changingDocuments) { return }
         EditorDocument document = currentDocument()
@@ -166,11 +342,33 @@ void Cedit.updateStatusText() {
         status.setText(message)
     }
 
+/*
+ * Cedit.updateStatus
+ *
+ * Purpose: updateStatus.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.updateStatus() {
         if (window == null || window.disposed() || changingDocuments) { return }
         updateMenu()
         updateStatusText()
     }
+
+/*
+ * Cedit.updateSelectionActions
+ *
+ * Purpose: updateSelectionActions.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.updateSelectionActions() {
         if (menu == null || window.disposed()) { return }
@@ -182,6 +380,17 @@ void Cedit.updateSelectionActions() {
             menu.setItemEnabled(copyItem, selected)
         }
     }
+
+/*
+ * Cedit.updateEditActions
+ *
+ * Purpose: updateEditActions.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.updateEditActions() {
         if (menu == null || window.disposed()) { return }
@@ -209,6 +418,17 @@ void Cedit.updateEditActions() {
             menu.setItemEnabled(copyItem, selected)
         }
     }
+
+/*
+ * Cedit.updateMenu
+ *
+ * Purpose: updateMenu.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.updateMenu() {
         if (menu == null || status == null || window.disposed()) { return }
@@ -260,10 +480,32 @@ void Cedit.updateMenu() {
         menuInitialized = true
     }
 
+/*
+ * Cedit.workspaceNeedsSave
+ *
+ * Purpose: workspaceNeedsSave.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: bool.
+ */
+
 bool Cedit.workspaceNeedsSave() {
         return(activeProject != null && activeProject.workspaceWritable &&
             !activeProject.workspaceText.equals(activeProject.workspaceOriginal))
     }
+
+/*
+ * Cedit.requestClose
+ *
+ * Purpose: requestClose.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: bool.
+ */
 
 bool Cedit.requestClose() {
         writeAllRecoveries()
@@ -319,6 +561,17 @@ bool Cedit.requestClose() {
         return(false)
     }
 
+/*
+ * Cedit.closePreferencesWindows
+ *
+ * Purpose: closePreferencesWindows.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.closePreferencesWindows() {
         closeSearchDialog()
         if (aboutWindow != null && !aboutWindow.disposed()) {
@@ -334,6 +587,17 @@ void Cedit.closePreferencesWindows() {
             preferencesWindow.dispose()
         }
     }
+
+/*
+ * Cedit.closeAll
+ *
+ * Purpose: closeAll.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.closeAll() {
         if (commandsBlocked()) { return }

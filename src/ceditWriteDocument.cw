@@ -1,3 +1,26 @@
+/*
+ * src/ceditWriteDocument.cw - Write/save/open dialogs and edit clipboard actions.
+ *
+ * Created: 2026-10-29
+ * Author: Auto
+ *
+ * Changelog:
+ *   2026-10-29  Initial file.
+ *   2026-11-13  CODING headers and method comments.
+ */
+
+/*
+ * Cedit.writeDocument
+ *
+ * Purpose: writeDocument.
+ *
+ * Parameters:
+ *   document.
+ *   destination.
+ *
+ * Returns: bool.
+ */
+
 bool Cedit.writeDocument(EditorDocument document, String destination) {
         if (destination.equals("")) {
             reportSaveFailure("empty file path")
@@ -91,6 +114,17 @@ bool Cedit.writeDocument(EditorDocument document, String destination) {
         return(true)
     }
 
+/*
+ * Cedit.reportSaveFailure
+ *
+ * Purpose: reportSaveFailure.
+ *
+ * Parameters:
+ *   detail.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.reportSaveFailure(String detail) {
         String operation = "Save"
         if (automaticSaving) { operation = "Automatic Save" }
@@ -99,10 +133,32 @@ void Cedit.reportSaveFailure(String detail) {
             operation, detail))
     }
 
+/*
+ * Cedit.commandsBlocked
+ *
+ * Purpose: commandsBlocked.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: bool.
+ */
+
 bool Cedit.commandsBlocked() {
         return(fileDialog != null || pendingCloseAll || pendingCloseDocument != null ||
             projectSaves > 0 || !confirmOp.equals(""))
     }
+
+/*
+ * Cedit.chooseOpen
+ *
+ * Purpose: chooseOpen.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.chooseOpen() {
         if (commandsBlocked()) { return }
@@ -114,6 +170,17 @@ void Cedit.chooseOpen() {
         updateMenu()
     }
 
+/*
+ * Cedit.chooseFolder
+ *
+ * Purpose: chooseFolder.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.chooseFolder() {
         if (commandsBlocked()) { return }
         String initialPath = project.rootPath
@@ -123,6 +190,17 @@ void Cedit.chooseFolder() {
         fileDialog = Gtk.FileDialog(window, initialPath, _self().folderOpened)
         updateMenu()
     }
+
+/*
+ * Cedit.folderOpened
+ *
+ * Purpose: folderOpened.
+ *
+ * Parameters:
+ *   path.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.folderOpened(String path) {
         fileDialog = null
@@ -153,6 +231,17 @@ void Cedit.folderOpened(String path) {
         adoptSettingsRoot(root)
         noteOpenFiles()
     }
+
+/*
+ * Cedit.opened
+ *
+ * Purpose: opened.
+ *
+ * Parameters:
+ *   paths.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.opened(list paths) {
         fileDialog = null
@@ -196,6 +285,18 @@ void Cedit.opened(list paths) {
         updateMenu()
     }
 
+/*
+ * Cedit.chooseSave
+ *
+ * Purpose: chooseSave.
+ *
+ * Parameters:
+ *   document.
+ *   closing.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.chooseSave(EditorDocument document, bool closing) {
         dialogDocument = document
         dialogClosing = closing
@@ -204,6 +305,17 @@ void Cedit.chooseSave(EditorDocument document, bool closing) {
         fileDialog = Gtk.FileDialog(window, true, initialPath, saveResultAction)
         updateMenu()
     }
+
+/*
+ * Cedit.savedAs
+ *
+ * Purpose: savedAs.
+ *
+ * Parameters:
+ *   path.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.savedAs(String path) {
         EditorDocument document = dialogDocument
@@ -222,7 +334,29 @@ void Cedit.savedAs(String path) {
         updateMenu()
     }
 
+/*
+ * Cedit.quit
+ *
+ * Purpose: quit.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.quit() { window.close() }
+
+/*
+ * Cedit.refreshRecentMenu
+ *
+ * Purpose: refreshRecentMenu.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.refreshRecentMenu() {
         if (menu == null) { return }
@@ -238,10 +372,32 @@ void Cedit.refreshRecentMenu() {
         }
     }
 
+/*
+ * Cedit.openRecent
+ *
+ * Purpose: openRecent.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.openRecent() {
         // Kept for command wiring; Recent is a submenu rebuilt by refreshRecentMenu.
         if (recentFiles.length == 0) { status.setText("No recent files in this session") }
     }
+
+/*
+ * Cedit.rememberRecent
+ *
+ * Purpose: rememberRecent.
+ *
+ * Parameters:
+ *   path.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.rememberRecent(String path) {
         list kept = []
@@ -265,6 +421,17 @@ void Cedit.rememberRecent(String path) {
         refreshRecentMenu()
     }
 
+/*
+ * Cedit.attachDocumentMenu
+ *
+ * Purpose: attachDocumentMenu.
+ *
+ * Parameters:
+ *   document.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.attachDocumentMenu(EditorDocument document) {
         if (document == null || document.view == null) { return }
         // Append to the native edit menu; do not replace Cut/Copy/Paste.
@@ -272,6 +439,17 @@ void Cedit.attachDocumentMenu(EditorDocument document) {
         document.view.addContextAction("Insert date/time", _self().pluginInsertDate)
         document.view.addContextAction("Toggle debug marker", _self().pluginToggleDebug)
     }
+
+/*
+ * Cedit.searchOptions
+ *
+ * Purpose: searchOptions.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: int64.
+ */
 
 int64 Cedit.searchOptions() {
         int64 options = 0
@@ -287,6 +465,17 @@ int64 Cedit.searchOptions() {
         return(options)
     }
 
+/*
+ * Cedit.searchDocument
+ *
+ * Purpose: searchDocument.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: EditorDocument.
+ */
+
 EditorDocument Cedit.searchDocument() {
         if (commandsBlocked()) { return(null) }
         EditorDocument document = currentDocument()
@@ -300,6 +489,17 @@ EditorDocument Cedit.searchDocument() {
         return(document)
     }
 
+/*
+ * Cedit.findNext
+ *
+ * Purpose: findNext.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.findNext() {
         EditorDocument document = searchDocument()
         if (document == null) {
@@ -312,6 +512,17 @@ void Cedit.findNext() {
         }
     }
 
+/*
+ * Cedit.replaceNext
+ *
+ * Purpose: replaceNext.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.replaceNext() {
         EditorDocument document = searchDocument()
         if (document == null) {
@@ -323,6 +534,17 @@ void Cedit.replaceNext() {
             updateStatus()
         }
     }
+
+/*
+ * Cedit.replaceAll
+ *
+ * Purpose: replaceAll.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.replaceAll() {
         EditorDocument document = searchDocument()
@@ -339,6 +561,17 @@ void Cedit.replaceAll() {
         }
     }
 
+/*
+ * Cedit.undoCurrent
+ *
+ * Purpose: undoCurrent.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.undoCurrent() {
         if (commandsBlocked()) { return }
         EditorDocument document = currentDocument()
@@ -346,6 +579,17 @@ void Cedit.undoCurrent() {
             document.view.undo()
         }
     }
+
+/*
+ * Cedit.redoCurrent
+ *
+ * Purpose: redoCurrent.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.redoCurrent() {
         if (commandsBlocked()) { return }
@@ -355,17 +599,61 @@ void Cedit.redoCurrent() {
         }
     }
 
+/*
+ * Cedit.cutCurrent
+ *
+ * Purpose: cutCurrent.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.cutCurrent() {
         if (!commandsBlocked() && currentDocument() != null) { currentDocument().view.cut() }
     }
+
+/*
+ * Cedit.copyCurrent
+ *
+ * Purpose: copyCurrent.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.copyCurrent() {
         if (!commandsBlocked() && currentDocument() != null) { currentDocument().view.copy() }
     }
 
+/*
+ * Cedit.pasteCurrent
+ *
+ * Purpose: pasteCurrent.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.pasteCurrent() {
         if (!commandsBlocked() && currentDocument() != null) { currentDocument().view.paste() }
     }
+
+/*
+ * Cedit.selectAllCurrent
+ *
+ * Purpose: selectAllCurrent.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.selectAllCurrent() {
         if (!commandsBlocked() && currentDocument() != null) { currentDocument().view.selectAll() }

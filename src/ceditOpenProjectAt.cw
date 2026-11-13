@@ -1,3 +1,25 @@
+/*
+ * src/ceditOpenProjectAt.cw - Open/switch/save/delete project operations.
+ *
+ * Created: 2026-10-29
+ * Author: Auto
+ *
+ * Changelog:
+ *   2026-10-29  Initial file.
+ *   2026-11-13  CODING headers and method comments.
+ */
+
+/*
+ * Cedit.openProjectAt
+ *
+ * Purpose: openProjectAt.
+ *
+ * Parameters:
+ *   path.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.openProjectAt(String path) {
         CwhipProject candidate = loadProject(path, "Could not open project")
         if (candidate == null) { return }
@@ -8,6 +30,18 @@ void Cedit.openProjectAt(String path) {
         nextProject = candidate
         beginSwitch("open")
     }
+
+/*
+ * Cedit.prepareNewProject
+ *
+ * Purpose: prepareNewProject.
+ *
+ * Parameters:
+ *   path.
+ *   copy.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.prepareNewProject(String path, bool copy) {
         String title = "Could not create project"
@@ -53,6 +87,17 @@ void Cedit.prepareNewProject(String path, bool copy) {
         startNewProject(op)
     }
 
+/*
+ * Cedit.startNewProject
+ *
+ * Purpose: startNewProject.
+ *
+ * Parameters:
+ *   op.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.startNewProject(String op) {
         // Save As leaves the original project's files untouched.
         if (op.equals("save-as")) {
@@ -62,6 +107,17 @@ void Cedit.startNewProject(String op) {
         beginSwitch("new")
     }
 
+/*
+ * Cedit.saveProject
+ *
+ * Purpose: saveProject.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.saveProject() {
         if (commandsBlocked() || activeProject == null) { return }
         activeProject.workspaceText = captureWorkspace(activeProject.root, activeProject.root)
@@ -69,10 +125,32 @@ void Cedit.saveProject() {
         writeProject(activeProject, true, true, "save")
     }
 
+/*
+ * Cedit.deleteProject
+ *
+ * Purpose: deleteProject.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.deleteProject() {
         if (commandsBlocked() || activeProject == null) { return }
         askConfirm("delete", format("Delete Cwhip project metadata for {}? Only {} and {} are removed; source files are kept.", activeProject.root, activeProject.configPath, activeProject.workspacePath), "Delete Metadata")
     }
+
+/*
+ * Cedit.deleteProjectMetadata
+ *
+ * Purpose: deleteProjectMetadata.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.deleteProjectMetadata() {
         CwhipProject target = activeProject
@@ -104,6 +182,17 @@ void Cedit.deleteProjectMetadata() {
         status.setText(format("Deleted project metadata; {} remains open as a folder", target.root))
     }
 
+/*
+ * Cedit.beginSwitch
+ *
+ * Purpose: beginSwitch.
+ *
+ * Parameters:
+ *   op.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.beginSwitch(String op) {
         if (activeProject != null) {
             activeProject.workspaceText = captureWorkspace(activeProject.root, activeProject.root)
@@ -120,6 +209,17 @@ void Cedit.beginSwitch(String op) {
         continueSwitch(op)
     }
 
+/*
+ * Cedit.continueSwitch
+ *
+ * Purpose: continueSwitch.
+ *
+ * Parameters:
+ *   op.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.continueSwitch(String op) {
         switchOp = ""
         bool sameRoot = false
@@ -130,6 +230,20 @@ void Cedit.continueSwitch(String op) {
         }
         performProjectOp(op)
     }
+
+/*
+ * Cedit.writeProject
+ *
+ * Purpose: writeProject.
+ *
+ * Parameters:
+ *   target.
+ *   config.
+ *   workspaceState.
+ *   op.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.writeProject(CwhipProject target, bool config, bool workspaceState, String op) {
         projectOp = op
@@ -176,6 +290,18 @@ void Cedit.writeProject(CwhipProject target, bool config, bool workspaceState, S
         if (projectSaves == 0) { finishProjectSave() }
     }
 
+/*
+ * Cedit.projectSaveMessage
+ *
+ * Purpose: projectSaveMessage.
+ *
+ * Parameters:
+ *   path.
+ *   error.
+ *
+ * Returns: String.
+ */
+
 String Cedit.projectSaveMessage(String path, String error) {
         if (error.contains("changed on disk")) {
             return(format("{} changed on disk since it was loaded; reopen the project before saving", path))
@@ -183,10 +309,32 @@ String Cedit.projectSaveMessage(String path, String error) {
         return(format("{}: {}", path, error))
     }
 
+/*
+ * Cedit.addProjectSaveError
+ *
+ * Purpose: addProjectSaveError.
+ *
+ * Parameters:
+ *   message.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.addProjectSaveError(String message) {
         if (!projectSaveErrors.equals("")) { projectSaveErrors.append("\n") }
         projectSaveErrors.append(message)
     }
+
+/*
+ * Cedit.projectConfigSaved
+ *
+ * Purpose: projectConfigSaved.
+ *
+ * Parameters:
+ *   error.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.projectConfigSaved(String error) {
         projectSaves = projectSaves - 1
@@ -197,12 +345,34 @@ void Cedit.projectConfigSaved(String error) {
         if (projectSaves == 0) { finishProjectSave() }
     }
 
+/*
+ * Cedit.projectWorkspaceSaved
+ *
+ * Purpose: projectWorkspaceSaved.
+ *
+ * Parameters:
+ *   error.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.projectWorkspaceSaved(String error) {
         projectSaves = projectSaves - 1
         if (error.equals("")) { savingProject.workspaceOriginal = savingProject.savingWorkspace }
         else { addProjectSaveError(projectSaveMessage(savingProject.workspacePath, error)) }
         if (projectSaves == 0) { finishProjectSave() }
     }
+
+/*
+ * Cedit.finishProjectSave
+ *
+ * Purpose: finishProjectSave.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.finishProjectSave() {
         String op = projectOp
@@ -218,6 +388,18 @@ void Cedit.finishProjectSave() {
             window.close()
         }
     }
+
+/*
+ * Cedit.projectSaveFailed
+ *
+ * Purpose: projectSaveFailed.
+ *
+ * Parameters:
+ *   op.
+ *   errors.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.projectSaveFailed(String op, String errors) {
         closeAfterSave = false
@@ -239,6 +421,17 @@ void Cedit.projectSaveFailed(String op, String errors) {
         if (op.equals("quit")) { accept = "Quit Without Saving" }
         askConfirm(format("continue-{}", op), format("Could not save workspace state: {}", errors), accept)
     }
+
+/*
+ * Cedit.performProjectOp
+ *
+ * Purpose: performProjectOp.
+ *
+ * Parameters:
+ *   op.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.performProjectOp(String op) {
         if (op.equals("save")) {
@@ -295,6 +488,19 @@ void Cedit.performProjectOp(String op) {
         }
     }
 
+/*
+ * Cedit.askConfirm
+ *
+ * Purpose: askConfirm.
+ *
+ * Parameters:
+ *   op.
+ *   message.
+ *   accept.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.askConfirm(String op, String message, String accept) {
         confirmOp = op
         confirmLabel.setText(message)
@@ -303,6 +509,17 @@ void Cedit.askConfirm(String op, String message, String accept) {
         status.setText(message)
         updateMenu()
     }
+
+/*
+ * Cedit.acceptConfirm
+ *
+ * Purpose: acceptConfirm.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.acceptConfirm() {
         String op = confirmOp
@@ -315,6 +532,17 @@ void Cedit.acceptConfirm() {
         if (op.equals("recover-buffer")) { acceptRecovery() }
         if (op.startsWith("continue-")) { performProjectOp(byteSpan(op, 9, op.length)) }
     }
+
+/*
+ * Cedit.cancelConfirm
+ *
+ * Purpose: cancelConfirm.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.cancelConfirm() {
         String op = confirmOp

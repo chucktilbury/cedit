@@ -1,3 +1,25 @@
+/*
+ * src/ceditApplyDocumentSettings.cw - Document settings apply and preferences UI.
+ *
+ * Created: 2026-10-29
+ * Author: Auto
+ *
+ * Changelog:
+ *   2026-10-29  Initial file.
+ *   2026-11-13  CODING headers and method comments.
+ */
+
+/*
+ * Cedit.applyDocumentSettings
+ *
+ * Purpose: Push font/tabs/view prefs onto one document (project overrides win).
+ *
+ * Parameters:
+ *   document.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.applyDocumentSettings(EditorDocument document) {
         String font = settings.fontFamily
         int64 size = settings.fontSize
@@ -51,6 +73,17 @@ void Cedit.applyDocumentSettings(EditorDocument document) {
             i = i + 1
         }
     }
+
+/*
+ * Cedit.createPreferences
+ *
+ * Purpose: createPreferences.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.createPreferences() {
         preferencesWindow = Gtk.TransientWindow("cedit Preferences")
@@ -184,12 +217,34 @@ Gtk.CheckButton Cedit.preferenceCheck(String label, bool active) {
         return(check)
     }
 
+/*
+ * Cedit.showPreferences
+ *
+ * Purpose: showPreferences.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.showPreferences() {
         if (commandsBlocked()) { return }
         if (preferencesWindow == null) { createPreferences() }
         refreshProjectNote()
         preferencesWindow.present()
     }
+
+/*
+ * Cedit.refreshProjectNote
+ *
+ * Purpose: refreshProjectNote.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.refreshProjectNote() {
         if (projectNote == null) { return }
@@ -203,20 +258,64 @@ void Cedit.refreshProjectNote() {
         refreshSettingsPathLabel()
     }
 
+/*
+ * Cedit.refreshSettingsPathLabel
+ *
+ * Purpose: refreshSettingsPathLabel.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.refreshSettingsPathLabel() {
         if (settingsPathLabel == null) { return }
         settingsPathLabel.setText(format("Automatically saved to {}", settings.path))
     }
+
+/*
+ * Cedit.settingsRoot
+ *
+ * Purpose: settingsRoot.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: String.
+ */
 
 String Cedit.settingsRoot() {
         if (activeProject != null) { return(activeProject.root) }
         return(System.FileSystem().getCwd())
     }
 
+/*
+ * Cedit.startupPatch
+ *
+ * Purpose: startupPatch.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: String.
+ */
+
 String Cedit.startupPatch() {
         return(format("version = 1\n[project]\nreopen_last = {}\nlast_root = {}\n",
             settings.reopenLast, Gtk.Config().quote(settings.lastRoot)))
     }
+
+/*
+ * Cedit.globalSettingsBase
+ *
+ * Purpose: globalSettingsBase.
+ *
+ * Parameters:
+ *   disk.
+ *
+ * Returns: String.
+ */
 
 String Cedit.globalSettingsBase(String disk) {
         if (disk.equals("")) { return("") }
@@ -240,6 +339,17 @@ String Cedit.globalSettingsBase(String disk) {
         }
         return("version = 1\n")
     }
+
+/*
+ * Cedit.recoverStartupFrom
+ *
+ * Purpose: recoverStartupFrom.
+ *
+ * Parameters:
+ *   disk.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.recoverStartupFrom(String disk) {
         if (disk.equals("") || Gtk.Config().validate(disk).equals("")) { return }
@@ -268,6 +378,17 @@ void Cedit.recoverStartupFrom(String disk) {
             index = index + 1
         }
     }
+
+/*
+ * Cedit.ensureGlobalSettingsFile
+ *
+ * Purpose: ensureGlobalSettingsFile.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.ensureGlobalSettingsFile() {
         String disk = readSettingsDisk(settings.globalPath)
@@ -314,6 +435,18 @@ void Cedit.ensureGlobalSettingsFile() {
         persistedText = text
     }
 
+/*
+ * Cedit.writeSettingsFile
+ *
+ * Purpose: writeSettingsFile.
+ *
+ * Parameters:
+ *   path.
+ *   text.
+ *
+ * Returns: bool.
+ */
+
 bool Cedit.writeSettingsFile(String path, String text) {
         String directory = System.FileSystem().dirname(path)
         if (!makeSettingsDirectory(directory)) { return(false) }
@@ -334,6 +467,17 @@ bool Cedit.writeSettingsFile(String path, String text) {
         return(true)
     }
 
+/*
+ * Cedit.writeStartupToGlobal
+ *
+ * Purpose: writeStartupToGlobal.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: bool.
+ */
+
 bool Cedit.writeStartupToGlobal() {
         String disk = readSettingsDisk(settings.globalPath)
         String base = globalSettingsBase(disk)
@@ -343,6 +487,17 @@ bool Cedit.writeStartupToGlobal() {
         return(writeSettingsFile(settings.globalPath,
             Gtk.Config().merge(base, startupPatch())))
     }
+
+/*
+ * Cedit.seedLocalSettings
+ *
+ * Purpose: seedLocalSettings.
+ *
+ * Parameters:
+ *   globalText.
+ *
+ * Returns: String.
+ */
 
 String Cedit.seedLocalSettings(String globalText) {
         // Editor/keyboard only: startup reopen keys stay in the global file.
@@ -360,6 +515,17 @@ String Cedit.seedLocalSettings(String globalText) {
         return(seed)
     }
 
+/*
+ * Cedit.writeMirroredGlobal
+ *
+ * Purpose: writeMirroredGlobal.
+ *
+ * Parameters:
+ *   editorText.
+ *
+ * Returns: bool.
+ */
+
 bool Cedit.writeMirroredGlobal(String editorText) {
         // Keep reopen_last/last_root when mirroring editor/keyboard into the global file.
         String disk = readSettingsDisk(settings.globalPath)
@@ -369,6 +535,17 @@ bool Cedit.writeMirroredGlobal(String editorText) {
         return(writeSettingsFile(settings.globalPath,
             Gtk.Config().merge(merged, startupPatch())))
     }
+
+/*
+ * Cedit.adoptSettingsRoot
+ *
+ * Purpose: adoptSettingsRoot.
+ *
+ * Parameters:
+ *   root.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.adoptSettingsRoot(String root) {
         if (root.equals("")) { return }
@@ -404,6 +581,17 @@ void Cedit.adoptSettingsRoot(String root) {
         refreshSettingsPathLabel()
     }
 
+/*
+ * Cedit.reopenChanged
+ *
+ * Purpose: reopenChanged.
+ *
+ * Parameters:
+ *   active.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.reopenChanged(bool active) {
         if (refreshingPreferences) { return }
         settings.reopenLast = active
@@ -418,10 +606,32 @@ void Cedit.reopenChanged(bool active) {
         if (preferencesMessage != null) { preferencesMessage.setText("Settings saved") }
     }
 
+/*
+ * Cedit.persistSettings
+ *
+ * Purpose: persistSettings.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.persistSettings() {
         if (preferencesWindow == null) { createPreferences() }
         settingsChanged()
     }
+
+/*
+ * Cedit.rememberProject
+ *
+ * Purpose: rememberProject.
+ *
+ * Parameters:
+ *   root.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.rememberProject(String root) {
         if (settings.reopenLast && !settings.lastRoot.equals(root)) {
@@ -430,12 +640,34 @@ void Cedit.rememberProject(String root) {
         }
     }
 
+/*
+ * Cedit.forgetProject
+ *
+ * Purpose: forgetProject.
+ *
+ * Parameters:
+ *   root.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.forgetProject(String root) {
         if (settings.lastRoot.equals(root)) {
             settings.lastRoot = ""
             writeStartupToGlobal()
         }
     }
+
+/*
+ * Cedit.hidePreferences
+ *
+ * Purpose: hidePreferences.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: bool.
+ */
 
 bool Cedit.hidePreferences() {
         if (preferencesWindow == null || preferencesWindow.disposed()) { return(true) }
@@ -445,6 +677,17 @@ bool Cedit.hidePreferences() {
         return(true)
     }
 
+/*
+ * Cedit.stopRecording
+ *
+ * Purpose: stopRecording.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.stopRecording() {
         int64 i = 0
         while (i < keyboardRows.length) {
@@ -453,6 +696,17 @@ void Cedit.stopRecording() {
         }
     }
 
+/*
+ * Cedit.showEditorPreferences
+ *
+ * Purpose: showEditorPreferences.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.showEditorPreferences() {
         hidePreferences()
         editorPreferences.setVisible(true)
@@ -460,6 +714,17 @@ void Cedit.showEditorPreferences() {
         startupPreferences.setVisible(false)
         preferencesWindow.present()
     }
+
+/*
+ * Cedit.showKeyboardPreferences
+ *
+ * Purpose: showKeyboardPreferences.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.showKeyboardPreferences() {
         hidePreferences()
@@ -478,10 +743,32 @@ void Cedit.showKeyboardPreferences() {
         preferencesWindow.present()
     }
 
+/*
+ * Cedit.showProjectPreferences
+ *
+ * Purpose: showProjectPreferences.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.showProjectPreferences() {
         if (activeProject == null || commandsBlocked()) { return }
         showConfigure()
     }
+
+/*
+ * Cedit.showStartupPreferences
+ *
+ * Purpose: showStartupPreferences.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.showStartupPreferences() {
         hidePreferences()
@@ -490,6 +777,17 @@ void Cedit.showStartupPreferences() {
         startupPreferences.setVisible(true)
         preferencesWindow.present()
     }
+
+/*
+ * Cedit.filterCommands
+ *
+ * Purpose: filterCommands.
+ *
+ * Parameters:
+ *   query.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.filterCommands(String query) {
         int64 i = 0
@@ -500,6 +798,19 @@ void Cedit.filterCommands(String query) {
             i = i + 1
         }
     }
+
+/*
+ * Cedit.preferenceNumber
+ *
+ * Purpose: preferenceNumber.
+ *
+ * Parameters:
+ *   text.
+ *   minimum.
+ *   maximum.
+ *
+ * Returns: int64.
+ */
 
 int64 Cedit.preferenceNumber(String text, int64 minimum, int64 maximum) {
         // Allow up to 3 digits so right_margin (0-512) can be entered.
@@ -514,7 +825,29 @@ int64 Cedit.preferenceNumber(String text, int64 minimum, int64 maximum) {
         return(number)
     }
 
+/*
+ * Cedit.editorCheckChanged
+ *
+ * Purpose: editorCheckChanged.
+ *
+ * Parameters:
+ *   active.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.editorCheckChanged(bool active) { editorSettingChanged("") }
+
+/*
+ * Cedit.editorSettingChanged
+ *
+ * Purpose: editorSettingChanged.
+ *
+ * Parameters:
+ *   text.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.editorSettingChanged(String text) {
         if (refreshingPreferences) { return }
@@ -559,6 +892,17 @@ void Cedit.editorSettingChanged(String text) {
         settingsChanged()
     }
 
+/*
+ * Cedit.saveGlobalClicked
+ *
+ * Purpose: saveGlobalClicked.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.saveGlobalClicked() {
         if (refreshingPreferences || commandsBlocked()) { return }
         if (!writeMirroredGlobal(settings.serialize())) {
@@ -573,6 +917,17 @@ void Cedit.saveGlobalClicked() {
         }
         refreshSettingsPathLabel()
     }
+
+/*
+ * Cedit.readSettingsDisk
+ *
+ * Purpose: readSettingsDisk.
+ *
+ * Parameters:
+ *   path.
+ *
+ * Returns: String.
+ */
 
 String Cedit.readSettingsDisk(String path) {
         if (!System.FileSystem().isFile(path)) { return("") }
@@ -589,15 +944,48 @@ String Cedit.readSettingsDisk(String path) {
         return(text)
     }
 
+/*
+ * Cedit.resetEditorPreferences
+ *
+ * Purpose: resetEditorPreferences.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.resetEditorPreferences() {
         resetSection = "Editor"
         resetChoices.setVisible(true)
     }
 
+/*
+ * Cedit.resetKeyboardPreferences
+ *
+ * Purpose: resetKeyboardPreferences.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.resetKeyboardPreferences() {
         resetSection = "Keyboard"
         resetChoices.setVisible(true)
     }
+
+/*
+ * Cedit.cancelPreferencesReset
+ *
+ * Purpose: cancelPreferencesReset.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.cancelPreferencesReset() {
         resetSection = ""

@@ -1,4 +1,30 @@
+/*
+ * src/editorDocument.cw - One open editor tab (view, path, disk text).
+ *
+ * Created: 2026-10-29
+ * Author: Auto
+ *
+ * Changelog:
+ *   2026-10-29  Initial file.
+ *   2026-11-13  CODING headers and method comments.
+ */
+
+/*
+ * EditorDocument for cedit; see method comments below.
+ */
 class EditorDocument {
+    /*
+     * _self
+     *
+     * Purpose: _self.
+     *
+     * Parameters:
+     *   filePath.
+     *   contents.
+     *
+     * Returns: EditorDocument.
+     */
+
     EditorDocument _self()
     void<EditorDocument> closeAction
     GtkSource.View view
@@ -12,6 +38,18 @@ class EditorDocument {
     String lastTitle
     String diskText
     int64 lspVersion
+
+    /*
+     * EditorDocument
+     *
+     * Purpose: EditorDocument for the editor.
+     *
+     * Parameters:
+     *   filePath.
+     *   contents.
+     *
+     * Returns: EditorDocument.
+     */
 
     EditorDocument(String filePath, String contents) {
         path = filePath
@@ -41,6 +79,17 @@ class EditorDocument {
         scroller.setChild(view.widget())
     }
 
+    /*
+     * updatePath
+     *
+     * Purpose: updatePath for the editor.
+     *
+     * Parameters:
+     *   newPath.
+     *
+     * Returns: nothing.
+     */
+
     void updatePath(String newPath) {
         path = newPath
         if (!path.equals("")) {
@@ -49,6 +98,17 @@ class EditorDocument {
             baseName = ""
         }
     }
+
+    /*
+     * tabTitle
+     *
+     * Purpose: Update the notebook page title when the document tab title changed.
+     *
+     * Parameters:
+     *   none.
+     *
+     * Returns: String.
+     */
 
     String tabTitle() {
         String title = "Untitled"
@@ -60,7 +120,29 @@ class EditorDocument {
         }
         return(title)
     }
+    /*
+     * stripTrailingSpaces
+     *
+     * Purpose: stripTrailingSpaces for the editor.
+     *
+     * Parameters:
+     *   none.
+     *
+     * Returns: bool.
+     */
+
     bool stripTrailingSpaces() { return(view.stripTrailingSpaces()) }
+    /*
+     * close
+     *
+     * Purpose: close for the editor.
+     *
+     * Parameters:
+     *   none.
+     *
+     * Returns: nothing.
+     */
+
     void close() { closeAction(_self()) }
 }
 EditorDocument EditorDocument._self() from "cwhip_gtk_self"

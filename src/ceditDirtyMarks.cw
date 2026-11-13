@@ -1,3 +1,28 @@
+/*
+ * src/ceditDirtyMarks.cw - Gutter marks for unsaved changed lines.
+ *
+ * Created: 2026-10-30
+ * Author: Auto
+ *
+ * Changelog:
+ *   2026-10-30  Initial file.
+ *   2026-11-13  CODING headers and method comments.
+ */
+
+/*
+ * Cedit.findMatchingLine
+ *
+ * Purpose: findMatchingLine.
+ *
+ * Parameters:
+ *   lines.
+ *   fromIndex.
+ *   target.
+ *   limit.
+ *
+ * Returns: int64.
+ */
+
 int64 Cedit.findMatchingLine(list lines, int64 fromIndex, String target, int64 limit) {
         int64 end = fromIndex + limit
         if (end > lines.length) { end = lines.length }
@@ -8,6 +33,17 @@ int64 Cedit.findMatchingLine(list lines, int64 fromIndex, String target, int64 l
         }
         return(-1)
     }
+
+/*
+ * Cedit.updateUnsavedMarks
+ *
+ * Purpose: updateUnsavedMarks.
+ *
+ * Parameters:
+ *   document.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.updateUnsavedMarks(EditorDocument document) {
         if (document == null) { return }
@@ -70,16 +106,49 @@ void Cedit.updateUnsavedMarks(EditorDocument document) {
         }
     }
 
+/*
+ * Cedit.clearUnsavedMarks
+ *
+ * Purpose: clearUnsavedMarks.
+ *
+ * Parameters:
+ *   document.
+ *
+ * Returns: nothing.
+ */
+
 void Cedit.clearUnsavedMarks(EditorDocument document) {
         if (document == null) { return }
         document.view.clearLineMarks("unsaved")
     }
+
+/*
+ * Cedit.scheduleUnsavedMarks
+ *
+ * Purpose: scheduleUnsavedMarks.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.scheduleUnsavedMarks() {
         if (unsavedMarksPending) { return }
         unsavedMarksPending = true
         Gtk.Application().schedule(50, unsavedMarksAction)
     }
+
+/*
+ * Cedit.flushUnsavedMarks
+ *
+ * Purpose: flushUnsavedMarks.
+ *
+ * Parameters:
+ *   none.
+ *
+ * Returns: nothing.
+ */
 
 void Cedit.flushUnsavedMarks() {
         unsavedMarksPending = false

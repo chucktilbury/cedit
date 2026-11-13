@@ -1,3 +1,17 @@
+/*
+ * src/cwhipProject.cw - CwhipProject config/workspace parse and validate.
+ *
+ * Created: 2026-10-29
+ * Author: Auto
+ *
+ * Changelog:
+ *   2026-10-29  Initial file.
+ *   2026-11-13  CODING headers and method comments.
+ */
+
+/*
+ * CwhipProject for cedit; see method comments below.
+ */
 class CwhipProject {
     String root
     String directory
@@ -40,6 +54,17 @@ class CwhipProject {
     bool readContent
     String acceptedPath
 
+    /*
+     * CwhipProject
+     *
+     * Purpose: Serialize open tabs/explorer into workspace TOML text.
+     *
+     * Parameters:
+     *   projectRoot.
+     *
+     * Returns: CwhipProject.
+     */
+
     CwhipProject(String projectRoot) {
         root = projectRoot
         directory = System.FileSystem().join(root, ".cwhip")
@@ -70,6 +95,17 @@ class CwhipProject {
         acceptedPath = ""
     }
 
+    /*
+     * resetWorkspace
+     *
+     * Purpose: resetWorkspace for the editor.
+     *
+     * Parameters:
+     *   none.
+     *
+     * Returns: nothing.
+     */
+
     void resetWorkspace() {
         active = ""
         explorerWidth = -1
@@ -79,11 +115,33 @@ class CwhipProject {
         files = []
     }
 
+    /*
+     * error
+     *
+     * Purpose: error for the editor.
+     *
+     * Parameters:
+     *   message.
+     *
+     * Returns: nothing.
+     */
+
     void error(String message) {
         if (!errors.equals("")) { errors.append("\n") }
         errors.append(message)
         writable = false
     }
+
+    /*
+     * workspaceError
+     *
+     * Purpose: workspaceError for the editor.
+     *
+     * Parameters:
+     *   message.
+     *
+     * Returns: nothing.
+     */
 
     void workspaceError(String message) {
         if (!workspaceErrors.equals("")) { workspaceErrors.append("\n") }
@@ -92,12 +150,34 @@ class CwhipProject {
         resetWorkspace()
     }
 
+    /*
+     * prefix
+     *
+     * Purpose: prefix for the editor.
+     *
+     * Parameters:
+     *   none.
+     *
+     * Returns: String.
+     */
+
     String prefix() {
         if (root.endsWith("/")) { return(root) }
         return(format("{}/", root))
     }
 
     // Root-relative path, or "" when path is outside the root.
+    /*
+     * relative
+     *
+     * Purpose: relative for the editor.
+     *
+     * Parameters:
+     *   path.
+     *
+     * Returns: String.
+     */
+
     String relative(String path) {
         String head = prefix()
         if (!path.startsWith(head) || path.length == head.length) { return("") }
@@ -106,9 +186,31 @@ class CwhipProject {
         return(rest)
     }
 
+    /*
+     * hasControl
+     *
+     * Purpose: hasControl for the editor.
+     *
+     * Parameters:
+     *   text.
+     *
+     * Returns: bool.
+     */
+
     bool hasControl(String text) {
         return(text.contains("\n") || text.contains("\r") || text.contains("\t"))
     }
+
+    /*
+     * validRelative
+     *
+     * Purpose: validRelative for the editor.
+     *
+     * Parameters:
+     *   path.
+     *
+     * Returns: bool.
+     */
 
     bool validRelative(String path) {
         if (path.equals("") || path.length > 4096 || path.startsWith("/") || hasControl(path)) { return(false) }
@@ -123,6 +225,17 @@ class CwhipProject {
     }
 
     // Absolute file path that is not inside this project. `.` and `..` segments are rejected.
+    /*
+     * validExternal
+     *
+     * Purpose: validExternal for the editor.
+     *
+     * Parameters:
+     *   path.
+     *
+     * Returns: bool.
+     */
+
     bool validExternal(String path) {
         if (!path.startsWith("/") || path.equals("/") || path.length > 4096 || hasControl(path)) { return(false) }
         if (path.equals(root) || !relative(path).equals("")) { return(false) }
@@ -133,6 +246,17 @@ class CwhipProject {
 
     // Accepts a root-relative path, or an absolute path outside the root.
     // An absolute path inside the root is stored in root-relative form.
+    /*
+     * acceptWorkspacePath
+     *
+     * Purpose: acceptWorkspacePath for the editor.
+     *
+     * Parameters:
+     *   stored.
+     *
+     * Returns: bool.
+     */
+
     bool acceptWorkspacePath(String stored) {
         acceptedPath = ""
         if (stored.startsWith("/")) {
@@ -150,12 +274,34 @@ class CwhipProject {
         return(true)
     }
 
+    /*
+     * nameError
+     *
+     * Purpose: nameError for the editor.
+     *
+     * Parameters:
+     *   text.
+     *
+     * Returns: String.
+     */
+
     String nameError(String text) {
         if (text.trim().equals("") || text.length > 128 || hasControl(text)) {
             return("Project name must be 1-128 characters, without control characters")
         }
         return("")
     }
+
+    /*
+     * excludeError
+     *
+     * Purpose: excludeError for the editor.
+     *
+     * Parameters:
+     *   pattern.
+     *
+     * Returns: String.
+     */
 
     String excludeError(String pattern) {
         if (pattern.trim().equals("") || pattern.length > 256 || hasControl(pattern)) {
@@ -169,6 +315,17 @@ class CwhipProject {
 
     // Refuses symlinked or non-regular metadata so writes and deletes stay
     // inside the project's metadata directory.
+    /*
+     * metadataProblem
+     *
+     * Purpose: metadataProblem for the editor.
+     *
+     * Parameters:
+     *   none.
+     *
+     * Returns: String.
+     */
+
     String metadataProblem() {
         if (!System.FileSystem().exists(directory)) { return("") }
         if (!System.FileSystem().isDir(directory) ||
@@ -179,6 +336,17 @@ class CwhipProject {
         if (problem.equals("")) { problem = fileProblem(workspacePath) }
         return(problem)
     }
+
+    /*
+     * fileProblem
+     *
+     * Purpose: fileProblem for the editor.
+     *
+     * Parameters:
+     *   path.
+     *
+     * Returns: String.
+     */
 
     String fileProblem(String path) {
         if (!System.FileSystem().exists(path)) { return("") }
@@ -191,6 +359,18 @@ class CwhipProject {
 
     // readMissing: no file; readContent: bytes were read (readError may still
     // report malformed contents).
+    /*
+     * readMetadata
+     *
+     * Purpose: readMetadata for the editor.
+     *
+     * Parameters:
+     *   path.
+     *   limit.
+     *
+     * Returns: String.
+     */
+
     String readMetadata(String path, int64 limit) {
         readError = ""
         readMissing = false
@@ -234,12 +414,49 @@ class CwhipProject {
         return(text)
     }
 
+    /*
+     * value
+     *
+     * Purpose: value for the editor.
+     *
+     * Parameters:
+     *   section.
+     *   key.
+     *
+     * Returns: String.
+     */
+
     String value(String section, String key) { return(Gtk.Config().value(base, section, key)) }
+
+    /*
+     * table
+     *
+     * Purpose: table for the editor.
+     *
+     * Parameters:
+     *   text.
+     *   key.
+     *
+     * Returns: nothing.
+     */
 
     void table(String text, String key) {
         String kind = Gtk.Config().value(text, "", key)
         if (!kind.equals("") && !kind.equals("t")) { error(format("{} must be a table", key)) }
     }
+
+    /*
+     * integer
+     *
+     * Purpose: integer for the editor.
+     *
+     * Parameters:
+     *   key.
+     *   minimum.
+     *   maximum.
+     *
+     * Returns: int64.
+     */
 
     int64 integer(String key, int64 minimum, int64 maximum) {
         String raw = value("editor", key)
@@ -253,6 +470,17 @@ class CwhipProject {
     }
 
     // -1 inherit (absent or invalid), 0 false, 1 true.
+    /*
+     * boolean
+     *
+     * Purpose: boolean for the editor.
+     *
+     * Parameters:
+     *   key.
+     *
+     * Returns: int64.
+     */
+
     int64 boolean(String key) {
         String raw = value("editor", key)
         if (raw.equals("")) { return(-1) }
@@ -264,6 +492,17 @@ class CwhipProject {
 
     // Returns "" when the project can be opened. Invalid individual values
     // keep it open with errors shown and its configuration unwritable.
+    /*
+     * load
+     *
+     * Purpose: load for the editor.
+     *
+     * Parameters:
+     *   settings.
+     *
+     * Returns: String.
+     */
+
     String load(CeditSettings settings) {
         String problem = metadataProblem()
         if (!problem.equals("")) { return(problem) }
@@ -338,6 +577,17 @@ class CwhipProject {
         return("")
     }
 
+    /*
+     * loadWorkspace
+     *
+     * Purpose: loadWorkspace for the editor.
+     *
+     * Parameters:
+     *   none.
+     *
+     * Returns: nothing.
+     */
+
     void loadWorkspace() {
         workspaceOriginal = readMetadata(workspacePath, 1048576)
         if (readMissing) {
@@ -352,6 +602,20 @@ class CwhipProject {
         if (!problem.equals("")) { workspaceError(problem) }
     }
 
+    /*
+     * wsInteger
+     *
+     * Purpose: wsInteger for the editor.
+     *
+     * Parameters:
+     *   text.
+     *   key.
+     *   minimum.
+     *   maximum.
+     *
+     * Returns: String.
+     */
+
     String wsInteger(String text, String key, int64 minimum, int64 maximum) {
         String raw = Gtk.Config().value(text, "workspace", key)
         if (raw.equals("")) { return("") }
@@ -362,6 +626,18 @@ class CwhipProject {
         return(format("workspace.{} must be an integer from {} to {}", key, minimum, maximum))
     }
 
+    /*
+     * wsNumber
+     *
+     * Purpose: wsNumber for the editor.
+     *
+     * Parameters:
+     *   text.
+     *   key.
+     *
+     * Returns: int64.
+     */
+
     int64 wsNumber(String text, String key) {
         String raw = Gtk.Config().value(text, "workspace", key)
         if (raw.equals("")) { return(-1) }
@@ -370,6 +646,17 @@ class CwhipProject {
 
     // Parses workspace TOML; returns "" or the first problem. Any problem
     // discards the whole workspace rather than restoring part of it.
+    /*
+     * parseWorkspace
+     *
+     * Purpose: parseWorkspace for the editor.
+     *
+     * Parameters:
+     *   text.
+     *
+     * Returns: String.
+     */
+
     String parseWorkspace(String text) {
         resetWorkspace()
         if (!Gtk.Config().value(text, "", "version").equals("i1")) {
@@ -430,11 +717,33 @@ class CwhipProject {
         return("")
     }
 
+    /*
+     * validPosition
+     *
+     * Purpose: validPosition for the editor.
+     *
+     * Parameters:
+     *   raw.
+     *
+     * Returns: bool.
+     */
+
     bool validPosition(String raw) {
         if (!raw.startsWith("i")) { return(false) }
         int64 number = byteSpan(raw, 1, raw.length).toInt64()
         return(number >= 1 && number <= 100000000)
     }
+
+    /*
+     * quotedList
+     *
+     * Purpose: quotedList for the editor.
+     *
+     * Parameters:
+     *   values.
+     *
+     * Returns: String.
+     */
 
     String quotedList(list values) {
         String text = "["
@@ -447,6 +756,17 @@ class CwhipProject {
         text.append("]")
         return(text)
     }
+
+    /*
+     * excludeLines
+     *
+     * Purpose: excludeLines for the editor.
+     *
+     * Parameters:
+     *   none.
+     *
+     * Returns: String.
+     */
 
     String excludeLines() {
         String text = ""
@@ -461,6 +781,17 @@ class CwhipProject {
 
     // Keeps unknown keys from the merge base; removed overrides fall back to
     // inheritance by deleting their keys.
+    /*
+     * serialize
+     *
+     * Purpose: Serialize settings and save via Gtk.Config when the on-disk text still matches.
+     *
+     * Parameters:
+     *   none.
+     *
+     * Returns: String.
+     */
+
     String serialize() {
         String text = base
         if (text.equals("")) { text = "version = 1\n" }
@@ -489,6 +820,17 @@ class CwhipProject {
     }
 
     // Copies configuration (including unknown keys) for Save As.
+    /*
+     * copyConfiguration
+     *
+     * Purpose: copyConfiguration for the editor.
+     *
+     * Parameters:
+     *   source.
+     *
+     * Returns: nothing.
+     */
+
     void copyConfiguration(CwhipProject source) {
         base = source.base
         name = source.name
@@ -514,6 +856,17 @@ class CwhipProject {
         highlightLine = source.highlightLine
     }
 
+    /*
+     * overrideSummary
+     *
+     * Purpose: overrideSummary for the editor.
+     *
+     * Parameters:
+     *   none.
+     *
+     * Returns: String.
+     */
+
     String overrideSummary() {
         list names = []
         if (hasFont) { names.append("font family") }
@@ -533,6 +886,18 @@ class CwhipProject {
         return(text)
     }
 
+    /*
+     * byteSpanBound
+     *
+     * Purpose: extract substrings for goto-line parsing and recovery
+     *
+     * Parameters:
+     *   value.
+     *   length.
+     *
+     * Returns: int64.
+     */
+
     int64 byteSpanBound(int64 value, int64 length) {
         int64 index = value
         if (index < 0) { index = index + length }
@@ -540,6 +905,19 @@ class CwhipProject {
         if (index > length) { return(length) }
         return(index)
     }
+    /*
+     * byteSpan
+     *
+     * Purpose: byteSpan for the editor.
+     *
+     * Parameters:
+     *   text.
+     *   first.
+     *   last.
+     *
+     * Returns: String.
+     */
+
     String byteSpan(String text, int64 first, int64 last) {
         int64 lower = byteSpanBound(first, text.length)
         int64 end = byteSpanBound(last, text.length)

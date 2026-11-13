@@ -1,3 +1,18 @@
+/*
+ * src/cedit.cw - GTK source editor application entry and Cedit class.
+ *
+ * Declares Cedit state and method signatures; implementations live in
+ * the included cedit*.cw units. start {} wires Gtk.Application callbacks.
+ *
+ * Created: 2026-10-14
+ * Author: Auto
+ *
+ * Changelog:
+ *   2026-10-14  Seed standalone cedit repository.
+ *   2026-10-29  Split method bodies into included units.
+ *   2026-11-13  CODING file header and class comment.
+ */
+
 import gtk
 import process
 import sourceview
@@ -18,6 +33,13 @@ include "projectNode.cw"
 include "projectExplorer.cw"
 include "recentEntry.cw"
 
+/*
+ * Cedit owns the main window, notebooks, project/explorer chrome,
+ * preferences, search, recovery, and document list. Method bodies are
+ * defined outside this class in the included units; signatures here are
+ * the API surface. Full Purpose/Parameters/Returns comments live on the
+ * out-of-class definitions.
+ */
 class Cedit {
     Cedit _self()
     CeditSettings settings
@@ -635,6 +657,15 @@ include "ceditTest.cw"
 
 Cedit Cedit._self() from "cwhip_gtk_self"
 
+/*
+ * Application entry: construct Cedit, bind actions, run GTK main loop.
+ *
+ * Purpose: wire editor callbacks to Gtk.Application and start the UI.
+ *
+ * Parameters: none (process argv handled inside activate via cli).
+ *
+ * Returns: nothing; process exits after app.shutdown().
+ */
 start {
     Gtk.Application app = Gtk.Application("org.cw.Editor")
     Cedit editor = Cedit()
